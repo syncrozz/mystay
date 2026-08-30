@@ -8,12 +8,13 @@ import {
   FolderKanban,
   ChevronDown,
   Lock,
+  Unlock,
   LogOut,
   Shield,
-  Cloud,
   RefreshCw,
   CheckCircle2,
-  Sparkles
+  KeyRound,
+  ShieldCheck
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -34,7 +35,12 @@ export const Header: React.FC<HeaderProps> = ({
     syncStatus,
     refreshFromCloud
   } = useStay();
-  const { user, userProfile, role, lockApp, signOut } = useAuth();
+  const {
+    isAdminMode,
+    openAdminModal,
+    deactivateAdminMode,
+    requireAdmin
+  } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -47,6 +53,10 @@ export const Header: React.FC<HeaderProps> = ({
     setTimeout(() => {
       setSyncFeedback(null);
     }, 4000);
+  };
+
+  const handleNewStayClick = () => {
+    requireAdmin(onOpenNewStay, 'Sila masukkan PIN Admin untuk mencipta pelan stay baharu.');
   };
 
   // Close user dropdown when clicking outside
@@ -120,90 +130,106 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Action Buttons with Horizontal Scroll & Icon-Only Minimalist Presentation */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 shrink-0 max-w-full">
+            {/* Admin Mode Status / Toggle Indicator Button */}
+            {isAdminMode ? (
+              <button
+                id="header-admin-mode-active-btn"
+                onClick={deactivateAdminMode}
+                className="inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white cursor-pointer border border-emerald-500 shrink-0"
+                title="Admin Mode Aktif (Klik untuk kunci/kembali ke Mod Paparan)"
+                aria-label="Admin Mode Aktif"
+              >
+                <span className="relative flex h-2 w-2 mr-1">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300"></span>
+                </span>
+                <Unlock className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                id="header-admin-mode-login-btn"
+                onClick={() => openAdminModal('Sila masukkan 4-digit PIN keselamatan untuk membuka Mod Admin.')}
+                className="inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-2xs bg-slate-100 hover:bg-teal-50 hover:text-teal-950 text-slate-800 border border-slate-200 hover:border-teal-300 active:scale-95 cursor-pointer shrink-0"
+                title="Akses Mod Admin (Masukkan PIN)"
+                aria-label="Akses Mod Admin"
+              >
+                <Lock className="w-4 h-4 text-slate-700" />
+              </button>
+            )}
+
             {/* Realtime Cloud Sync Status & Refresh Button */}
             <button
               id="header-save-sync-btn"
               onClick={handleManualRefresh}
               disabled={isSyncing}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer ${
+              className={`inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
                 syncStatus === 'ERROR'
                   ? 'bg-rose-600 hover:bg-rose-700 text-white'
                   : syncStatus === 'OFFLINE'
                   ? 'bg-slate-500 text-white'
                   : isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING'
-                  ? 'bg-teal-500 hover:bg-teal-600 text-white animate-pulse'
+                  ? 'bg-teal-500 hover:bg-teal-600 text-white'
                   : 'bg-teal-600 hover:bg-teal-700 text-white'
               }`}
-              title="Penyelarasan Firestore Automatik. Klik untuk refresh dari cloud."
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">
-                {syncStatus === 'SAVING' || isSyncing || syncStatus === 'SYNCING'
-                  ? 'Syncing...'
+              title={
+                syncStatus === 'SAVING' || isSyncing || syncStatus === 'SYNCING'
+                  ? 'Sedang menyelaraskan...'
                   : syncStatus === 'OFFLINE'
-                  ? 'Offline'
+                  ? 'Luar Talian (Offline)'
                   : syncStatus === 'ERROR'
-                  ? 'Sync Gagal'
-                  : 'Cloud Synced'}
-              </span>
-              <span className="sm:hidden">
-                {isSyncing ? 'Syncing...' : 'Sync'}
-              </span>
+                  ? 'Ralat Penyelarasan'
+                  : 'Penyelarasan Firestore Automatik (Klik untuk muat semula)'
+              }
+              aria-label="Penyelarasan Cloud Firestore"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
             </button>
 
             {/* All Stays Button */}
             <button
               id="header-all-stays-btn"
               onClick={onOpenStayList}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Senarai Semua Stay"
+              aria-label="Senarai Semua Stay"
             >
-              <FolderKanban className="w-4 h-4 text-slate-600" />
-              <span className="hidden md:inline">Semua Stay</span>
+              <FolderKanban className="w-4 h-4 text-slate-700" />
             </button>
 
             {/* Share / Export */}
             <button
               id="header-share-btn"
               onClick={onOpenShare}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Kongsi ke WhatsApp atau Cetak"
+              aria-label="Kongsi Stay"
             >
-              <Share2 className="w-4 h-4 text-teal-600" />
-              <span className="hidden sm:inline">Kongsi</span>
+              <Share2 className="w-4 h-4 text-teal-700" />
             </button>
 
-            {/* New Stay Button */}
+            {/* New Stay Button (Admin Gated) */}
             <button
               id="header-new-stay-btn"
-              onClick={onOpenNewStay}
-              title="Cipta Stay Baharu"
+              onClick={handleNewStayClick}
+              title={isAdminMode ? 'Cipta Stay Baharu' : 'Cipta Stay Baharu (Perlu Mod Admin)'}
               aria-label="Cipta Stay Baharu"
-              className="inline-flex items-center justify-center p-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
             </button>
 
-            {/* Owner Profile & Security Menu */}
-            <div className="relative" ref={userMenuRef}>
+            {/* Security Menu / Profile Dropdown */}
+            <div className="relative shrink-0" ref={userMenuRef}>
               <button
                 id="user-profile-menu-btn"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all cursor-pointer"
-                title="Menu Pemilik"
+                className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all cursor-pointer"
+                title="Pilihan Keselamatan & Admin"
               >
-                <div className="w-7 h-7 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
-                  👑
-                </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-xs font-bold text-slate-800 truncate max-w-[110px]">
-                    Pemilik
-                  </p>
-                  <p className="text-[10px] text-teal-700 font-semibold uppercase tracking-wider">
-                    {role}
-                  </p>
+                <div className={`w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-2xs ${isAdminMode ? 'bg-emerald-600' : 'bg-slate-700'}`}>
+                  {isAdminMode ? '👑' : '👤'}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
               </button>
@@ -213,18 +239,48 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 text-slate-900">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-xs font-bold text-slate-900 truncate">
-                      StayPlan Personal Owner
+                      StayPlan Personal
                     </p>
-                    <p className="text-[11px] text-slate-500 truncate">{user?.email || 'owner@stayplan.personal'}</p>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {isAdminMode ? 'Sesi Mod Pentadbir Aktif' : 'Mod Paparan Sahaja'}
+                    </p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-50 text-teal-950 border border-teal-200 uppercase inline-flex items-center gap-1">
-                        <Shield className="w-2.5 h-2.5 text-teal-600" />
-                        Akses Penuh Pemilik
+                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase inline-flex items-center gap-1 ${
+                        isAdminMode
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                          : 'bg-slate-100 text-slate-700 border border-slate-300'
+                      }`}>
+                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        {isAdminMode ? 'Admin Unlocked' : 'Viewer Mode'}
                       </span>
                     </div>
                   </div>
 
                   <div className="p-1 space-y-0.5">
+                    {isAdminMode ? (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          deactivateAdminMode();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <Lock className="w-4 h-4 text-slate-500" />
+                        <span>Kunci Semula Mod Admin</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openAdminModal('Sila masukkan 4-digit PIN keselamatan untuk membuka Mod Admin.');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-teal-950 bg-teal-50/70 hover:bg-teal-100 rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <KeyRound className="w-4 h-4 text-teal-600" />
+                        <span>Buka Mod Admin (PIN)</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
@@ -244,29 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left cursor-pointer"
                     >
                       <FolderKanban className="w-4 h-4 text-slate-500" />
-                      <span>Semua Stay Peribadi Saya</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        lockApp();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-teal-950 hover:bg-teal-50 rounded-xl transition-colors text-left cursor-pointer"
-                    >
-                      <Lock className="w-4 h-4 text-teal-600" />
-                      <span>Kunci Aplikasi (Lock)</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        signOut();
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 text-rose-500" />
-                      <span>Log Keluar Sesi</span>
+                      <span>Semua Pelan Stay</span>
                     </button>
                   </div>
                 </div>

@@ -1,8 +1,12 @@
 import { StayType, ActivityPriority, TimeSlot, ChecklistCategory } from '../types';
 
 export const ASSETS = {
-  LOGO: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/StayPlan/android-chrome-192x192.png',
-  OGI: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/StayPlan/OGI.StayPlan.jpg',
+  LOGO: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/android-chrome-192x192.png',
+  LOGO_512: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/android-chrome-512x512.png',
+  APPLE_TOUCH_ICON: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/apple-touch-icon.png',
+  FAVICON_SVG: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/favicon.svg',
+  FAVICON_ICO: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/favicon.ico',
+  OGI: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/logo/MyStay/OGI.MyStay.jpg',
   QR_SUPPORT: 'https://raw.githubusercontent.com/syncrozz/syncrozz-assets/main/Bank%20QR/QR%20RYT%20for%20Sumbangan.jpg'
 };
 

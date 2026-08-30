@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
-import { Stay, AgendaItem, TimeSlot, DayType } from '../types';
-import { TIME_SLOTS, PRIORITY_CONFIG, DAY_TYPE_CONFIG } from '../utils/constants';
-import { getDayType, getDayContextLabel, formatStaySummary } from '../utils/formatters';
+import { Stay, AgendaItem, TimeSlot } from '../types';
+import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
+import { getDayContextLabel, formatStaySummary } from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
 import {
   Calendar as CalendarIcon,
   Plus,
   Check,
   MapPin,
-  Clock,
   User,
   ChevronRight,
-  Sparkles,
   X,
-  List,
-  ChevronLeft,
-  Car,
-  Home
+  List
 } from 'lucide-react';
 
 interface CalendarViewProps {
@@ -36,7 +32,7 @@ export function CalendarView({
   onToggleComplete,
   onNavigateToPlan
 }: CalendarViewProps) {
-  // Modal/Drawer state for Full Day Detail
+  const { requireAdmin } = useAuth();
   const [selectedDayDetail, setSelectedDayDetail] = useState<number | null>(null);
 
   const duration = stay.durationDays || 3;
@@ -102,6 +98,18 @@ export function CalendarView({
       .sort((a, b) => slotRank[a.timeSlot] - slotRank[b.timeSlot]);
   };
 
+  const handleAddClick = (dayNum: number, slot: TimeSlot) => {
+    requireAdmin(() => {
+      onAddItem(dayNum, slot);
+    }, 'Sila sahkan PIN Admin untuk menambah agenda ke kalendar.');
+  };
+
+  const handleEditClick = (item: AgendaItem) => {
+    requireAdmin(() => {
+      onEditItem(item);
+    }, 'Sila sahkan PIN Admin untuk mengedit agenda.');
+  };
+
   const activeDayDetailItems = selectedDayDetail !== null ? getSortedDayItems(selectedDayDetail) : [];
   const activeDayDateInfo = selectedDayDetail !== null ? getDayDateInfo(selectedDayDetail) : null;
   const activeDayContext = selectedDayDetail !== null ? getDayContextLabel(stay, selectedDayDetail) : null;
@@ -110,21 +118,21 @@ export function CalendarView({
     <div id="stay-calendar-view" className="space-y-6">
       
       {/* Calendar Header / Subtitle Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-amber-100/80 text-amber-800">
-            <CalendarIcon className="w-5 h-5" />
+          <div className="p-2.5 rounded-xl bg-teal-100/80 text-teal-800">
+            <CalendarIcon className="w-5 h-5 text-teal-700" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-stone-900">
+              <h3 className="text-base font-bold text-slate-900">
                 Gambaran Keseluruhan Kalendar Stay
               </h3>
-              <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md hidden sm:inline-block">
+              <span className="text-xs font-bold text-teal-950 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md hidden sm:inline-block">
                 {staySummary}
               </span>
             </div>
-            <p className="text-xs text-stone-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Gambaran aktiviti harian dengan pembezaan Hari Perjalanan (🚗) dan Hari Stay (🏠).
             </p>
           </div>
@@ -135,15 +143,15 @@ export function CalendarView({
             <button
               type="button"
               onClick={onNavigateToPlan}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 rounded-xl transition-all cursor-pointer"
             >
               <span>📋 Belum Dijadualkan ({backlogItems.length})</span>
             </button>
           )}
           <button
             type="button"
-            onClick={() => onAddItem(1, 'morning')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all shadow-2xs active:scale-98"
+            onClick={() => handleAddClick(1, 'morning')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-2xs active:scale-98 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>+ Tambah Agenda</span>
@@ -153,8 +161,8 @@ export function CalendarView({
 
       {/* Backlog Alert banner if items exist */}
       {backlogItems.length > 0 && onNavigateToPlan && (
-        <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-amber-950">
+        <div className="bg-teal-50/80 border border-teal-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-teal-950">
             <span className="text-base">📋</span>
             <span>
               Anda mempunyai <strong>{backlogItems.length} perkara dirancang</strong> yang belum dijadualkan ke mana-mana hari.
@@ -163,7 +171,7 @@ export function CalendarView({
           <button
             type="button"
             onClick={onNavigateToPlan}
-            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-colors self-start sm:self-auto cursor-pointer"
+            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-colors self-start sm:self-auto cursor-pointer"
           >
             Susun Perancangan Sekarang →
           </button>
@@ -189,29 +197,29 @@ export function CalendarView({
               id={`calendar-day-card-${dayNum}`}
               className={`bg-white rounded-2xl border shadow-2xs transition-all flex flex-col overflow-hidden group ${
                 isTravel
-                  ? 'border-orange-200/90 hover:border-orange-300'
-                  : 'border-stone-200 hover:border-amber-300'
+                  ? 'border-amber-200/90 hover:border-amber-300'
+                  : 'border-slate-200 hover:border-teal-300'
               }`}
             >
               {/* Day Card Header with Obvious Day Context */}
               <div
                 className={`p-4 border-b flex items-center justify-between transition-colors ${
                   isTravel
-                    ? 'bg-orange-50/70 border-orange-200/80'
-                    : 'bg-stone-50/90 border-stone-200'
+                    ? 'bg-amber-50/70 border-amber-200/80'
+                    : 'bg-slate-50/90 border-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex flex-col items-center justify-center min-w-11 px-2 py-1 rounded-xl shadow-2xs border ${
                       isTravel
-                        ? 'bg-white border-orange-200 text-orange-950'
-                        : 'bg-white border-stone-200 text-stone-900'
+                        ? 'bg-white border-amber-200 text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-900'
                     }`}
                   >
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider ${
-                        isTravel ? 'text-orange-800' : 'text-amber-800'
+                        isTravel ? 'text-amber-800' : 'text-teal-800'
                       }`}
                     >
                       {dateInfo.dayName}
@@ -220,7 +228,7 @@ export function CalendarView({
                       {dateInfo.dayOfMonth}
                     </span>
                     {dateInfo.monthShort && (
-                      <span className="text-[9px] font-semibold text-stone-400">
+                      <span className="text-[9px] font-semibold text-slate-400">
                         {dateInfo.monthShort}
                       </span>
                     )}
@@ -232,15 +240,15 @@ export function CalendarView({
                       <span
                         className={`text-xs font-bold px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${
                           isTravel
-                            ? 'bg-orange-100 text-orange-950 border-orange-300/80'
-                            : 'bg-amber-100 text-amber-950 border-amber-300/80'
+                            ? 'bg-amber-100 text-amber-950 border-amber-300/80'
+                            : 'bg-teal-50 text-teal-950 border-teal-200/80'
                         }`}
                       >
                         <span>{dayContext.icon} {dayContext.label}</span>
                       </span>
                     </div>
 
-                    <span className="text-[11px] text-stone-500 block mt-1">
+                    <span className="text-[11px] text-slate-500 block mt-1">
                       {dayItems.length === 0
                         ? (isTravel ? 'Logistik perjalanan' : 'Tiada agenda')
                         : `${completedCount}/${dayItems.length} selesai`}
@@ -251,35 +259,35 @@ export function CalendarView({
                 <button
                   type="button"
                   title="Tambah aktiviti untuk hari ini"
-                  onClick={() => onAddItem(dayNum, isTravel ? 'morning' : 'morning')}
-                  className={`p-1.5 rounded-lg transition-colors ${
+                  onClick={() => handleAddClick(dayNum, isTravel ? 'morning' : 'morning')}
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                     isTravel
-                      ? 'text-orange-500 hover:text-orange-800 hover:bg-orange-100'
-                      : 'text-stone-400 hover:text-amber-700 hover:bg-amber-50'
+                      ? 'text-amber-600 hover:text-amber-800 hover:bg-amber-100'
+                      : 'text-slate-400 hover:text-teal-700 hover:bg-teal-50'
                   }`}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Day Items List (Target: 4-5 items) */}
+              {/* Day Items List */}
               <div className="p-3 sm:p-3.5 flex-1 flex flex-col justify-between space-y-2 min-h-52">
                 {dayItems.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center py-6 text-center text-stone-400">
+                  <div className="flex-1 flex flex-col items-center justify-center py-6 text-center text-slate-400">
                     <span className="text-2xl mb-1">{isTravel ? '🚗' : '🍃'}</span>
-                    <p className="text-xs font-medium text-stone-600">
+                    <p className="text-xs font-medium text-slate-600">
                       {isTravel ? 'Perjalanan & Rehat Jalanan' : 'Hari Santai / Bebas'}
                     </p>
-                    <p className="text-[10px] text-stone-400 max-w-[180px] mt-0.5">
+                    <p className="text-[10px] text-slate-400 max-w-[180px] mt-0.5">
                       {isTravel
                         ? 'Boleh tambah perhentian R&R, waktu bertolak, atau ketibaan.'
                         : 'Masa luang untuk berehat dan aktiviti bebas bersama.'}
                     </p>
                     <button
                       type="button"
-                      onClick={() => onAddItem(dayNum, 'morning')}
-                      className={`mt-2 text-[11px] font-bold hover:underline ${
-                        isTravel ? 'text-orange-700' : 'text-amber-700'
+                      onClick={() => handleAddClick(dayNum, 'morning')}
+                      className={`mt-2 text-[11px] font-bold hover:underline cursor-pointer ${
+                        isTravel ? 'text-amber-700' : 'text-teal-700'
                       }`}
                     >
                       + Tambah agenda {isTravel ? 'perjalanan' : 'stay'}
@@ -292,13 +300,13 @@ export function CalendarView({
                       return (
                         <div
                           key={item.id}
-                          onClick={() => onEditItem(item)}
+                          onClick={() => handleEditClick(item)}
                           className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2 group/item ${
                             item.isCompleted
-                              ? 'bg-stone-50/70 border-stone-200 text-stone-400'
+                              ? 'bg-slate-50/70 border-slate-200 text-slate-400'
                               : isTravel
-                              ? 'bg-white hover:bg-orange-50/40 border-stone-200/80 hover:border-orange-200 text-stone-800 shadow-2xs'
-                              : 'bg-white hover:bg-amber-50/40 border-stone-200/80 hover:border-amber-200 text-stone-800 shadow-2xs'
+                              ? 'bg-white hover:bg-amber-50/40 border-slate-200/80 hover:border-amber-200 text-slate-800 shadow-2xs'
+                              : 'bg-white hover:bg-teal-50/40 border-slate-200/80 hover:border-teal-200 text-slate-800 shadow-2xs'
                           }`}
                         >
                           <button
@@ -308,10 +316,10 @@ export function CalendarView({
                               e.stopPropagation();
                               onToggleComplete(item.id);
                             }}
-                            className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                            className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors cursor-pointer ${
                               item.isCompleted
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : 'border-stone-300 hover:border-amber-500 bg-stone-50'
+                                : 'border-slate-300 hover:border-teal-500 bg-slate-50'
                             }`}
                           >
                             {item.isCompleted && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -324,18 +332,18 @@ export function CalendarView({
                               </span>
                               <span
                                 className={`text-xs font-bold truncate ${
-                                  item.isCompleted ? 'line-through text-stone-400' : 'text-stone-900'
+                                  item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
                                 }`}
                               >
                                 {item.title}
                               </span>
                             </div>
 
-                            {/* Secondary Metadata (light/compact) */}
+                            {/* Secondary Metadata */}
                             {(item.timeSpecific || item.locationName) && (
-                              <div className="flex items-center gap-2 text-[10px] text-stone-500 mt-0.5 truncate pl-4">
+                              <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5 truncate pl-4">
                                 {item.timeSpecific && (
-                                  <span className="font-semibold text-amber-900/80">
+                                  <span className="font-semibold text-teal-900/80">
                                     {item.timeSpecific}
                                   </span>
                                 )}
@@ -352,16 +360,16 @@ export function CalendarView({
                 )}
 
                 {/* Progressive Disclosure Footer: "Lihat Butiran" and "+ Tambah" */}
-                <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedDayDetail(dayNum)}
                     className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                       remainingCount > 0
                         ? isTravel
-                          ? 'text-orange-800 bg-orange-50 hover:bg-orange-100'
-                          : 'text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100'
-                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                          ? 'text-amber-800 bg-amber-50 hover:bg-amber-100'
+                          : 'text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <span>{remainingCount > 0 ? `+ ${remainingCount} lagi (Butiran)` : 'Lihat Butiran'}</span>
@@ -370,8 +378,8 @@ export function CalendarView({
 
                   <button
                     type="button"
-                    onClick={() => onAddItem(dayNum, isTravel ? 'morning' : 'morning')}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-900 hover:bg-amber-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                    onClick={() => handleAddClick(dayNum, isTravel ? 'morning' : 'morning')}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900 hover:bg-teal-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Tambah</span>
@@ -386,23 +394,23 @@ export function CalendarView({
 
       {/* Full Day Details Modal / Popover (Progressive Disclosure) */}
       {selectedDayDetail !== null && activeDayDateInfo && activeDayContext && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div
             id="full-day-detail-modal"
-            className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl border border-stone-200 overflow-hidden"
+            className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-200 overflow-hidden"
           >
             {/* Modal Header */}
             <div
               className={`px-6 py-4 border-b flex items-center justify-between ${
                 activeDayContext.type === 'travel_day'
-                  ? 'bg-orange-50/80 border-orange-200'
-                  : 'bg-stone-50 border-stone-200'
+                  ? 'bg-amber-50/80 border-amber-200'
+                  : 'bg-slate-50 border-slate-200'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`flex flex-col items-center justify-center min-w-12 px-2.5 py-1.5 rounded-xl shadow-2xs text-white ${
-                    activeDayContext.type === 'travel_day' ? 'bg-orange-600' : 'bg-amber-600'
+                    activeDayContext.type === 'travel_day' ? 'bg-amber-600' : 'bg-teal-600'
                   }`}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -414,11 +422,11 @@ export function CalendarView({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-stone-900">
+                    <h3 className="text-base font-bold text-slate-900">
                       {activeDayContext.label} ({activeDayDateInfo.dateFormatted})
                     </h3>
                   </div>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-slate-500">
                     {activeDayContext.type === 'travel_day'
                       ? 'Hari Perjalanan & Logistik'
                       : 'Hari Penginapan Penuh'} · {activeDayDetailItems.length} agenda dirancang
@@ -429,7 +437,7 @@ export function CalendarView({
               <button
                 type="button"
                 onClick={() => setSelectedDayDetail(null)}
-                className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -438,14 +446,14 @@ export function CalendarView({
             {/* Modal Body: Complete list of items for this day */}
             <div className="p-6 overflow-y-auto flex-1 space-y-3">
               {activeDayDetailItems.length === 0 ? (
-                <div className="py-10 text-center text-stone-400 space-y-2">
+                <div className="py-10 text-center text-slate-400 space-y-2">
                   <span className="text-3xl">{activeDayContext.type === 'travel_day' ? '🚗' : '🍃'}</span>
-                  <p className="text-sm font-semibold text-stone-600">
+                  <p className="text-sm font-semibold text-slate-600">
                     {activeDayContext.type === 'travel_day'
                       ? 'Tiada catatan logistik perjalanan untuk hari ini.'
                       : 'Tiada agenda dirancang untuk hari ini.'}
                   </p>
-                  <p className="text-xs text-stone-400">
+                  <p className="text-xs text-slate-400">
                     {activeDayContext.type === 'travel_day'
                       ? 'Anda boleh menambah jadual bertolak, perhentian makan, atau ketibaan.'
                       : 'Luangkan masa untuk aktiviti bebas atau berehat.'}
@@ -460,12 +468,12 @@ export function CalendarView({
                       key={item.id}
                       onClick={() => {
                         setSelectedDayDetail(null);
-                        onEditItem(item);
+                        handleEditClick(item);
                       }}
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                         item.isCompleted
-                          ? 'bg-stone-50 border-stone-200 opacity-70'
-                          : 'bg-white hover:bg-amber-50/40 border-stone-200 shadow-2xs hover:border-amber-300'
+                          ? 'bg-slate-50 border-slate-200 opacity-70'
+                          : 'bg-white hover:bg-teal-50/40 border-slate-200 shadow-2xs hover:border-teal-300'
                       }`}
                     >
                       <button
@@ -474,10 +482,10 @@ export function CalendarView({
                           e.stopPropagation();
                           onToggleComplete(item.id);
                         }}
-                        className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                        className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-colors cursor-pointer ${
                           item.isCompleted
                             ? 'bg-emerald-600 border-emerald-600 text-white'
-                            : 'border-stone-300 hover:border-amber-500 bg-stone-50'
+                            : 'border-slate-300 hover:border-teal-500 bg-slate-50'
                         }`}
                       >
                         {item.isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -486,11 +494,11 @@ export function CalendarView({
                       <div className="flex-1 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm">{slotMeta.icon}</span>
-                          <span className="text-xs font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-md">
+                          <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
                             {slotMeta.label}
                           </span>
                           {item.timeSpecific && (
-                            <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
+                            <span className="text-xs font-bold text-teal-900 bg-teal-100 px-2 py-0.5 rounded-md">
                               {item.timeSpecific}
                             </span>
                           )}
@@ -501,27 +509,27 @@ export function CalendarView({
 
                         <h4
                           className={`text-sm font-bold ${
-                            item.isCompleted ? 'line-through text-stone-400' : 'text-stone-900'
+                            item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
                           }`}
                         >
                           {item.title}
                         </h4>
 
                         {item.description && (
-                          <p className="text-xs text-stone-600 pt-0.5">{item.description}</p>
+                          <p className="text-xs text-slate-600 pt-0.5">{item.description}</p>
                         )}
 
                         {(item.locationName || item.personInCharge) && (
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 pt-1">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
                             {item.locationName && (
                               <span className="inline-flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-stone-400" />
-                                {item.locationName}
+                                <MapPin className="w-3 h-3 text-slate-400" />
+                                <span>{item.locationName}</span>
                               </span>
                             )}
                             {item.personInCharge && (
-                              <span className="inline-flex items-center gap-1 text-amber-900">
-                                <User className="w-3 h-3 text-amber-600" />
+                              <span className="inline-flex items-center gap-1 text-teal-900">
+                                <User className="w-3 h-3 text-teal-600" />
                                 PIC: {item.personInCharge}
                               </span>
                             )}
@@ -535,7 +543,7 @@ export function CalendarView({
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between gap-3">
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
               {onNavigateToPlan ? (
                 <button
                   type="button"
@@ -543,16 +551,16 @@ export function CalendarView({
                     setSelectedDayDetail(null);
                     onNavigateToPlan();
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 hover:text-stone-900 bg-white border border-stone-300 px-4 py-2.5 rounded-xl hover:bg-stone-100 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-300 px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  <List className="w-4 h-4 text-amber-700" />
+                  <List className="w-4 h-4 text-teal-700" />
                   <span>📝 Susun di Perancangan</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setSelectedDayDetail(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-stone-900 bg-white border border-stone-300 px-4 py-2.5 rounded-xl hover:bg-stone-100 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-300 px-4 py-2.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   <span>Tutup</span>
                 </button>
@@ -563,9 +571,9 @@ export function CalendarView({
                 onClick={() => {
                   const day = selectedDayDetail || 1;
                   setSelectedDayDetail(null);
-                  onAddItem(day, 'morning');
+                  handleAddClick(day, 'morning');
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-4 py-2.5 rounded-xl transition-colors shadow-2xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2.5 rounded-xl transition-colors shadow-2xs cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>+ Tambah Agenda</span>

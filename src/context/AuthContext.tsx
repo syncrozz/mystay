@@ -17,12 +17,21 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   role: UserRole;
   isAuthenticated: boolean;
+  isAdminMode: boolean;
   isUnlocked: boolean;
   isLoading: boolean;
+  validateAndActivateAdmin: (pin: string) => Promise<{ success: boolean; message?: string }>;
+  deactivateAdminMode: () => void;
   unlockWithPin: (pin: string) => Promise<{ success: boolean; message?: string }>;
   lockApp: () => Promise<void>;
   signOut: () => Promise<void>;
-  // Auth prompt modal management
+  // Admin PIN Modal controls
+  isAdminModalOpen: boolean;
+  adminModalContext: string;
+  openAdminModal: (contextMessage?: string, onAuthenticated?: () => void) => void;
+  closeAdminModal: () => void;
+  requireAdmin: (callback: () => void, contextMessage?: string) => void;
+  // Compatibility aliases
   isAuthModalOpen: boolean;
   authModalContext: string;
   openAuthModal: (contextMessage?: string) => void;
@@ -32,11 +41,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Session storage key (never stores raw PIN, only an ephemeral session state token)
-const SESSION_FLAG_KEY = 'stayplan_personal_session_unlocked';
+// Session storage keys (stores session state token only, never stores raw PIN)
+const ADMIN_MODE_SESSION_KEY = 'stayplan_admin_mode_active';
 
-// Expected SHA-256 digest for owner PIN (5313)
-const OWNER_PIN_HASH = '0d8be8cfcf9aa1b7fc945bda750efdc7e085026e0a3c50d90adbca1f451618e1';
+// Expected SHA-256 digest for secret owner PIN
+const ADMIN_PIN_HASH = '0d8be8cfcf9aa1b7fc945bda750efdc7e085026e0a3c50d90adbca1f451618e1';
+const RAW_ADMIN_PIN = '5313';
 
 // Internal owner credentials for Firebase Auth
 const OWNER_AUTH_EMAIL = 'owner@stayplan.personal';
@@ -56,20 +66,20 @@ async function computeSha256(input: string): Promise<string> {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
     try {
-      return sessionStorage.getItem(SESSION_FLAG_KEY) === 'true';
+      return sessionStorage.getItem(ADMIN_MODE_SESSION_KEY) === 'true';
     } catch {
       return false;
     }
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [authModalContext, setAuthModalContext] = useState<string>('');
-  const [pendingCallback, setPendingCallback] = useState<(() => void) | null>(null);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
+  const [adminModalContext, setAdminModalContext] = useState<string>('');
+  const [pendingAdminCallback, setPendingAdminCallback] = useState<(() => void) | null>(null);
 
-  // Inactivity auto-lock timer (30 minutes)
-  const lastActivityRef = useRef<number>(Date.now());
+  // Inactivity auto-deactivate timer for Admin Mode (45 minutes)
+  const lastAdminActivityRef = useRef<number>(Date.now());
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -79,14 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile({
           uid: currentUser.uid,
           email: currentUser.email || OWNER_AUTH_EMAIL,
-          displayName: 'Pemilik StayPlan',
+          displayName: 'Pentadbir StayPlan',
           photoURL: null,
           role: 'ADMIN',
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
 
-        // Background sync owner profile document in Firestore
+        // Background sync owner/admin profile document in Firestore
         try {
           const userRef = doc(db, 'users', currentUser.uid);
           const snap = await getDoc(userRef);
@@ -94,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email || OWNER_AUTH_EMAIL,
-              displayName: 'Pemilik StayPlan',
+              displayName: 'Pentadbir StayPlan',
               role: 'ADMIN',
               createdAt: Date.now(),
               updatedAt: Date.now(),
@@ -102,12 +112,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
         } catch (err) {
-          // Non-blocking background sync note
-          console.warn('Owner profile sync status:', err);
+          console.warn('Admin profile sync note:', err);
         }
       } else {
-        setUser(null);
-        setUserProfile(null);
+        // If not logged in, attempt seamless anonymous auth to enable Firestore realtime sync
+        try {
+          await signInAnonymously(auth);
+        } catch (anonErr) {
+          console.warn('Initial session init note:', anonErr);
+        }
       }
       setIsLoading(false);
     });
@@ -115,18 +128,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // Inactivity lock handler
+  // Inactivity timeout for Admin Mode
   useEffect(() => {
-    if (!isUnlocked) return;
+    if (!isAdminMode) return;
 
     const resetActivity = () => {
-      lastActivityRef.current = Date.now();
+      lastAdminActivityRef.current = Date.now();
     };
 
     const interval = setInterval(() => {
-      // 30 minutes of inactivity = auto-lock
-      if (Date.now() - lastActivityRef.current > 30 * 60 * 1000) {
-        lockApp();
+      // 45 minutes of inactivity = auto deactivate Admin Mode
+      if (Date.now() - lastAdminActivityRef.current > 45 * 60 * 1000) {
+        deactivateAdminMode();
       }
     }, 60 * 1000);
 
@@ -140,126 +153,143 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('keydown', resetActivity);
       window.removeEventListener('touchstart', resetActivity);
     };
-  }, [isUnlocked]);
+  }, [isAdminMode]);
 
   /**
-   * Validates PIN securely and establishes the owner's Firebase session.
+   * Validates PIN and activates Admin Mode.
    */
-  const unlockWithPin = useCallback(async (pin: string): Promise<{ success: boolean; message?: string }> => {
-    try {
-      if (!pin || pin.trim().length === 0) {
-        return { success: false, message: 'Sila masukkan PIN akses.' };
-      }
-
-      const inputHash = await computeSha256(pin.trim());
-      if (inputHash !== OWNER_PIN_HASH) {
-        return { success: false, message: 'PIN akses tidak sah. Sila semak semula.' };
-      }
-
-      // Establish Firebase authentication for the owner
+  const validateAndActivateAdmin = useCallback(
+    async (inputPin: string): Promise<{ success: boolean; message?: string }> => {
       try {
-        await signInWithEmailAndPassword(auth, OWNER_AUTH_EMAIL, OWNER_AUTH_SECRET);
-      } catch (authErr: any) {
-        if (
-          authErr?.code === 'auth/user-not-found' ||
-          authErr?.code === 'auth/invalid-credential' ||
-          authErr?.code === 'auth/wrong-password'
-        ) {
-          // Attempt account creation on first launch
-          try {
-            await createUserWithEmailAndPassword(auth, OWNER_AUTH_EMAIL, OWNER_AUTH_SECRET);
-          } catch (createErr: any) {
-            // If email/password provider is not enabled on this Firebase instance, fallback to anonymous auth
-            if (createErr?.code === 'auth/operation-not-allowed' || createErr?.code === 'auth/email-already-in-use') {
-              try {
-                await signInAnonymously(auth);
-              } catch (anonErr) {
-                console.warn('Auth fallback note:', anonErr);
-              }
-            } else {
-              throw createErr;
-            }
-          }
-        } else if (authErr?.code === 'auth/operation-not-allowed') {
-          // Fallback to anonymous auth if Email provider is disabled
-          try {
-            await signInAnonymously(auth);
-          } catch (anonErr) {
-            console.warn('Anonymous auth note:', anonErr);
-          }
-        } else {
-          // If offline or other recoverable state, proceed with session unlock
-          console.warn('Firebase auth connection notice:', authErr);
+        const cleanPin = (inputPin || '').trim();
+        if (cleanPin.length === 0) {
+          return { success: false, message: 'Sila masukkan 4-digit PIN.' };
         }
+
+        const inputHash = await computeSha256(cleanPin);
+        const isValid = cleanPin === RAW_ADMIN_PIN || inputHash === ADMIN_PIN_HASH;
+
+        if (!isValid) {
+          return { success: false, message: 'PIN salah. Sila cuba lagi.' };
+        }
+
+        // Establish full Firebase authentication credentials if not already signed in
+        try {
+          await signInWithEmailAndPassword(auth, OWNER_AUTH_EMAIL, OWNER_AUTH_SECRET);
+        } catch (authErr: any) {
+          if (
+            authErr?.code === 'auth/user-not-found' ||
+            authErr?.code === 'auth/invalid-credential' ||
+            authErr?.code === 'auth/wrong-password'
+          ) {
+            try {
+              await createUserWithEmailAndPassword(auth, OWNER_AUTH_EMAIL, OWNER_AUTH_SECRET);
+            } catch (createErr: any) {
+              if (
+                createErr?.code === 'auth/operation-not-allowed' ||
+                createErr?.code === 'auth/email-already-in-use'
+              ) {
+                try {
+                  await signInAnonymously(auth);
+                } catch {}
+              }
+            }
+          } else if (authErr?.code === 'auth/operation-not-allowed') {
+            try {
+              await signInAnonymously(auth);
+            } catch {}
+          }
+        }
+
+        // Save active state to session storage
+        try {
+          sessionStorage.setItem(ADMIN_MODE_SESSION_KEY, 'true');
+        } catch {}
+
+        setIsAdminMode(true);
+        lastAdminActivityRef.current = Date.now();
+
+        // Run pending admin callback if any
+        if (pendingAdminCallback) {
+          const cb = pendingAdminCallback;
+          setPendingAdminCallback(null);
+          // Execute callback shortly after modal unmounts
+          setTimeout(() => {
+            try {
+              cb();
+            } catch (e) {
+              console.error('Error executing admin action:', e);
+            }
+          }, 50);
+        }
+
+        setIsAdminModalOpen(false);
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, message: 'PIN salah. Sila cuba lagi.' };
       }
-
-      // Mark session as unlocked (in sessionStorage only, NEVER raw PIN)
-      try {
-        sessionStorage.setItem(SESSION_FLAG_KEY, 'true');
-      } catch {}
-
-      setIsUnlocked(true);
-      lastActivityRef.current = Date.now();
-
-      if (pendingCallback) {
-        pendingCallback();
-        setPendingCallback(null);
-      }
-      setIsAuthModalOpen(false);
-
-      return { success: true };
-    } catch (err: any) {
-      console.error('Unlock error:', err);
-      return { success: false, message: err?.message || 'Ralat mengesahkan PIN akses.' };
-    }
-  }, [pendingCallback]);
+    },
+    [pendingAdminCallback]
+  );
 
   /**
-   * Locks the app and returns to the Private Access Screen.
+   * Deactivates Admin Mode (switches to Read/Member view).
    */
-  const lockApp = useCallback(async () => {
+  const deactivateAdminMode = useCallback(() => {
     try {
-      sessionStorage.removeItem(SESSION_FLAG_KEY);
+      sessionStorage.removeItem(ADMIN_MODE_SESSION_KEY);
     } catch {}
-    setIsUnlocked(false);
+    setIsAdminMode(false);
+    setPendingAdminCallback(null);
   }, []);
 
   /**
-   * Fully signs out of Firebase and locks the app.
+   * Opens the Admin PIN modal.
    */
+  const openAdminModal = useCallback((contextMessage?: string, onAuthenticated?: () => void) => {
+    setAdminModalContext(contextMessage || 'Sila masukkan 4-digit PIN keselamatan.');
+    if (onAuthenticated) {
+      setPendingAdminCallback(() => onAuthenticated);
+    }
+    setIsAdminModalOpen(true);
+  }, []);
+
+  /**
+   * Closes the Admin PIN modal without activating.
+   */
+  const closeAdminModal = useCallback(() => {
+    setIsAdminModalOpen(false);
+    setPendingAdminCallback(null);
+  }, []);
+
+  /**
+   * Gate for administrative actions: if in admin mode, runs callback directly;
+   * otherwise, prompts the Admin PIN modal and runs callback upon success.
+   */
+  const requireAdmin = useCallback(
+    (callback: () => void, contextMessage?: string) => {
+      if (isAdminMode) {
+        callback();
+      } else {
+        openAdminModal(contextMessage || 'Sila sahkan PIN Admin untuk meneruskan tindakan ini.', callback);
+      }
+    },
+    [isAdminMode, openAdminModal]
+  );
+
   const signOut = useCallback(async () => {
+    deactivateAdminMode();
     try {
-      sessionStorage.removeItem(SESSION_FLAG_KEY);
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Sign Out Error:', error);
     } finally {
-      setIsUnlocked(false);
       setUser(null);
       setUserProfile(null);
     }
-  }, []);
+  }, [deactivateAdminMode]);
 
-  const openAuthModal = (contextMessage?: string) => {
-    setAuthModalContext(contextMessage || 'Sila masukkan PIN untuk mengesahkan akses.');
-    setIsAuthModalOpen(true);
-  };
-
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false);
-    setPendingCallback(null);
-  };
-
-  const requireAuth = (callback: () => void, contextMessage?: string) => {
-    if (isUnlocked && user) {
-      callback();
-    } else {
-      setPendingCallback(() => callback);
-      openAuthModal(contextMessage);
-    }
-  };
-
-  const role: UserRole = userProfile?.role || 'ADMIN';
+  const role: UserRole = isAdminMode ? 'ADMIN' : 'VIEWER';
 
   return (
     <AuthContext.Provider
@@ -267,17 +297,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         userProfile,
         role,
-        isAuthenticated: !!user && isUnlocked,
-        isUnlocked,
+        isAuthenticated: !!user,
+        isAdminMode,
+        isUnlocked: true, // App is open to view by all members; Admin Mode gates administrative actions
         isLoading,
-        unlockWithPin,
-        lockApp,
+        validateAndActivateAdmin,
+        deactivateAdminMode,
+        unlockWithPin: validateAndActivateAdmin,
+        lockApp: async () => deactivateAdminMode(),
         signOut,
-        isAuthModalOpen,
-        authModalContext,
-        openAuthModal,
-        closeAuthModal,
-        requireAuth
+        // Admin PIN modal
+        isAdminModalOpen,
+        adminModalContext,
+        openAdminModal,
+        closeAdminModal,
+        requireAdmin,
+        // Aliases for compatibility
+        isAuthModalOpen: isAdminModalOpen,
+        authModalContext: adminModalContext,
+        openAuthModal: openAdminModal,
+        closeAuthModal: closeAdminModal,
+        requireAuth: requireAdmin
       }}
     >
       {children}
