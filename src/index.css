@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@media print {
+  header,
+  footer,
+  #hero-edit-stay-btn,
+  #hero-share-btn,
+  #pacing-advice-card,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  #stay-hero-banner,
+  #agenda-board,
+  .bg-white {
+    box-shadow: none !important;
+    border-color: #e5e5e5 !important;
+  }
+
+  .slot-section {
+    page-break-inside: avoid;
+  }
+}

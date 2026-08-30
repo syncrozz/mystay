@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profile Document
+    match /users/{userId} {
+      // User can read their own profile
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // When creating a profile, new users receive role 'USER' and cannot self-assign ADMIN/MASTER_ADMIN
+      allow create: if request.auth != null && request.auth.uid == userId && 
+        (request.resource.data.role == 'USER' || !('role' in request.resource.data));
+      
+      // Users cannot elevate or change their own role
+      allow update: if request.auth != null && request.auth.uid == userId && 
+        (request.resource.data.role == resource.data.role || !('role' in request.resource.data));
+      
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Personal Stay documents owned exclusively by the user
+      match /stays/{stayId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Subcollections: Agenda Items, Checklist Items, etc.
+        match /{subcollection}/{docId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+  }
+}

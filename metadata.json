@@ -1,0 +1,6 @@
+{
+  "name": "StayPlan",
+  "description": "Plan the stay, don't miss something. Platform perancangan agenda ringkas untuk short stay 2–4 hari.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

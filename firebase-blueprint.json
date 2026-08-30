@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "fields": {
+        "id": { "type": "string", "description": "Unique user ID matching auth UID" },
+        "email": { "type": "string", "description": "User Google email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User avatar photo URL" },
+        "role": { "type": "string", "enum": ["USER", "ADMIN", "MASTER_ADMIN"], "description": "User role" },
+        "createdAt": { "type": "number", "description": "Timestamp of account creation" },
+        "updatedAt": { "type": "number", "description": "Timestamp of last update" }
+      }
+    },
+    "Stay": {
+      "collection": "users/{userId}/stays",
+      "fields": {
+        "id": { "type": "string", "description": "Unique stay ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "title": { "type": "string", "description": "Stay title" },
+        "type": { "type": "string", "description": "Stay type category" },
+        "startDate": { "type": "string", "description": "Start date YYYY-MM-DD" },
+        "endDate": { "type": "string", "description": "End date YYYY-MM-DD" },
+        "durationDays": { "type": "number", "description": "Duration in days" },
+        "location": { "type": "string", "description": "Location description" },
+        "address": { "type": "string", "description": "Full address" },
+        "wazeUrl": { "type": "string", "description": "Waze navigation link" },
+        "googleMapsUrl": { "type": "string", "description": "Google Maps link" },
+        "wifiSsid": { "type": "string", "description": "Wi-Fi network name" },
+        "wifiPassword": { "type": "string", "description": "Wi-Fi password" },
+        "hostContact": { "type": "string", "description": "Host phone/contact" },
+        "hostName": { "type": "string", "description": "Host name" },
+        "gatePin": { "type": "string", "description": "Gate / Key lock PIN" },
+        "houseRules": { "type": "array", "description": "House rules list" },
+        "importantNotes": { "type": "string", "description": "Important stay notes" },
+        "companions": { "type": "array", "description": "Family members / guests list" },
+        "themeColor": { "type": "string", "description": "Accent color" },
+        "createdAt": { "type": "number", "description": "Created timestamp" },
+        "updatedAt": { "type": "number", "description": "Updated timestamp" }
+      }
+    },
+    "AgendaItem": {
+      "collection": "users/{userId}/stays/{stayId}/agendaItems",
+      "fields": {
+        "id": { "type": "string", "description": "Unique agenda item ID" },
+        "stayId": { "type": "string", "description": "Parent stay ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "dayNumber": { "type": "number", "description": "Day number (1..N)" },
+        "timeSlot": { "type": "string", "description": "Time slot (morning, afternoon, evening, flexible)" },
+        "timeSpecific": { "type": "string", "description": "Specific time string" },
+        "title": { "type": "string", "description": "Activity title" },
+        "description": { "type": "string", "description": "Activity description" },
+        "priority": { "type": "string", "description": "Priority (must_do, optional, food, rest, logistics)" },
+        "locationName": { "type": "string", "description": "Activity location" },
+        "personInCharge": { "type": "string", "description": "PIC name" },
+        "isCompleted": { "type": "boolean", "description": "Completion status" },
+        "notes": { "type": "string", "description": "Additional notes" }
+      }
+    },
+    "ChecklistItem": {
+      "collection": "users/{userId}/stays/{stayId}/checklistItems",
+      "fields": {
+        "id": { "type": "string", "description": "Unique checklist item ID" },
+        "stayId": { "type": "string", "description": "Parent stay ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "category": { "type": "string", "description": "Category (essentials, house_homestay, food_gifts, kids_elderly, custom)" },
+        "text": { "type": "string", "description": "Item description" },
+        "isCompleted": { "type": "boolean", "description": "Completion status" }
+      }
+    }
+  }
+}
