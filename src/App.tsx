@@ -28,8 +28,7 @@ import {
   Sparkles,
   Plus,
   Cloud,
-  RefreshCw,
-  Loader2
+  RefreshCw
 } from 'lucide-react';
 
 function StayPlanApp() {
@@ -160,23 +159,8 @@ function StayPlanApp() {
     return <PrivateAccessScreen />;
   }
 
-  // If loading stays from Firestore for the first time
-  if (isLoadingStays && !activeStay) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-slate-900">
-        <div className="text-center space-y-4 max-w-sm">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
-          </div>
-          <h2 className="text-lg font-bold text-slate-800">Menyambung ke Cloud Firestore...</h2>
-          <p className="text-xs text-slate-500">Memuatkan data peribadi StayPlan anda dari awan.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If owner is authenticated and has 0 stays, render welcoming onboarding
-  if (isUnlocked && !activeStay && !isLoadingStays) {
+  // If owner has 0 stays, render welcoming onboarding
+  if (!activeStay) {
     return (
       <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
         <Header

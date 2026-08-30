@@ -13,7 +13,7 @@
       }
     },
     "Stay": {
-      "collection": "users/{userId}/stays",
+      "collection": "stays",
       "fields": {
         "id": { "type": "string", "description": "Unique stay ID" },
         "userId": { "type": "string", "description": "Owner user UID" },
@@ -40,7 +40,7 @@
       }
     },
     "AgendaItem": {
-      "collection": "users/{userId}/stays/{stayId}/agendaItems",
+      "collection": "stays/{stayId}/agendaItems",
       "fields": {
         "id": { "type": "string", "description": "Unique agenda item ID" },
         "stayId": { "type": "string", "description": "Parent stay ID" },
@@ -58,7 +58,7 @@
       }
     },
     "ChecklistItem": {
-      "collection": "users/{userId}/stays/{stayId}/checklistItems",
+      "collection": "stays/{stayId}/checklistItems",
       "fields": {
         "id": { "type": "string", "description": "Unique checklist item ID" },
         "stayId": { "type": "string", "description": "Parent stay ID" },

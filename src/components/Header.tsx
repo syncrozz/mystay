@@ -130,8 +130,8 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Action Buttons with Horizontal Scroll & Icon-Only Minimalist Presentation */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 shrink-0 max-w-full">
+          {/* Action Buttons (Icon-Only Minimalist Presentation) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Admin Mode Status / Toggle Indicator Button */}
             {isAdminMode ? (
               <button
