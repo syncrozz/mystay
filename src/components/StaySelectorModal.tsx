@@ -56,20 +56,20 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
     requireAdmin(() => {
       onClose();
       onNewStay();
-    }, 'Sila sahkan PIN Admin untuk mencipta pelan stay baharu.');
+    }, 'Sila sahkan PIN Admin untuk memulakan rancangan baharu.');
   };
 
   const handleEdit = (stay: Stay) => {
     requireAdmin(() => {
       onClose();
       onEditStay(stay);
-    }, 'Sila sahkan PIN Admin untuk mengedit maklumat stay.');
+    }, 'Sila sahkan PIN Admin untuk mengedit maklumat rancangan.');
   };
 
   const handleDuplicate = (stayId: string) => {
     requireAdmin(async () => {
       await duplicateStay(stayId);
-    }, 'Sila sahkan PIN Admin untuk menyalin stay.');
+    }, 'Sila sahkan PIN Admin untuk menyalin rancangan.');
   };
 
   const handleDelete = (stay: Stay) => {
@@ -77,7 +77,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
       if (confirm(`Adakah anda pasti mahu memadam "${stay.title}"?`)) {
         await deleteStay(stay.id);
       }
-    }, 'Sila sahkan PIN Admin untuk memadam stay.');
+    }, 'Sila sahkan PIN Admin untuk memadam rancangan.');
   };
 
   return (
@@ -100,10 +100,10 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              Koleksi Stay
+              Rancangan Tersimpan
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pilih, cipta, atau urus pelan stay anda
+              Pilih, cipta, atau urus rancangan perjalanan anda
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Stay Baharu</span>
+            <span>+ Rancangan Baharu</span>
           </button>
         </div>
 
@@ -181,7 +181,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
 
                   <button
                     onClick={() => handleEdit(stay)}
-                    title="Edit Stay"
+                    title="Edit Rancangan"
                     className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -189,7 +189,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
 
                   <button
                     onClick={() => handleDuplicate(stay.id)}
-                    title="Salin / Duplikasi Stay"
+                    title="Salin Rancangan"
                     className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                   >
                     <Copy className="w-4 h-4" />
@@ -197,7 +197,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
 
                   <button
                     onClick={() => handleDelete(stay)}
-                    title="Padam Stay"
+                    title="Padam Rancangan"
                     className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -209,12 +209,12 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
 
           {stays.length === 0 && (
             <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <p className="text-xs font-semibold text-slate-500">Belum ada stay.</p>
+              <p className="text-xs font-semibold text-slate-500">Belum ada rancangan.</p>
               <button
                 onClick={handleCreateNew}
                 className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
-                + Cipta Stay Baharu
+                + Rancangan Baharu
               </button>
             </div>
           )}

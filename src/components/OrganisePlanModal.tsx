@@ -279,11 +279,11 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                 <Sparkles className="w-4 h-4" />
               </span>
               <h2 className="text-xl font-black text-stone-900 tracking-tight">
-                Susun & Agihkan Agenda Stay
+                Susun & Agihkan Agenda Perjalanan
               </h2>
             </div>
             <p className="text-xs text-stone-500 mt-1">
-              Agihkan senarai perkara dirancang merentasi hari stay secara seimbang tanpa membebankan jadual.
+              Agihkan senarai perkara dirancang merentasi hari perjalanan secara seimbang tanpa membebankan jadual.
             </p>
           </div>
 

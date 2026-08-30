@@ -45,7 +45,7 @@ export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Maklumat Stay</h3>
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Maklumat Penginapan & Lokasi</h3>
           <p className="text-xs text-slate-500 font-medium">Alamat, Wi-Fi & akses pantas</p>
         </div>
         <button

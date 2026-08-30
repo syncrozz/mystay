@@ -121,7 +121,7 @@ export function CalendarView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
           <h1 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-            Kalendar Stay
+            Kalendar Perjalanan
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
             {duration} Hari ({staySummary})

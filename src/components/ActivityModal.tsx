@@ -100,7 +100,7 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
         {/* Header */}
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-            {isEditing ? 'Edit Agenda' : 'Tambah Agenda Stay'}
+            {isEditing ? 'Edit Agenda' : 'Tambah Agenda'}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
             Rancang aktiviti mengikut slot waktu tanpa terikat jadual jam yang ketat.

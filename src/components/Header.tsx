@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleNewStayClick = () => {
-    requireAdmin(onOpenNewStay, 'Sila masukkan PIN Admin untuk mencipta pelan stay baharu.');
+    requireAdmin(onOpenNewStay, 'Sila masukkan PIN Admin untuk memulakan rancangan baharu.');
   };
 
   // Close user dropdown when clicking outside
@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Logo & Brand Identity */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-            <div className="relative group cursor-pointer shrink-0" onClick={onOpenStayList} title="Pilih atau Tukar Stay">
+            <div className="relative group cursor-pointer shrink-0" onClick={onOpenStayList} title="Pilih atau Tukar Rancangan">
               <img
                 id="stayplan-brand-logo"
                 src={ASSETS.LOGO}
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="header-stay-pill-btn"
                 onClick={onOpenStayList}
                 className="group flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 transition-all text-left truncate cursor-pointer"
-                title="Tukar atau Urus Stay"
+                title="Tukar atau Urus Rancangan"
               >
                 <span className="text-base shrink-0">{stayTypeMeta?.icon || '🏡'}</span>
                 <div className="truncate">
@@ -159,41 +159,13 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Realtime Cloud Sync Status & Refresh Button */}
-            <button
-              id="header-save-sync-btn"
-              onClick={handleManualRefresh}
-              disabled={isSyncing}
-              className={`inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
-                syncStatus === 'ERROR'
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                  : syncStatus === 'OFFLINE'
-                  ? 'bg-slate-500 text-white'
-                  : isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING'
-                  ? 'bg-teal-500 hover:bg-teal-600 text-white'
-                  : 'bg-teal-600 hover:bg-teal-700 text-white'
-              }`}
-              title={
-                syncStatus === 'SAVING' || isSyncing || syncStatus === 'SYNCING'
-                  ? 'Sedang menyelaraskan...'
-                  : syncStatus === 'OFFLINE'
-                  ? 'Luar Talian (Offline)'
-                  : syncStatus === 'ERROR'
-                  ? 'Ralat Penyelarasan'
-                  : 'Penyelarasan Firestore Automatik (Klik untuk muat semula)'
-              }
-              aria-label="Penyelarasan Cloud Firestore"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
-            </button>
-
             {/* All Stays Button (Desktop only on sm+) */}
             <button
               id="header-all-stays-btn"
               onClick={onOpenStayList}
               className="hidden sm:inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
-              title="Senarai Semua Stay"
-              aria-label="Senarai Semua Stay"
+              title="Rancangan Tersimpan"
+              aria-label="Rancangan Tersimpan"
             >
               <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
             </button>
@@ -204,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenShare}
               className="inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Kongsi ke WhatsApp atau Cetak"
-              aria-label="Kongsi Stay"
+              aria-label="Kongsi Rancangan"
             >
               <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700" />
             </button>
@@ -213,8 +185,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-new-stay-btn"
               onClick={handleNewStayClick}
-              title={isAdminMode ? 'Cipta Stay Baharu' : 'Cipta Stay Baharu (Perlu Mod Admin)'}
-              aria-label="Cipta Stay Baharu"
+              title={isAdminMode ? 'Rancangan Baharu' : 'Rancangan Baharu (Perlu Mod Admin)'}
+              aria-label="Rancangan Baharu"
               className="inline-flex items-center justify-center p-2 sm:p-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -300,7 +272,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors text-left cursor-pointer"
                     >
                       <FolderKanban className="w-4 h-4 text-slate-500" />
-                      <span>Semua Pelan Stay</span>
+                      <span>Rancangan Tersimpan</span>
                     </button>
                   </div>
                 </div>

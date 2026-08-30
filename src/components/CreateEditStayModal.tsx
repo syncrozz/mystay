@@ -277,7 +277,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
         {/* Modal Header */}
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight">
-            {isEditing ? 'Edit Stay' : 'Cipta Stay'}
+            {isEditing ? 'Edit Rancangan' : 'Rancang Perjalanan'}
           </h2>
         </div>
 
@@ -325,7 +325,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
               {/* Stay Type Selection */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Jenis Short Stay
+                  Jenis Perjalanan
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {(Object.keys(STAY_TYPES) as StayType[]).map((tKey) => {
@@ -359,14 +359,14 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
               {/* Title Input */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nama / Tajuk Stay <span className="text-rose-500">*</span>
+                  Tajuk Rancangan <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(toTitleCase(e.target.value))}
-                  placeholder="Nama Stay (Cth: Percutian Pantai / Balik Kampung)"
+                  placeholder="Nama Rancangan (Cth: Percutian Pantai / Balik Kampung)"
                   className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium text-slate-900"
                 />
               </div>

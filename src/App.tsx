@@ -57,7 +57,6 @@ function StayPlanApp() {
   } = useStay();
 
   const { user, isUnlocked, isAdminMode, openAdminModal } = useAuth();
-  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
   // Modals state
   const [isSupportOpen, setIsSupportOpen] = useState(false);
@@ -117,12 +116,6 @@ function StayPlanApp() {
     setIsCreateStayOpen(true);
   };
 
-  const handleManualSync = async () => {
-    const res = await refreshFromCloud({ forceFetch: true });
-    setSyncFeedback(res.message);
-    setTimeout(() => setSyncFeedback(null), 3000);
-  };
-
   // If app is not unlocked by the owner PIN, render the Private Access Screen
   if (!isUnlocked) {
     return <PrivateAccessScreen />;
@@ -139,46 +132,14 @@ function StayPlanApp() {
           onOpenSupport={() => setIsSupportOpen(true)}
         />
 
-        {/* Realtime Sync Status Bar (Compact & Subtle) */}
-        <div className="bg-white border-b border-slate-200/80 w-full max-w-full">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-slate-600">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className={`w-2 h-2 rounded-full ${syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'bg-amber-400 animate-ping' : syncStatus === 'ERROR' ? 'bg-rose-500' : syncStatus === 'OFFLINE' ? 'bg-slate-400' : 'bg-emerald-500'}`} />
-              <span className="font-semibold text-slate-700 truncate">
-                {syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'Syncing...' : syncStatus === 'ERROR' ? 'Sync Gagal' : syncStatus === 'OFFLINE' ? 'Offline' : 'Synced'}
-              </span>
-              {syncFeedback && (
-                <span className="text-teal-700 hidden sm:inline truncate font-medium">({syncFeedback})</span>
-              )}
-            </div>
-            <button
-              onClick={handleManualSync}
-              disabled={isSyncing}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-600 hover:text-teal-700 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-md transition-all cursor-pointer active:scale-95"
-              title="Muat semula dari Firestore"
-            >
-              <RefreshCw className={`w-3 h-3 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
-            </button>
-          </div>
-        </div>
-
         <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6">
           {/* 1. Page Context Bar */}
           <div className="flex items-center justify-between gap-3">
             <div>
               <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-                My Stays
+                Rancangan Saya
               </h1>
             </div>
-
-            <button
-              onClick={handleOpenNewStay}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Cipta Stay</span>
-            </button>
           </div>
 
           {/* 2. Structured Empty State Panel */}
@@ -188,9 +149,9 @@ function StayPlanApp() {
             </div>
 
             <div className="space-y-1">
-              <p className="text-base font-bold text-slate-900">Belum ada stay</p>
+              <p className="text-base font-bold text-slate-900">Belum ada rancangan</p>
               <p className="text-xs text-slate-500 font-medium max-w-xs">
-                Mula rancang short stay, percutian atau balik kampung anda.
+                Mula merancang perjalanan, percutian atau balik kampung anda.
               </p>
             </div>
 
@@ -200,7 +161,7 @@ function StayPlanApp() {
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>+ Cipta Stay</span>
+                <span>+ Rancang Perjalanan</span>
               </button>
             </div>
           </div>
@@ -212,7 +173,7 @@ function StayPlanApp() {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Shortcut 1: Koleksi Stay */}
+              {/* Shortcut 1: Rancangan Tersimpan */}
               <button
                 type="button"
                 onClick={() => setIsStayListOpen(true)}
@@ -222,35 +183,34 @@ function StayPlanApp() {
                   <div className="flex items-center gap-2">
                     <FolderKanban className="w-4 h-4 text-teal-600 shrink-0" />
                     <span className="text-xs font-bold text-slate-900 group-hover:text-teal-950">
-                      Koleksi Stay
+                      Rancangan Tersimpan
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium truncate">
-                    {stays.length > 0 ? `${stays.length} pelan tersimpan` : 'Buka pengurus stay'}
+                    {stays.length > 0 ? `${stays.length} rancangan tersimpan` : 'Lihat dan urus rancangan anda'}
                   </p>
                 </div>
                 <span className="text-xs text-slate-400 group-hover:text-slate-600 shrink-0 font-bold">→</span>
               </button>
 
-              {/* Shortcut 2: Segerak Firestore */}
+              {/* Shortcut 2: Rancangan Baharu */}
               <button
                 type="button"
-                onClick={handleManualSync}
-                disabled={isSyncing}
+                onClick={handleOpenNewStay}
                 className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 transition-all text-left shadow-2xs group flex items-start justify-between gap-3 cursor-pointer"
               >
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <RefreshCw className={`w-4 h-4 text-teal-600 shrink-0 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <Plus className="w-4 h-4 text-teal-600 shrink-0" />
                     <span className="text-xs font-bold text-slate-900 group-hover:text-teal-950">
-                      Segerak Awan
+                      Rancangan Baharu
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 font-medium truncate">
-                    {isSyncing ? 'Sedang muat semula...' : 'Firestore real-time'}
+                    Mulakan rancangan baharu
                   </p>
                 </div>
-                <span className="text-xs text-slate-400 group-hover:text-slate-600 shrink-0 font-bold">↻</span>
+                <span className="text-xs text-slate-400 group-hover:text-slate-600 shrink-0 font-bold">+</span>
               </button>
 
               {/* Shortcut 3: Kawalan Pentadbir / PIN */}
@@ -311,34 +271,6 @@ function StayPlanApp() {
         onOpenShare={() => setIsShareOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
       />
-
-      {/* Realtime Sync Status Bar (Compact & Subtle) */}
-      <div className="bg-white border-b border-slate-200/80 w-full max-w-full">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-slate-600">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className={`w-2 h-2 rounded-full ${syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'bg-amber-400 animate-ping' : syncStatus === 'ERROR' ? 'bg-rose-500' : syncStatus === 'OFFLINE' ? 'bg-slate-400' : 'bg-emerald-500'}`} />
-            <span className="font-semibold text-slate-700 truncate">
-              {syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'Syncing...' : syncStatus === 'ERROR' ? 'Sync Gagal' : syncStatus === 'OFFLINE' ? 'Offline' : 'Synced'}
-            </span>
-            {syncFeedback && (
-              <span className="text-teal-700 hidden sm:inline truncate font-medium">({syncFeedback})</span>
-            )}
-          </div>
-          <button
-            onClick={async () => {
-              const res = await refreshFromCloud({ forceFetch: true });
-              setSyncFeedback(res.message);
-              setTimeout(() => setSyncFeedback(null), 3000);
-            }}
-            disabled={isSyncing}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-600 hover:text-teal-700 bg-slate-50 hover:bg-teal-50 border border-slate-200 rounded-md transition-all cursor-pointer active:scale-95"
-            title="Muat semula dari Firestore"
-          >
-            <RefreshCw className={`w-3 h-3 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
-          </button>
-        </div>
-      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 overflow-hidden">
