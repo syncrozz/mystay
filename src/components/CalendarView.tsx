@@ -115,27 +115,17 @@ export function CalendarView({
   const activeDayContext = selectedDayDetail !== null ? getDayContextLabel(stay, selectedDayDetail) : null;
 
   return (
-    <div id="stay-calendar-view" className="space-y-6">
+    <div id="stay-calendar-view" className="space-y-4">
       
-      {/* Calendar Header / Subtitle Bar */}
+      {/* Calendar Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-teal-100/80 text-teal-800">
-            <CalendarIcon className="w-5 h-5 text-teal-700" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-900">
-                Gambaran Keseluruhan Kalendar Stay
-              </h3>
-              <span className="text-xs font-bold text-teal-950 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md hidden sm:inline-block">
-                {staySummary}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Gambaran aktiviti harian dengan pembezaan Hari Perjalanan (🚗) dan Hari Stay (🏠).
-            </p>
-          </div>
+        <div>
+          <h1 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+            Kalendar Stay
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            {duration} Hari ({staySummary})
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -143,40 +133,21 @@ export function CalendarView({
             <button
               type="button"
               onClick={onNavigateToPlan}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 rounded-xl transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 rounded-xl transition-all cursor-pointer"
             >
-              <span>📋 Belum Dijadualkan ({backlogItems.length})</span>
+              <span>Belum Dijadualkan ({backlogItems.length})</span>
             </button>
           )}
           <button
             type="button"
             onClick={() => handleAddClick(1, 'morning')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-2xs active:scale-98 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>+ Tambah Agenda</span>
           </button>
         </div>
       </div>
-
-      {/* Backlog Alert banner if items exist */}
-      {backlogItems.length > 0 && onNavigateToPlan && (
-        <div className="bg-teal-50/80 border border-teal-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-teal-950">
-            <span className="text-base">📋</span>
-            <span>
-              Anda mempunyai <strong>{backlogItems.length} perkara dirancang</strong> yang belum dijadualkan ke mana-mana hari.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onNavigateToPlan}
-            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition-colors self-start sm:self-auto cursor-pointer"
-          >
-            Susun Perancangan Sekarang →
-          </button>
-        </div>
-      )}
 
       {/* Responsive Calendar Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">

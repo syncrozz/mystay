@@ -92,25 +92,16 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
     : items.filter((i) => i.category === filterCategory);
 
   return (
-    <div id="packing-checklist-section" className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-5">
+    <div id="packing-checklist-section" className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
       {/* Header & Progress */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
-            <ListChecks className="w-5 h-5" />
-          </span>
-          <div>
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Senarai Semak & Beg Persediaan</h3>
-            <p className="text-[11px] text-slate-500">Pastikan barang penting tidak tertinggal sebelum bertolak.</p>
-          </div>
+        <div>
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Senarai Semak</h3>
+          <p className="text-xs text-slate-500 font-medium">{completedCount}/{totalCount} item selesai ({progressPercent}%)</p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-xs font-bold text-slate-800">{completedCount}/{totalCount} Siap</p>
-            <p className="text-[10px] text-slate-500">{progressPercent}% selesai</p>
-          </div>
-          <div className="w-20 sm:w-24 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <div className="w-24 sm:w-32 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -124,7 +115,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value as ChecklistCategory)}
-          className="px-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500 font-medium shrink-0 text-slate-800"
+          className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-1 focus:ring-teal-500 font-medium shrink-0 text-slate-800"
         >
           {(Object.keys(CHECKLIST_CATEGORIES) as ChecklistCategory[]).map((catKey) => (
             <option key={catKey} value={catKey}>
@@ -137,25 +128,25 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
           type="text"
           value={inputText}
           onChange={(e) => setInputText(toTitleCase(e.target.value))}
-          placeholder="Cth: Ubat Darah Tinggi Tok / Extension Plug / Buah Tangan..."
-          className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 placeholder:text-slate-400 font-medium"
+          placeholder="Tambah item semakan..."
+          className="flex-1 px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 text-slate-900 placeholder:text-slate-400 font-medium"
         />
 
         <button
           type="submit"
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-2xs transition-all shrink-0 cursor-pointer active:scale-95"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           <span>Tambah</span>
         </button>
       </form>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-1.5 pt-1">
+      <div className="flex flex-wrap gap-1">
         <button
           type="button"
           onClick={() => setFilterCategory('all')}
-          className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
+          className={`px-3 py-1 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
             filterCategory === 'all'
               ? 'bg-teal-600 text-white shadow-2xs'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -171,7 +162,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
               key={catKey}
               type="button"
               onClick={() => setFilterCategory(catKey)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1 cursor-pointer ${
+              className={`px-3 py-1 text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1 cursor-pointer ${
                 filterCategory === catKey
                   ? 'bg-teal-600 text-white shadow-2xs'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -192,24 +183,24 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
           return (
             <div
               key={item.id}
-              className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+              className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl border transition-all ${
                 item.isCompleted
                   ? 'bg-slate-50/70 border-slate-200 text-slate-400'
                   : 'bg-white hover:bg-slate-50/90 border-slate-200 text-slate-800 shadow-2xs'
               }`}
             >
               <div
-                className="flex items-center gap-3 cursor-pointer flex-1"
+                className="flex items-center gap-2.5 cursor-pointer flex-1"
                 onClick={() => handleToggle(item.id, item.isCompleted)}
               >
                 <div
-                  className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
+                  className={`w-4.5 h-4.5 rounded-md flex items-center justify-center border transition-all ${
                     item.isCompleted
                       ? 'bg-emerald-600 border-emerald-600 text-white'
                       : 'border-slate-300 bg-white hover:border-slate-400'
                   }`}
                 >
-                  {item.isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  {item.isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
                 <div className="flex items-center gap-2 flex-1">
                   <span className="text-xs">{catMeta.icon}</span>
@@ -232,22 +223,10 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
         })}
 
         {filteredItems.length === 0 && (
-          <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            Tiada senarai semak dalam kategori ini.
+          <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+            Tiada item senarai semak.
           </div>
         )}
-      </div>
-
-      {/* Preset Suggestions Button */}
-      <div className="pt-2 flex justify-end">
-        <button
-          type="button"
-          onClick={addPresetSuggestions}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-          <span>+ Tambah Cadangan Item Penting Automatik</span>
-        </button>
       </div>
     </div>
   );

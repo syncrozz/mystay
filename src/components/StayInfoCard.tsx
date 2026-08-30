@@ -41,14 +41,12 @@ export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) 
   const wazeUrl = `https://waze.com/ul?q=${mapsQuery}`;
 
   return (
-    <div id="stay-info-card" className="p-5 sm:p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-5">
+    <div id="stay-info-card" className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
-            <Home className="w-5 h-5" />
-          </span>
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Maklumat Stay</h3>
+        <div>
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Maklumat Stay</h3>
+          <p className="text-xs text-slate-500 font-medium">Alamat, Wi-Fi & akses pantas</p>
         </div>
         <button
           onClick={handleEditClick}

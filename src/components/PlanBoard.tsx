@@ -201,115 +201,52 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   }, [items, activeFilter, searchQuery]);
 
   return (
-    <div id="plan-board-view" className="space-y-6 max-w-6xl mx-auto">
+    <div id="plan-board-view" className="space-y-4 max-w-6xl mx-auto">
       
-      {/* 1. Header & Planning Context Status Card */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-4 sm:space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-teal-50 text-teal-950 text-[11px] sm:text-xs font-bold mb-1.5 sm:mb-2 border border-teal-200">
-              <span>📋 Langkah 1: Kumpul Perkara Dirancang</span>
-            </div>
-            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-              Perancangan Aktiviti
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-              Senaraikan semua perkara yang ingin anda buat sepanjang stay ini. Kumpulkan segalanya di sini, kemudian susun ke dalam hari aktiviti dengan mudah.
-            </p>
-          </div>
-
-          {/* Call to Action: Susun Agenda */}
-          <div className="shrink-0 flex items-center gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              id="organise-stay-button"
-              onClick={handleOrganiseClick}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-teal-600 hover:bg-teal-700 active:scale-98 text-white text-xs sm:text-sm font-black rounded-xl sm:rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Susun Agenda Stay</span>
-            </button>
-          </div>
+      {/* 1. Header & Context */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5">
+        <div>
+          <h1 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+            Perancangan
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
+            {totalItems} aktiviti ({wajibCount} Wajib, {optionalCount} Pilihan, {backlogCount} Belum Dijadual)
+          </p>
         </div>
 
-        {/* Overview Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-1">
-          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 block uppercase tracking-wider">
-              Total Dirancang
-            </span>
-            <div className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 flex items-baseline gap-1">
-              <span>{totalItems}</span>
-              <span className="text-[11px] font-semibold text-slate-400">perkara</span>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-200">
-            <span className="text-[10px] sm:text-[11px] font-bold text-amber-800 block uppercase tracking-wider">
-              ⭐ Keutamaan Wajib
-            </span>
-            <div className="text-lg sm:text-xl font-black text-amber-950 mt-0.5 flex items-baseline gap-1">
-              <span>{wajibCount}</span>
-              <span className="text-[11px] font-semibold text-amber-700">mesti buat</span>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200">
-            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-800 block uppercase tracking-wider">
-              🌿 Pilihan Santai
-            </span>
-            <div className="text-lg sm:text-xl font-black text-emerald-950 mt-0.5 flex items-baseline gap-1">
-              <span>{optionalCount}</span>
-              <span className="text-[11px] font-semibold text-emerald-700">fleksibel</span>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-100 border border-slate-200">
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 block uppercase tracking-wider">
-              📋 Belum Dijadual
-            </span>
-            <div className="text-lg sm:text-xl font-black text-slate-800 mt-0.5 flex items-baseline gap-1">
-              <span>{backlogCount}</span>
-              <span className="text-[11px] font-semibold text-slate-500">backlog</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            id="organise-stay-button"
+            onClick={handleOrganiseClick}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Susun Agenda</span>
+          </button>
         </div>
       </div>
 
-      {/* 2. Fast Frictionless Brain Dump Input Area */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xs p-4 sm:p-6 space-y-3.5 sm:space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <label htmlFor="quick-brain-dump-input" className="text-xs font-bold text-slate-700 flex flex-wrap items-center gap-1.5">
-            <span>✨ Tambah Cepat Perkara Dirancang</span>
-            {!isAdminMode && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-normal">
-                <Lock className="w-2.5 h-2.5" /> PIN Diperlukan
-              </span>
-            )}
-          </label>
-          <span className="text-[10px] sm:text-[11px] text-slate-400 hidden xs:inline">Tekan Enter atau klik Tambah</span>
-        </div>
-
+      {/* 2. Fast Frictionless Direct Input */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-4 space-y-3">
         <form onSubmit={handleQuickAdd} className="flex flex-col sm:flex-row items-stretch gap-2">
-          {/* Text Input */}
           <div className="relative flex-1">
             <input
               id="quick-brain-dump-input"
               type="text"
               value={quickTitle}
               onChange={(e) => setQuickTitle(toTitleCase(e.target.value))}
-              placeholder="Cth: Makan Nasi Dagang, Pergi Pantai, Kenduri Ayoh Lie..."
-              className="w-full pl-3.5 pr-3.5 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              placeholder="Tambah aktiviti dirancang..."
+              className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
             />
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Priority Toggle Buttons */}
-            <div className="inline-flex rounded-xl sm:rounded-2xl bg-slate-100 p-1 border border-slate-200 shrink-0 flex-1 sm:flex-none justify-center">
+            <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 shrink-0">
               <button
                 type="button"
                 onClick={() => setQuickPriority('must_do')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-none text-center ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   quickPriority === 'must_do'
                     ? 'bg-amber-500 text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -320,7 +257,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               <button
                 type="button"
                 onClick={() => setQuickPriority('optional')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-none text-center ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   quickPriority === 'optional'
                     ? 'bg-emerald-600 text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -330,66 +267,36 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </button>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               id="quick-add-submit-button"
               disabled={!quickTitle.trim() || isAdding}
               aria-label="Tambah Aktiviti"
-              className="px-4 py-2 sm:px-5 sm:py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 text-white text-xs font-black rounded-xl sm:rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
             >
               {isAdding ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-teal-200" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-200" />
                   <span>Menambah...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Tambah</span>
                 </>
               )}
             </button>
           </div>
         </form>
-
-        {/* Quick Malaysian Short Stay Suggestions Chips */}
-        <div className="pt-1">
-          <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 block mb-1.5">
-            💡 Cadangan Pantas (Klik Untuk Tambah):
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {MALAYSIAN_STAY_IDEAS.map((idea, idx) => {
-              const isAdded = items.some((i) => i.title.toLowerCase() === idea.title.toLowerCase());
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleAddIdeaChip(idea)}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
-                    isAdded
-                      ? 'bg-teal-50 border-teal-200 text-teal-950 opacity-80'
-                      : 'bg-slate-50 hover:bg-white hover:border-teal-300 border-slate-200 text-slate-700 shadow-2xs'
-                  }`}
-                >
-                  <span>{idea.icon}</span>
-                  <span>{idea.title}</span>
-                  {isAdded && <Check className="w-3 h-3 text-teal-700" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
-      {/* 3. Filters, Search & View Controls */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+      {/* 3. Filters & Search Controls */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+        <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"
             onClick={() => setActiveFilter('all')}
-            className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeFilter === 'all'
                 ? 'bg-teal-600 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -401,19 +308,19 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           <button
             type="button"
             onClick={() => setActiveFilter('backlog')}
-            className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeFilter === 'backlog'
                 ? 'bg-teal-700 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            📋 Belum Dijadual ({backlogCount})
+            Belum Dijadual ({backlogCount})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveFilter('wajib')}
-            className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeFilter === 'wajib'
                 ? 'bg-amber-500 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -425,7 +332,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           <button
             type="button"
             onClick={() => setActiveFilter('optional')}
-            className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeFilter === 'optional'
                 ? 'bg-emerald-600 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -437,25 +344,24 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           <button
             type="button"
             onClick={() => setActiveFilter('scheduled')}
-            className={`px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeFilter === 'scheduled'
-                ? 'bg-cyan-700 text-white shadow-2xs'
+                ? 'bg-slate-800 text-white shadow-2xs'
                 : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            📅 Dijadualkan ({scheduledCount})
+            Dijadualkan ({scheduledCount})
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full md:w-auto md:min-w-[220px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full md:w-auto md:min-w-[200px]">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari aktiviti dirancang..."
-            className="w-full pl-9 pr-4 py-1.5 sm:py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            placeholder="Cari aktiviti..."
+            className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
       </div>
@@ -607,13 +513,9 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
         })}
 
         {filteredItems.length === 0 && (
-          <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-2xs space-y-3">
-            <span className="text-3xl block">📝</span>
-            <h4 className="text-sm font-black text-slate-800">
-              {searchQuery ? 'Tiada aktiviti sepadan carian' : 'Belum ada perkara dirancang'}
-            </h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Gunakan kotak input di atas untuk memasukkan perkara yang ingin anda buat, atau pilih salah satu cadangan pantas!
+          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-2xs">
+            <p className="text-xs font-semibold text-slate-500">
+              {searchQuery ? 'Tiada aktiviti sepadan carian' : 'Belum ada aktiviti'}
             </p>
           </div>
         )}

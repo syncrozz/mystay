@@ -157,10 +157,10 @@ function areChecklistListsEqual(a: ChecklistItem[], b: ChecklistItem[]): boolean
 
 // Storage cache keys for instant offline-first rendering
 const CACHE_KEYS = {
-  STAYS: 'stayplan_cached_stays_v4',
-  AGENDA: 'stayplan_cached_agenda_v4',
-  CHECKLIST: 'stayplan_cached_checklist_v4',
-  ACTIVE_ID: 'stayplan_cached_active_id_v4'
+  STAYS: 'stayplan_cached_stays_v5',
+  AGENDA: 'stayplan_cached_agenda_v5',
+  CHECKLIST: 'stayplan_cached_checklist_v5',
+  ACTIVE_ID: 'stayplan_cached_active_id_v5'
 };
 
 const getInitialCachedStays = (): Stay[] => {
@@ -168,10 +168,12 @@ const getInitialCachedStays = (): Stay[] => {
     const raw = localStorage.getItem(CACHE_KEYS.STAYS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((s: any) => s && !s.id?.startsWith('showcase-') && !s.title?.startsWith('Contoh:'));
+      }
     }
   } catch {}
-  return SHOWCASE_STAYS;
+  return [];
 };
 
 const getInitialCachedAgenda = (): AgendaItem[] => {
@@ -179,10 +181,12 @@ const getInitialCachedAgenda = (): AgendaItem[] => {
     const raw = localStorage.getItem(CACHE_KEYS.AGENDA);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((a: any) => a && !a.id?.startsWith('showcase-'));
+      }
     }
   } catch {}
-  return SHOWCASE_AGENDA_ITEMS;
+  return [];
 };
 
 const getInitialCachedChecklist = (): ChecklistItem[] => {
@@ -190,18 +194,20 @@ const getInitialCachedChecklist = (): ChecklistItem[] => {
     const raw = localStorage.getItem(CACHE_KEYS.CHECKLIST);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((c: any) => c && !c.id?.startsWith('showcase-'));
+      }
     }
   } catch {}
-  return SHOWCASE_CHECKLIST_ITEMS;
+  return [];
 };
 
 const getInitialCachedActiveStayId = (): string | null => {
   try {
     const raw = localStorage.getItem(CACHE_KEYS.ACTIVE_ID);
-    if (raw) return raw;
+    if (raw && !raw.startsWith('showcase-')) return raw;
   } catch {}
-  return SHOWCASE_STAYS[0]?.id || null;
+  return null;
 };
 
 export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -424,42 +430,6 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [refreshFromCloud]
   );
 
-  // Helper to seed initial stay to central Firestore collection if completely empty
-  const seedDefaultStaysIfEmpty = useCallback(async () => {
-    if (hasCheckedSeedRef.current) return;
-    hasCheckedSeedRef.current = true;
-
-    try {
-      const staysColRef = collection(db, 'stays');
-      const staysSnap = await getDocs(staysColRef);
-
-      if (staysSnap.empty) {
-        // If empty, seed SHOWCASE_STAYS[0] and its items so all devices start on the same synced stay
-        const initialStay = SHOWCASE_STAYS[0];
-        const stayDocRef = doc(db, 'stays', initialStay.id);
-        const batch = writeBatch(db);
-
-        batch.set(stayDocRef, sanitizeForFirestore<Stay>(initialStay));
-
-        const initialAgendas = SHOWCASE_AGENDA_ITEMS.filter((a) => a.stayId === initialStay.id);
-        initialAgendas.forEach((item) => {
-          const itemRef = doc(collection(db, 'stays', initialStay.id, 'agendaItems'), item.id);
-          batch.set(itemRef, sanitizeForFirestore<AgendaItem>(item));
-        });
-
-        const initialChecklists = SHOWCASE_CHECKLIST_ITEMS.filter((c) => c.stayId === initialStay.id);
-        initialChecklists.forEach((item) => {
-          const itemRef = doc(collection(db, 'stays', initialStay.id, 'checklistItems'), item.id);
-          batch.set(itemRef, sanitizeForFirestore<ChecklistItem>(item));
-        });
-
-        await batch.commit();
-      }
-    } catch (seedErr) {
-      console.warn('Initial stay setup notice:', seedErr);
-    }
-  }, []);
-
   // ----------------------------------------------------------------------------------
   // 2. DATA SUBSCRIPTION & HYDRATION (Universal Realtime Multi-Device Listener)
   // ----------------------------------------------------------------------------------
@@ -483,7 +453,10 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const fetchedStays: Stay[] = [];
         snapshot.forEach((docSnap) => {
-          fetchedStays.push(docSnap.data() as Stay);
+          const s = docSnap.data() as Stay;
+          if (s && !s.id?.startsWith('showcase-') && !s.title?.startsWith('Contoh:')) {
+            fetchedStays.push(s);
+          }
         });
 
         fetchedStays.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -503,8 +476,8 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return nextId;
           });
         } else {
-          // If Firestore is empty, seed initial stay
-          seedDefaultStaysIfEmpty();
+          setUserStays([]);
+          setActiveStayIdState(null);
         }
 
         setIsLoadingStays(false);
@@ -525,7 +498,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       staysListenerActiveRef.current = false;
       unsubscribeStays();
     };
-  }, [seedDefaultStaysIfEmpty]);
+  }, []);
 
   // ----------------------------------------------------------------------------------
   // 3. REALTIME SUBSCRIPTION FOR ACTIVE STAY'S SUBCOLLECTIONS (Agenda & Checklist)

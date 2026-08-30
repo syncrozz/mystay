@@ -101,8 +101,8 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       }
       setDayTypes(initialDayTypes);
     } else {
-      // Default new stay - always defaults to current local date (Hari Ini)
-      setTitle('Balik Kampung Hujung Minggu');
+      // Default new stay - clean blank form
+      setTitle('');
       setType('balik_kampung');
       const defaultDuration = 3;
       setDurationDays(defaultDuration);
@@ -118,7 +118,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       setHostContact('');
       setGatePin('');
       setImportantNotes('');
-      setCompanions(['Keluarga']);
+      setCompanions([]);
       setHouseRules([]);
       // Default day types: Day 1 & Day 3 Travel, Day 2 Stay
       setDayTypes({
@@ -276,61 +276,58 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
 
         {/* Modal Header */}
         <div>
-          <h2 className="text-2xl font-extrabold text-stone-900 tracking-tight">
-            {isEditing ? 'Edit Stay' : 'Rancang Short Stay Baharu'}
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            {isEditing ? 'Edit Stay' : 'Cipta Stay'}
           </h2>
-          <p className="text-xs text-stone-500 mt-1">
-            Fokuskan perancangan 2–4 hari yang santai, bermakna, dan mudah dikongsi bersama keluarga.
-          </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-stone-200 gap-2 text-xs font-bold">
+        <div className="flex border-b border-slate-200 gap-2 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab('basic')}
-            className={`pb-2.5 px-3 border-b-2 transition-all ${
+            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
               activeTab === 'basic'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-teal-600 text-teal-950 font-black'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            1. Maklumat Asas & Tempoh
+            Maklumat Asas
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('stay_info')}
-            className={`pb-2.5 px-3 border-b-2 transition-all ${
+            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
               activeTab === 'stay_info'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-teal-600 text-teal-950 font-black'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            2. Info Rumah / Homestay & Wi-Fi
+            Info Homestay & Wi-Fi
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('companions')}
-            className={`pb-2.5 px-3 border-b-2 transition-all ${
+            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
               activeTab === 'companions'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-teal-600 text-teal-950 font-black'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            3. Ahli / Tetamu ({companions.length})
+            Ahli / Tetamu ({companions.length})
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* TAB 1: BASIC */}
           {activeTab === 'basic' && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Stay Type Selection */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                   Jenis Short Stay
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {(Object.keys(STAY_TYPES) as StayType[]).map((tKey) => {
                     const item = STAY_TYPES[tKey];
                     const isSelected = type === tKey;
@@ -339,19 +336,19 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                         key={tKey}
                         type="button"
                         onClick={() => handleTypeSelect(tKey)}
-                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                           isSelected
-                            ? 'bg-amber-50/90 border-amber-500 ring-2 ring-amber-400/20 text-amber-950'
-                            : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-700'
+                            ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-400/20 text-teal-950'
+                            : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xl">{item.icon}</span>
-                          {isSelected && <Check className="w-4 h-4 text-amber-600 font-bold" />}
+                          {isSelected && <Check className="w-4 h-4 text-teal-600 font-bold" />}
                         </div>
-                        <div className="mt-2">
+                        <div className="mt-1.5">
                           <p className="text-xs font-bold">{item.label}</p>
-                          <p className="text-[10px] text-stone-500 line-clamp-1 mt-0.5">{item.desc}</p>
+                          <p className="text-[10px] text-slate-500 line-clamp-1">{item.desc}</p>
                         </div>
                       </button>
                     );
@@ -361,7 +358,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
 
               {/* Title Input */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Nama / Tajuk Stay <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -369,8 +366,8 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                   required
                   value={title}
                   onChange={(e) => setTitle(toTitleCase(e.target.value))}
-                  placeholder="Cth: Balik Kampung Muar (Rumah Tok) / Homestay Kundasang"
-                  className="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium"
+                  placeholder="Nama Stay (Cth: Percutian Pantai / Balik Kampung)"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium text-slate-900"
                 />
               </div>
 

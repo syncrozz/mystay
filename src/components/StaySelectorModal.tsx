@@ -99,17 +99,11 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                Koleksi Stay Peribadi Saya
-              </h2>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-50 text-teal-950 border border-teal-200 inline-flex items-center gap-1">
-                <Shield className="w-2.5 h-2.5 text-teal-600" />
-                Personal
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Semua perancangan short stay anda disimpan dan diselaraskan secara langsung ke Firestore.
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              Koleksi Stay
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Pilih, cipta, atau urus pelan stay anda
             </p>
           </div>
 
@@ -119,7 +113,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Stay Baharu</span>
+            <span>+ Stay Baharu</span>
           </button>
         </div>
 
@@ -214,14 +208,8 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
           })}
 
           {stays.length === 0 && (
-            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
-              <Sparkles className="w-8 h-8 text-teal-600 mx-auto" />
-              <div>
-                <p className="text-sm font-bold text-slate-800">Belum Ada Stay Peribadi</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Mulakan dengan mencipta perancangan short stay pertama anda.
-                </p>
-              </div>
+            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+              <p className="text-xs font-semibold text-slate-500">Belum ada stay.</p>
               <button
                 onClick={handleCreateNew}
                 className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
