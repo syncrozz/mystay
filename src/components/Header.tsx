@@ -71,32 +71,32 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header id="stayplan-main-header" className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-3">
+    <header id="stayplan-main-header" className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs w-full max-w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-3">
           
           {/* Logo & Brand Identity */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="relative group cursor-pointer" onClick={onOpenStayList} title="Pilih atau Tukar Stay">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+            <div className="relative group cursor-pointer shrink-0" onClick={onOpenStayList} title="Pilih atau Tukar Stay">
               <img
                 id="stayplan-brand-logo"
                 src={ASSETS.LOGO}
                 alt="StayPlan Logo"
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl shadow-xs object-cover border border-slate-200 transition-transform group-hover:scale-105"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl shadow-xs object-cover border border-slate-200 transition-transform group-hover:scale-105"
                 referrerPolicy="no-referrer"
               />
-              <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-teal-500"></span>
               </span>
             </div>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
                   Stay<span className="text-teal-600">Plan</span>
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-950 border border-teal-200/80 text-[11px] font-bold">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-950 border border-teal-200/80 text-[11px] font-bold">
                   <Shield className="w-3 h-3 text-teal-600" />
                   <span>Personal</span>
                 </span>
@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Active Stay Selector Pill */}
+          {/* Active Stay Selector Pill (Desktop) */}
           {activeStay && (
             <div className="hidden lg:flex items-center max-w-sm xl:max-w-md">
               <button
@@ -130,14 +130,14 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Action Buttons (Icon-Only Minimalist Presentation) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Action Buttons (Responsive Icon Presentation) */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Admin Mode Status / Toggle Indicator Button */}
             {isAdminMode ? (
               <button
                 id="header-admin-mode-active-btn"
                 onClick={deactivateAdminMode}
-                className="inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white cursor-pointer border border-emerald-500 shrink-0"
+                className="inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white cursor-pointer border border-emerald-500 shrink-0"
                 title="Admin Mode Aktif (Klik untuk kunci/kembali ke Mod Paparan)"
                 aria-label="Admin Mode Aktif"
               >
@@ -145,17 +145,17 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300"></span>
                 </span>
-                <Unlock className="w-4 h-4" />
+                <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             ) : (
               <button
                 id="header-admin-mode-login-btn"
                 onClick={() => openAdminModal('Sila masukkan 4-digit PIN keselamatan untuk membuka Mod Admin.')}
-                className="inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-2xs bg-slate-100 hover:bg-teal-50 hover:text-teal-950 text-slate-800 border border-slate-200 hover:border-teal-300 active:scale-95 cursor-pointer shrink-0"
+                className="inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-2xs bg-slate-100 hover:bg-teal-50 hover:text-teal-950 text-slate-800 border border-slate-200 hover:border-teal-300 active:scale-95 cursor-pointer shrink-0"
                 title="Akses Mod Admin (Masukkan PIN)"
                 aria-label="Akses Mod Admin"
               >
-                <Lock className="w-4 h-4 text-slate-700" />
+                <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
               </button>
             )}
 
@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-save-sync-btn"
               onClick={handleManualRefresh}
               disabled={isSyncing}
-              className={`inline-flex items-center justify-center p-2.5 sm:p-2.5 rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
+              className={`inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 ${
                 syncStatus === 'ERROR'
                   ? 'bg-rose-600 hover:bg-rose-700 text-white'
                   : syncStatus === 'OFFLINE'
@@ -184,29 +184,29 @@ export const Header: React.FC<HeaderProps> = ({
               }
               aria-label="Penyelarasan Cloud Firestore"
             >
-              <RefreshCw className={`w-4 h-4 ${isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncing || syncStatus === 'SAVING' || syncStatus === 'SYNCING' ? 'animate-spin' : ''}`} />
             </button>
 
-            {/* All Stays Button */}
+            {/* All Stays Button (Desktop only on sm+) */}
             <button
               id="header-all-stays-btn"
               onClick={onOpenStayList}
-              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              className="hidden sm:inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Senarai Semua Stay"
               aria-label="Senarai Semua Stay"
             >
-              <FolderKanban className="w-4 h-4 text-slate-700" />
+              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
             </button>
 
             {/* Share / Export */}
             <button
               id="header-share-btn"
               onClick={onOpenShare}
-              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Kongsi ke WhatsApp atau Cetak"
               aria-label="Kongsi Stay"
             >
-              <Share2 className="w-4 h-4 text-teal-700" />
+              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700" />
             </button>
 
             {/* New Stay Button (Admin Gated) */}
@@ -215,9 +215,9 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={handleNewStayClick}
               title={isAdminMode ? 'Cipta Stay Baharu' : 'Cipta Stay Baharu (Perlu Mod Admin)'}
               aria-label="Cipta Stay Baharu"
-              className="inline-flex items-center justify-center p-2.5 sm:p-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center p-2 sm:p-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             {/* Security Menu / Profile Dropdown */}
@@ -225,13 +225,13 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="user-profile-menu-btn"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all cursor-pointer"
+                className="flex items-center gap-1 p-1 sm:px-2.5 sm:py-1.5 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all cursor-pointer"
                 title="Pilihan Keselamatan & Admin"
               >
-                <div className={`w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-2xs ${isAdminMode ? 'bg-emerald-600' : 'bg-slate-700'}`}>
+                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white font-bold text-[10px] sm:text-xs flex items-center justify-center shadow-2xs ${isAdminMode ? 'bg-emerald-600' : 'bg-slate-700'}`}>
                   {isAdminMode ? '👑' : '👤'}
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
+                <ChevronDown className="w-3 h-3 text-slate-500 hidden sm:block" />
               </button>
 
               {/* Dropdown Menu */}
