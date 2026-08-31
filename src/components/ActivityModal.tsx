@@ -171,13 +171,13 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
               )}
             </div>
 
-            {/* 4 Primary Time of Day Blocks */}
+            {/* 5 Primary Time of Day Blocks */}
             <div className="space-y-1.5 pt-1">
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                 Slot Waktu
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {(['morning', 'midday', 'afternoon', 'evening'] as TimeSlot[]).map((slotKey) => {
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {(['morning', 'midday', 'afternoon', 'evening', 'flexible'] as TimeSlot[]).map((slotKey) => {
                   const meta = TIME_SLOTS[slotKey];
                   const isSelected = timeSlot === slotKey;
                   return (
@@ -187,12 +187,12 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
                       onClick={() => setTimeSlot(slotKey)}
                       className={`py-2 sm:py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-teal-600 border-teal-600 text-white shadow-xs font-bold'
-                          : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 font-semibold'
+                          ? meta.activeButton
+                          : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-semibold'
                       }`}
                     >
                       <span className="text-lg sm:text-xl">{meta.icon}</span>
-                      <span className="text-[11px] sm:text-xs whitespace-nowrap">{meta.label}</span>
+                      <span className="text-[11px] sm:text-xs font-bold whitespace-nowrap">{meta.label}</span>
                     </button>
                   );
                 })}

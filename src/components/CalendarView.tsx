@@ -427,7 +427,7 @@ export function CalendarView({
                       <div className="flex-1 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm">{slotMeta.icon}</span>
-                          <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <span className={`text-xs px-2 py-0.5 rounded-md border ${slotMeta.bgBadge}`}>
                             {slotMeta.label}
                           </span>
                           {item.timeSpecific && (

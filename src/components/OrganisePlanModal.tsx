@@ -398,7 +398,9 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                             <select
                               value={p.timeSlot}
                               onChange={(e) => handleItemMove(item.id, dayNum, e.target.value as TimeSlot)}
-                              className="text-[11px] font-semibold bg-stone-50 border border-stone-200 rounded-md px-1.5 py-0.5 text-stone-700 focus:ring-1 focus:ring-amber-500"
+                              className={`text-[11px] font-bold rounded-md px-1.5 py-0.5 border cursor-pointer ${
+                                TIME_SLOTS[p.timeSlot]?.selectClass || 'bg-stone-50 border-stone-200 text-stone-700'
+                              }`}
                             >
                               <option value="morning">🌅 Pagi</option>
                               <option value="midday">☀️ Tengah Hari</option>

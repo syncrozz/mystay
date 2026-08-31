@@ -331,13 +331,13 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
               id={`slot-section-${slotKey}`}
               className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden"
             >
-              {/* Slot Header */}
-              <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-slate-50/90 border-b border-slate-200">
+              {/* Slot Header with Cheerful Pastel Theme */}
+              <div className={`flex items-center justify-between px-4 sm:px-5 py-3.5 border-b transition-colors ${slotMeta.headerBg}`}>
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl">{slotMeta.icon}</span>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-900">{slotMeta.label}</h3>
-                    <span className="text-xs font-semibold text-slate-400">
+                    <h3 className="text-base font-bold">{slotMeta.label}</h3>
+                    <span className="text-xs font-bold opacity-75">
                       ({slotItems.length})
                     </span>
                   </div>
@@ -346,7 +346,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                 <button
                   type="button"
                   onClick={() => onAddItem(selectedDay === 0 ? 1 : selectedDay, slotKey)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-950 bg-teal-100/80 hover:bg-teal-200 rounded-xl transition-all active:scale-98 cursor-pointer"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all active:scale-98 cursor-pointer shadow-2xs ${slotMeta.headerButton}`}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Tambah Aktiviti</span>

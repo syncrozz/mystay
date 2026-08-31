@@ -118,31 +118,59 @@ export const PRIORITY_CONFIG: Record<ActivityPriority, {
   }
 };
 
-export const TIME_SLOTS: Record<TimeSlot, { label: string; icon: string; bgBadge: string }> = {
+export const TIME_SLOTS: Record<TimeSlot, {
+  label: string;
+  icon: string;
+  bgBadge: string;
+  activeButton: string;
+  selectClass: string;
+  headerBg: string;
+  headerButton: string;
+}> = {
   morning: {
     label: 'Pagi',
     icon: '🌅',
-    bgBadge: 'bg-teal-100/80 text-teal-950 border-teal-200'
+    bgBadge: 'bg-amber-100/90 text-amber-950 border-amber-300 font-bold',
+    activeButton: 'bg-amber-100 border-amber-400 text-amber-950 ring-2 ring-amber-300/80 shadow-xs font-bold',
+    selectClass: 'bg-amber-50/90 text-amber-950 border-amber-300 hover:bg-amber-100/80',
+    headerBg: 'bg-amber-50/90 border-amber-200 text-amber-950',
+    headerButton: 'text-amber-950 bg-amber-200/80 hover:bg-amber-300'
   },
   midday: {
     label: 'Tengah Hari',
     icon: '☀️',
-    bgBadge: 'bg-sky-100/80 text-sky-950 border-sky-200'
+    bgBadge: 'bg-rose-100/90 text-rose-950 border-rose-300 font-bold',
+    activeButton: 'bg-rose-100 border-rose-400 text-rose-950 ring-2 ring-rose-300/80 shadow-xs font-bold',
+    selectClass: 'bg-rose-50/90 text-rose-950 border-rose-300 hover:bg-rose-100/80',
+    headerBg: 'bg-rose-50/90 border-rose-200 text-rose-950',
+    headerButton: 'text-rose-950 bg-rose-200/80 hover:bg-rose-300'
   },
   afternoon: {
     label: 'Petang',
     icon: '🌤️',
-    bgBadge: 'bg-cyan-100/80 text-cyan-950 border-cyan-200'
+    bgBadge: 'bg-sky-100/90 text-sky-950 border-sky-300 font-bold',
+    activeButton: 'bg-sky-100 border-sky-400 text-sky-950 ring-2 ring-sky-300/80 shadow-xs font-bold',
+    selectClass: 'bg-sky-50/90 text-sky-950 border-sky-300 hover:bg-sky-100/80',
+    headerBg: 'bg-sky-50/90 border-sky-200 text-sky-950',
+    headerButton: 'text-sky-950 bg-sky-200/80 hover:bg-sky-300'
   },
   evening: {
     label: 'Malam',
     icon: '🌙',
-    bgBadge: 'bg-indigo-100/80 text-indigo-950 border-indigo-200'
+    bgBadge: 'bg-purple-100/90 text-purple-950 border-purple-300 font-bold',
+    activeButton: 'bg-purple-100 border-purple-400 text-purple-950 ring-2 ring-purple-300/80 shadow-xs font-bold',
+    selectClass: 'bg-purple-50/90 text-purple-950 border-purple-300 hover:bg-purple-100/80',
+    headerBg: 'bg-purple-50/90 border-purple-200 text-purple-950',
+    headerButton: 'text-purple-950 bg-purple-200/80 hover:bg-purple-300'
   },
   flexible: {
     label: 'Fleksibel',
     icon: '🍃',
-    bgBadge: 'bg-emerald-100/80 text-emerald-950 border-emerald-200'
+    bgBadge: 'bg-orange-100/90 text-orange-950 border-orange-300 font-bold',
+    activeButton: 'bg-orange-100 border-orange-400 text-orange-950 ring-2 ring-orange-300/80 shadow-xs font-bold',
+    selectClass: 'bg-orange-50/90 text-orange-950 border-orange-300 hover:bg-orange-100/80',
+    headerBg: 'bg-orange-50/90 border-orange-200 text-orange-950',
+    headerButton: 'text-orange-950 bg-orange-200/80 hover:bg-orange-300'
   }
 };
 

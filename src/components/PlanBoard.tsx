@@ -18,7 +18,10 @@ import {
   MapPin,
   User,
   Lock,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ArrowUpDown,
+  Filter,
+  X
 } from 'lucide-react';
 
 interface PlanBoardProps {
@@ -28,6 +31,15 @@ interface PlanBoardProps {
 }
 
 type FilterType = 'all' | 'backlog' | 'wajib' | 'optional' | 'scheduled';
+type SortOption = 'date_asc' | 'date_desc' | 'priority' | 'time_slot' | 'title_asc' | 'created_desc';
+
+const TIME_SLOT_ORDER: Record<string, number> = {
+  morning: 1,
+  midday: 2,
+  afternoon: 3,
+  evening: 4,
+  flexible: 5
+};
 
 const MALAYSIAN_STAY_IDEAS = [
   { title: 'Makan Nasi Dagang', priority: 'must_do' as ActivityPriority, icon: '🍚' },
@@ -60,6 +72,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const [quickTitle, setQuickTitle] = useState('');
   const [quickPriority, setQuickPriority] = useState<ActivityPriority>('must_do');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all'); // 'all' | '0' | '1' | '2' ...
+  const [sortBy, setSortBy] = useState<SortOption>('date_asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOrganiseModalOpen, setIsOrganiseModalOpen] = useState(false);
 
@@ -76,6 +90,104 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const optionalCount = totalItems - wajibCount;
   const backlogCount = items.filter((i) => !i.dayNumber || i.dayNumber === 0).length;
   const scheduledCount = totalItems - backlogCount;
+
+  // Filtered and sorted items
+  const filteredItems = useMemo(() => {
+    const filtered = items.filter((item) => {
+      // 1. Status Filter
+      if (activeFilter === 'backlog' && (item.dayNumber || 0) !== 0) return false;
+      if (activeFilter === 'scheduled' && (item.dayNumber || 0) === 0) return false;
+      if (activeFilter === 'wajib' && item.priority !== 'must_do') return false;
+      if (activeFilter === 'optional' && item.priority === 'must_do') return false;
+
+      // 2. Date Filter
+      if (dateFilter !== 'all') {
+        const targetDayNum = Number(dateFilter);
+        if (targetDayNum === 0) {
+          if ((item.dayNumber || 0) !== 0) return false;
+        } else {
+          if (item.dayNumber !== targetDayNum) return false;
+        }
+      }
+
+      // 3. Search Query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = item.title.toLowerCase().includes(query);
+        const matchesDesc = (item.description || '').toLowerCase().includes(query);
+        const matchesLoc = (item.locationName || '').toLowerCase().includes(query);
+        const matchesPic = (item.personInCharge || '').toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDesc && !matchesLoc && !matchesPic) return false;
+      }
+
+      return true;
+    });
+
+    // 4. Sort Items
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'date_asc') {
+        const dayA = a.dayNumber || 0;
+        const dayB = b.dayNumber || 0;
+        // Scheduled dates first (Day 1, Day 2...), unscheduled (0) at end
+        if (dayA === 0 && dayB !== 0) return 1;
+        if (dayB === 0 && dayA !== 0) return -1;
+        if (dayA !== dayB) return dayA - dayB;
+        // If same day, sort by time slot
+        const slotA = TIME_SLOT_ORDER[a.timeSlot || 'flexible'] || 5;
+        const slotB = TIME_SLOT_ORDER[b.timeSlot || 'flexible'] || 5;
+        if (slotA !== slotB) return slotA - slotB;
+        // If same slot, wajib first
+        if (a.priority === 'must_do' && b.priority !== 'must_do') return -1;
+        if (b.priority === 'must_do' && a.priority !== 'must_do') return 1;
+        return a.title.localeCompare(b.title);
+      }
+
+      if (sortBy === 'date_desc') {
+        const dayA = a.dayNumber || 0;
+        const dayB = b.dayNumber || 0;
+        if (dayA === 0 && dayB !== 0) return 1;
+        if (dayB === 0 && dayA !== 0) return -1;
+        if (dayA !== dayB) return dayB - dayA;
+        const slotA = TIME_SLOT_ORDER[a.timeSlot || 'flexible'] || 5;
+        const slotB = TIME_SLOT_ORDER[b.timeSlot || 'flexible'] || 5;
+        return slotA - slotB;
+      }
+
+      if (sortBy === 'priority') {
+        if (a.priority === 'must_do' && b.priority !== 'must_do') return -1;
+        if (b.priority === 'must_do' && a.priority !== 'must_do') return 1;
+        const dayA = a.dayNumber || 0;
+        const dayB = b.dayNumber || 0;
+        if (dayA !== dayB) {
+          if (dayA === 0) return 1;
+          if (dayB === 0) return -1;
+          return dayA - dayB;
+        }
+        return a.title.localeCompare(b.title);
+      }
+
+      if (sortBy === 'time_slot') {
+        const slotA = TIME_SLOT_ORDER[a.timeSlot || 'flexible'] || 5;
+        const slotB = TIME_SLOT_ORDER[b.timeSlot || 'flexible'] || 5;
+        if (slotA !== slotB) return slotA - slotB;
+        const dayA = a.dayNumber || 0;
+        const dayB = b.dayNumber || 0;
+        return dayA - dayB;
+      }
+
+      if (sortBy === 'title_asc') {
+        return a.title.localeCompare(b.title);
+      }
+
+      if (sortBy === 'created_desc') {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      }
+
+      return 0;
+    });
+  }, [items, activeFilter, dateFilter, searchQuery, sortBy]);
 
   // Helper to add parsed activities via existing addAgendaItem flow with single requireAdmin auth
   const addActivitiesBatch = (titles: string[]) => {
@@ -195,26 +307,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }, 'Sila sahkan PIN Admin untuk menggunakan pembantu susun automatik agenda.');
   };
 
-  // Filtered and searched items
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      if (activeFilter === 'backlog' && (item.dayNumber || 0) !== 0) return false;
-      if (activeFilter === 'scheduled' && (item.dayNumber || 0) === 0) return false;
-      if (activeFilter === 'wajib' && item.priority !== 'must_do') return false;
-      if (activeFilter === 'optional' && item.priority === 'must_do') return false;
-
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = item.title.toLowerCase().includes(query);
-        const matchesDesc = (item.description || '').toLowerCase().includes(query);
-        const matchesLoc = (item.locationName || '').toLowerCase().includes(query);
-        const matchesPic = (item.personInCharge || '').toLowerCase().includes(query);
-        if (!matchesTitle && !matchesDesc && !matchesLoc && !matchesPic) return false;
-      }
-
-      return true;
-    });
-  }, [items, activeFilter, searchQuery]);
+  const isFilterActive = activeFilter !== 'all' || dateFilter !== 'all' || searchQuery.trim() !== '' || sortBy !== 'date_asc';
 
   return (
     <div id="plan-board-view" className="space-y-4 max-w-6xl mx-auto">
@@ -369,84 +462,198 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
             </form>
           </div>
 
-          {/* Filters & Search Controls */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
-            <div className="flex flex-wrap items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveFilter('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === 'all'
-                    ? 'bg-teal-600 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Semua ({totalItems})
-              </button>
+          {/* Filters & Search Controls (Target element) */}
+          <div className="space-y-2.5">
+            {/* Top Row: Category Filter Chips & Search Bar */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'all'
+                      ? 'bg-teal-600 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Semua ({totalItems})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveFilter('backlog')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === 'backlog'
-                    ? 'bg-teal-700 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Belum Dijadual ({backlogCount})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('backlog')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'backlog'
+                      ? 'bg-teal-700 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Belum Dijadual ({backlogCount})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveFilter('wajib')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === 'wajib'
-                    ? 'bg-amber-500 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                🫪 Wajib ({wajibCount})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('wajib')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'wajib'
+                      ? 'bg-amber-500 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  🫪 Wajib ({wajibCount})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveFilter('optional')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === 'optional'
-                    ? 'bg-emerald-600 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                🌿 Pilihan ({optionalCount})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('optional')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'optional'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  🌿 Pilihan ({optionalCount})
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveFilter('scheduled')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeFilter === 'scheduled'
-                    ? 'bg-slate-800 text-white shadow-2xs'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Dijadualkan ({scheduledCount})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('scheduled')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'scheduled'
+                      ? 'bg-slate-800 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  Dijadualkan ({scheduledCount})
+                </button>
+              </div>
+
+              <div className="relative w-full md:w-auto md:min-w-[200px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari aktiviti..."
+                  className="w-full pl-8 pr-8 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="relative w-full md:w-auto md:min-w-[200px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari aktiviti..."
-                className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
-              />
+            {/* Bottom Row: Date Specific Filter & Sorting by Date / Priority */}
+            <div className="bg-slate-50/90 rounded-2xl border border-slate-200/90 p-2.5 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* 1. Date Filter Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-bold flex items-center gap-1 text-[11px]">
+                    <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Tapis Tarikh:</span>
+                  </span>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-slate-800 hover:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value="all">Semua Tarikh ({items.length})</option>
+                    <option value="0">📋 Belum Dijadualkan ({backlogCount})</option>
+                    {Array.from({ length: duration }).map((_, idx) => {
+                      const dNum = idx + 1;
+                      const dCtx = getDayContextLabel(stay, dNum);
+                      const dInfo = getDateForDay(stay.startDate, dNum);
+                      const dayItemCount = items.filter((i) => i.dayNumber === dNum).length;
+                      return (
+                        <option key={dNum} value={dNum.toString()}>
+                          {dCtx.icon} {dInfo.displayLabel} ({dInfo.dayName}) · {dayItemCount} aktiviti
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* 2. Sorting Option Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-bold flex items-center gap-1 text-[11px]">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Susun:</span>
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-slate-800 hover:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value="date_asc">📅 Tarikh: Awal ➔ Akhir</option>
+                    <option value="date_desc">📅 Tarikh: Akhir ➔ Awal</option>
+                    <option value="priority">🫪 Keutamaan: Wajib Dahulu</option>
+                    <option value="time_slot">⏰ Slot Masa: Pagi ➔ Malam</option>
+                    <option value="title_asc">🔤 Nama Aktiviti: A ➔ Z</option>
+                    <option value="created_desc">⏱️ Terkini Ditambah</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Status & Reset Action */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-500">
+                  Memaparkan <strong className="text-teal-950">{filteredItems.length}</strong> daripada {totalItems} aktiviti
+                </span>
+
+                {isFilterActive && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveFilter('all');
+                      setDateFilter('all');
+                      setSearchQuery('');
+                      setSortBy('date_asc');
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 border border-slate-200 text-slate-600 text-[11px] font-bold rounded-lg transition-all cursor-pointer"
+                    title="Set semula semua penapis dan susunan"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Set Semula</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* List of Planned Items */}
-          <div className="space-y-3">
+          {/* List of Planned Items or Filter Empty State */}
+          {filteredItems.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto text-slate-500">
+                <Search className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-slate-900">Tiada aktiviti padan</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Tiada aktiviti yang sepadan dengan penapis status, tarikh, atau carian &quot;{searchQuery}&quot;.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveFilter('all');
+                  setDateFilter('all');
+                  setSearchQuery('');
+                  setSortBy('date_asc');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Papar Semua Aktiviti</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
             {filteredItems.map((item) => {
               const isWajib = item.priority === 'must_do';
               const isBacklog = !item.dayNumber || item.dayNumber === 0;
@@ -554,13 +761,15 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         <select
                           value={item.timeSlot || 'flexible'}
                           onChange={(e) => handleAssignSlot(item, e.target.value as TimeSlot)}
-                          className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-700"
+                          className={`text-xs font-bold rounded-xl px-2.5 py-1.5 border transition-all cursor-pointer shadow-2xs ${
+                            TIME_SLOTS[item.timeSlot || 'flexible']?.selectClass || 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}
                         >
-                          <option value="morning">🌅 Pagi</option>
-                          <option value="midday">☀️ Tengah Hari</option>
-                          <option value="afternoon">🌤️ Petang</option>
-                          <option value="evening">🌙 Malam</option>
-                          <option value="flexible">🍃 Fleksibel</option>
+                          <option value="morning" className="bg-amber-50 text-amber-950 font-bold">🌅 Pagi</option>
+                          <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tengah Hari</option>
+                          <option value="afternoon" className="bg-sky-50 text-sky-950 font-bold">🌤️ Petang</option>
+                          <option value="evening" className="bg-purple-50 text-purple-950 font-bold">🌙 Malam</option>
+                          <option value="flexible" className="bg-orange-50 text-orange-950 font-bold">🍃 Fleksibel</option>
                         </select>
                       </div>
                     )}
@@ -591,15 +800,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                 </div>
               );
             })}
-
-            {filteredItems.length === 0 && (
-              <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-2xs">
-                <p className="text-xs font-semibold text-slate-500">
-                  {searchQuery ? 'Tiada aktiviti sepadan carian' : 'Belum ada aktiviti'}
-                </p>
-              </div>
-            )}
           </div>
+        )}
 
           {/* Susun & Agihkan Agenda Section (Di bahagian bawah sebelum footer) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-teal-50/90 via-slate-50 to-white border border-teal-200/80 rounded-2xl p-3.5 sm:px-4 sm:py-3 shadow-2xs">
