@@ -426,7 +426,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                                 }`}
                                 title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
                               >
-                                <span>{isWajib ? '★ Wajib' : '🌿 Pilihan'}</span>
+                                <span>{isWajib ? '📌 Wajib' : '🌿 Pilihan'}</span>
                               </button>
 
                               {/* Location */}

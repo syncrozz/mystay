@@ -422,7 +422,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    🫪 Wajib
+                    📌 Wajib
                   </button>
                   <button
                     type="button"
@@ -500,7 +500,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  🫪 Wajib ({wajibCount})
+                  📌 Wajib ({wajibCount})
                 </button>
 
                 <button
@@ -592,7 +592,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   >
                     <option value="date_asc">📅 Tarikh: Awal ➔ Akhir</option>
                     <option value="date_desc">📅 Tarikh: Akhir ➔ Awal</option>
-                    <option value="priority">🫪 Keutamaan: Wajib Dahulu</option>
+                    <option value="priority">📌 Keutamaan: Wajib Dahulu</option>
                     <option value="time_slot">⏰ Slot Masa: Pagi ➔ Malam</option>
                     <option value="title_asc">🔤 Nama Aktiviti: A ➔ Z</option>
                     <option value="created_desc">⏱️ Terkini Ditambah</option>
@@ -703,7 +703,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         }`}
                         title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
                       >
-                        <span>{isWajib ? '★ Wajib' : '🌿 Pilihan'}</span>
+                        <span>{isWajib ? '📌 Wajib' : '🌿 Pilihan'}</span>
                       </button>
                     </div>
 
