@@ -22,12 +22,14 @@ interface HeaderProps {
   onOpenStayList: () => void;
   onOpenShare: () => void;
   onOpenSupport?: () => void;
+  onOpenDataSafety?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenNewStay,
   onOpenStayList,
-  onOpenShare
+  onOpenShare,
+  onOpenDataSafety
 }) => {
   const {
     activeStay,
@@ -274,6 +276,19 @@ export const Header: React.FC<HeaderProps> = ({
                       <FolderKanban className="w-4 h-4 text-slate-500" />
                       <span>Rancangan Tersimpan</span>
                     </button>
+
+                    {onOpenDataSafety && (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          onOpenDataSafety();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-950 rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <ShieldCheck className="w-4 h-4 text-teal-700" />
+                        <span>Data Safety (SES v4.4)</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

@@ -4,6 +4,7 @@ import { SHOWCASE_STAYS, SHOWCASE_AGENDA_ITEMS, SHOWCASE_CHECKLIST_ITEMS } from 
 import { getLocalTodayDate, getLocalDateWithOffset } from '../utils/formatters';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
+import { ValidatedCsvRow, MyStayBackupPayload, normalizeText } from '../utils/dataSafety';
 import {
   collection,
   doc,
@@ -52,6 +53,17 @@ interface StayContextType {
   deleteChecklistItem: (id: string) => Promise<void>;
   createFromStarterTemplate: (templateType: StayType) => Promise<string>;
   exportDataJson: () => string;
+  importCsvRows: (
+    rows: ValidatedCsvRow[],
+    defaultStayId?: string,
+    onProgress?: (msg: string) => void
+  ) => Promise<{ success: boolean; importedCount: number; message: string }>;
+  restoreDataBackup: (payload: MyStayBackupPayload) => Promise<{ success: boolean; message: string }>;
+  deleteDuplicateItems: (duplicateIds: {
+    agendaIds: string[];
+    checklistIds: string[];
+    stayIds: string[];
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 const StayContext = createContext<StayContextType | undefined>(undefined);
@@ -240,36 +252,33 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isPersonalMode = true; // In multi-device shared sync, live cloud data is always active
 
   // Persist cache to local storage on changes for instantaneous subsequent visits
+  // Strictly overwrite cache even when arrays are empty so deletions/empty state are respected across reloads
   useEffect(() => {
-    if (userStays && userStays.length > 0) {
-      try {
-        localStorage.setItem(CACHE_KEYS.STAYS, JSON.stringify(userStays));
-      } catch {}
-    }
+    try {
+      localStorage.setItem(CACHE_KEYS.STAYS, JSON.stringify(userStays));
+    } catch {}
   }, [userStays]);
 
   useEffect(() => {
-    if (userAgendaItems && userAgendaItems.length > 0) {
-      try {
-        localStorage.setItem(CACHE_KEYS.AGENDA, JSON.stringify(userAgendaItems));
-      } catch {}
-    }
+    try {
+      localStorage.setItem(CACHE_KEYS.AGENDA, JSON.stringify(userAgendaItems));
+    } catch {}
   }, [userAgendaItems]);
 
   useEffect(() => {
-    if (userChecklistItems && userChecklistItems.length > 0) {
-      try {
-        localStorage.setItem(CACHE_KEYS.CHECKLIST, JSON.stringify(userChecklistItems));
-      } catch {}
-    }
+    try {
+      localStorage.setItem(CACHE_KEYS.CHECKLIST, JSON.stringify(userChecklistItems));
+    } catch {}
   }, [userChecklistItems]);
 
   useEffect(() => {
-    if (activeStayId) {
-      try {
+    try {
+      if (activeStayId) {
         localStorage.setItem(CACHE_KEYS.ACTIVE_ID, activeStayId);
-      } catch {}
-    }
+      } else {
+        localStorage.removeItem(CACHE_KEYS.ACTIVE_ID);
+      }
+    } catch {}
   }, [activeStayId]);
 
   // Listen to network status (Online / Offline)
@@ -341,12 +350,16 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (fetchedStays.length > 0) {
           setUserStays((prev) => (areStaysEqual(prev, fetchedStays) ? prev : fetchedStays));
+        } else {
+          setUserStays([]);
+          setUserAgendaItems([]);
+          setUserChecklistItems([]);
         }
 
         // Determine active stay
         let currentActive = activeStayId;
         if (!currentActive || !fetchedStays.some((s) => s.id === currentActive)) {
-          currentActive = fetchedStays.length > 0 ? fetchedStays[0].id : (userStays[0]?.id || null);
+          currentActive = fetchedStays.length > 0 ? fetchedStays[0].id : null;
           setActiveStayIdState(currentActive);
         }
 
@@ -1143,19 +1156,338 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [addStay]
   );
 
+  // ----------------------------------------------------------------------------------
+  // 5. DATA SAFETY & PORTABILITY ENGINE (SES v4.4 Locked)
+  // ----------------------------------------------------------------------------------
+
+  const importCsvRows = useCallback(
+    async (
+      rows: ValidatedCsvRow[],
+      defaultStayId?: string,
+      onProgress?: (msg: string) => void
+    ): Promise<{ success: boolean; importedCount: number; message: string }> => {
+      const validRows = rows.filter((r) => r.status === 'valid');
+      if (validRows.length === 0) {
+        return { success: false, importedCount: 0, message: 'Tiada rekod sah untuk diimport.' };
+      }
+
+      const now = Date.now();
+      const currentUid = user?.uid || 'admin_device';
+      setIsSyncing(true);
+      setSyncStatus('SAVING');
+
+      try {
+        onProgress?.('Menyediakan pangkalan data...');
+        const batch = writeBatch(db);
+
+        // Map to keep track of stay IDs by title
+        const stayTitleToId = new Map<string, string>();
+        userStays.forEach((s) => stayTitleToId.set(normalizeText(s.title), s.id));
+
+        const newStays: Stay[] = [];
+        const newAgendas: AgendaItem[] = [];
+        const newChecklists: ChecklistItem[] = [];
+
+        // 1. Process STAY records first
+        for (const row of validRows) {
+          if (row.recordType === 'STAY') {
+            const stayTitle = row.itemTitle || row.stayTitle;
+            const normTitle = normalizeText(stayTitle);
+            if (!stayTitleToId.has(normTitle)) {
+              const stayId = `stay_${now}_${Math.random().toString(36).substring(2, 7)}`;
+              stayTitleToId.set(normTitle, stayId);
+
+              const newStay: Stay = {
+                id: stayId,
+                userId: currentUid,
+                title: stayTitle,
+                type: row.stayType || 'homestay',
+                startDate: row.startDate || getLocalTodayDate(),
+                endDate: row.endDate || getLocalDateWithOffset(2),
+                durationDays: 3,
+                location: row.locationName || 'Destinasi',
+                address: row.address,
+                companions: row.companions || [],
+                houseRules: row.houseRules || [],
+                importantNotes: row.descriptionNotes,
+                createdAt: now,
+                updatedAt: now
+              };
+
+              newStays.push(newStay);
+              const stayDocRef = doc(db, 'stays', stayId);
+              batch.set(stayDocRef, sanitizeForFirestore<Stay>(newStay));
+            }
+          }
+        }
+
+        // 2. Process ACTIVITY & CHECKLIST records
+        let itemIndex = 0;
+        for (const row of validRows) {
+          itemIndex++;
+          const targetStayTitle = normalizeText(row.stayTitle);
+          let targetStayId = stayTitleToId.get(targetStayTitle) || defaultStayId || (userStays[0]?.id) || (newStays[0]?.id);
+
+          // If no stay exists at all, create an encompassing stay for imported items
+          if (!targetStayId) {
+            targetStayId = `stay_${now}_${Math.random().toString(36).substring(2, 7)}`;
+            stayTitleToId.set(targetStayTitle || 'rancangan diimport', targetStayId);
+
+            const fallbackStay: Stay = {
+              id: targetStayId,
+              userId: currentUid,
+              title: row.stayTitle || 'Rancangan Diimport',
+              type: 'homestay',
+              startDate: getLocalTodayDate(),
+              endDate: getLocalDateWithOffset(2),
+              durationDays: 3,
+              location: row.locationName || 'Destinasi',
+              companions: [],
+              houseRules: [],
+              createdAt: now,
+              updatedAt: now
+            };
+
+            newStays.push(fallbackStay);
+            const stayDocRef = doc(db, 'stays', targetStayId);
+            batch.set(stayDocRef, sanitizeForFirestore<Stay>(fallbackStay));
+          }
+
+          if (row.recordType === 'ACTIVITY') {
+            const agnId = `agn_${now}_${itemIndex}_${Math.random().toString(36).substring(2, 6)}`;
+            const newAgenda: AgendaItem = {
+              id: agnId,
+              stayId: targetStayId,
+              userId: currentUid,
+              dayNumber: row.dayNumber ?? 0,
+              timeSlot: row.timeSlot || 'flexible',
+              timeSpecific: row.timeSpecific,
+              title: row.itemTitle,
+              priority: row.priority || 'must_do',
+              locationName: row.locationName,
+              personInCharge: row.personInCharge,
+              description: row.descriptionNotes,
+              isCompleted: row.isCompleted,
+              createdAt: now,
+              updatedAt: now
+            };
+
+            newAgendas.push(newAgenda);
+            const docRef = doc(collection(db, 'stays', targetStayId, 'agendaItems'), agnId);
+            batch.set(docRef, sanitizeForFirestore<AgendaItem>(newAgenda));
+          } else if (row.recordType === 'CHECKLIST') {
+            const chkId = `chk_${now}_${itemIndex}_${Math.random().toString(36).substring(2, 6)}`;
+            const newChecklist: ChecklistItem = {
+              id: chkId,
+              stayId: targetStayId,
+              userId: currentUid,
+              category: row.category || 'essentials',
+              text: row.itemTitle,
+              isCompleted: row.isCompleted,
+              createdAt: now,
+              updatedAt: now
+            };
+
+            newChecklists.push(newChecklist);
+            const docRef = doc(collection(db, 'stays', targetStayId, 'checklistItems'), chkId);
+            batch.set(docRef, sanitizeForFirestore<ChecklistItem>(newChecklist));
+          }
+        }
+
+        onProgress?.('Menulis rekod ke Cloud Firestore...');
+        await batch.commit();
+
+        // Update local React state
+        if (newStays.length > 0) {
+          setUserStays((prev) => [...newStays, ...prev]);
+          if (!activeStayId) {
+            setActiveStayIdState(newStays[0].id);
+          }
+        }
+        if (newAgendas.length > 0) {
+          setUserAgendaItems((prev) => [...prev, ...newAgendas]);
+        }
+        if (newChecklists.length > 0) {
+          setUserChecklistItems((prev) => [...prev, ...newChecklists]);
+        }
+
+        setSyncStatus('SYNCED');
+        setLastSyncTime(Date.now());
+        setSyncError(null);
+
+        return {
+          success: true,
+          importedCount: validRows.length,
+          message: `Berjaya mengimport ${validRows.length} rekod ke dalam MyStay.`
+        };
+      } catch (err: any) {
+        console.error('Import CSV error:', err);
+        setSyncStatus('ERROR');
+        setSyncError(err?.message || 'Gagal mengimport rekod CSV.');
+        throw err;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [user, userStays, activeStayId]
+  );
+
+  const restoreDataBackup = useCallback(
+    async (payload: MyStayBackupPayload): Promise<{ success: boolean; message: string }> => {
+      const { stays: backupStays, agendaItems: backupAgendas, checklistItems: backupChecklists, activeStayId: backupActiveId } = payload.data;
+
+      setIsSyncing(true);
+      setSyncStatus('SAVING');
+
+      try {
+        const batch = writeBatch(db);
+
+        // 1. Write Stays
+        for (const stay of backupStays) {
+          const stayRef = doc(db, 'stays', stay.id);
+          batch.set(stayRef, sanitizeForFirestore<Stay>(stay));
+        }
+
+        // 2. Write Agendas
+        for (const agenda of backupAgendas) {
+          const agendaRef = doc(collection(db, 'stays', agenda.stayId, 'agendaItems'), agenda.id);
+          batch.set(agendaRef, sanitizeForFirestore<AgendaItem>(agenda));
+        }
+
+        // 3. Write Checklists
+        for (const chk of backupChecklists) {
+          const chkRef = doc(collection(db, 'stays', chk.stayId, 'checklistItems'), chk.id);
+          batch.set(chkRef, sanitizeForFirestore<ChecklistItem>(chk));
+        }
+
+        await batch.commit();
+
+        // Update local state
+        setUserStays(backupStays);
+        setUserAgendaItems(backupAgendas);
+        setUserChecklistItems(backupChecklists);
+        if (backupActiveId) {
+          setActiveStayIdState(backupActiveId);
+        } else if (backupStays.length > 0) {
+          setActiveStayIdState(backupStays[0].id);
+        }
+
+        setSyncStatus('SYNCED');
+        setLastSyncTime(Date.now());
+        setSyncError(null);
+
+        return {
+          success: true,
+          message: `Berjaya memulihkan data sandaran (${backupStays.length} rancangan, ${backupAgendas.length} aktiviti, ${backupChecklists.length} senarai semak).`
+        };
+      } catch (err: any) {
+        console.error('Restore data backup error:', err);
+        setSyncStatus('ERROR');
+        setSyncError(err?.message || 'Gagal memulihkan data sandaran.');
+        throw err;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    []
+  );
+
+  const deleteDuplicateItems = useCallback(
+    async (duplicateIds: {
+      agendaIds: string[];
+      checklistIds: string[];
+      stayIds: string[];
+    }): Promise<{ success: boolean; message: string }> => {
+      const { agendaIds, checklistIds, stayIds } = duplicateIds;
+      const totalCount = agendaIds.length + checklistIds.length + stayIds.length;
+      if (totalCount === 0) {
+        return { success: true, message: 'Tiada item duplikasi yang dipilih.' };
+      }
+
+      setIsSyncing(true);
+      setSyncStatus('SAVING');
+
+      try {
+        const batch = writeBatch(db);
+
+        // 1. Delete agenda duplicates
+        for (const id of agendaIds) {
+          const item = userAgendaItems.find((a) => a.id === id);
+          if (item) {
+            const itemRef = doc(db, 'stays', item.stayId, 'agendaItems', id);
+            batch.delete(itemRef);
+          }
+        }
+
+        // 2. Delete checklist duplicates
+        for (const id of checklistIds) {
+          const item = userChecklistItems.find((c) => c.id === id);
+          if (item) {
+            const itemRef = doc(db, 'stays', item.stayId, 'checklistItems', id);
+            batch.delete(itemRef);
+          }
+        }
+
+        // 3. Delete stay duplicates
+        for (const id of stayIds) {
+          batch.delete(doc(db, 'stays', id));
+        }
+
+        await batch.commit();
+
+        // Update local state
+        const agendaIdSet = new Set(agendaIds);
+        const checklistIdSet = new Set(checklistIds);
+        const stayIdSet = new Set(stayIds);
+
+        setUserAgendaItems((prev) => prev.filter((a) => !agendaIdSet.has(a.id)));
+        setUserChecklistItems((prev) => prev.filter((c) => !checklistIdSet.has(c.id)));
+        setUserStays((prev) => {
+          const filtered = prev.filter((s) => !stayIdSet.has(s.id));
+          if (activeStayId && stayIdSet.has(activeStayId)) {
+            setActiveStayIdState(filtered.length > 0 ? filtered[0].id : null);
+          }
+          return filtered;
+        });
+
+        setSyncStatus('SYNCED');
+        setLastSyncTime(Date.now());
+        setSyncError(null);
+
+        return {
+          success: true,
+          message: `Berjaya membersihkan ${totalCount} rekod duplikasi yang dipilih.`
+        };
+      } catch (err: any) {
+        console.error('Delete duplicate items error:', err);
+        setSyncStatus('ERROR');
+        setSyncError(err?.message || 'Gagal membersihkan rekod duplikasi.');
+        throw err;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [userAgendaItems, userChecklistItems, activeStayId]
+  );
+
   const exportDataJson = useCallback((): string => {
     return JSON.stringify(
       {
-        userUid: user?.uid || null,
-        stays,
-        agendaItems: userAgendaItems.length > 0 ? userAgendaItems : SHOWCASE_AGENDA_ITEMS,
-        checklistItems: userChecklistItems.length > 0 ? userChecklistItems : SHOWCASE_CHECKLIST_ITEMS,
-        activeStayId
+        version: '4.4',
+        appName: 'MyStay',
+        exportedAt: new Date().toISOString(),
+        timestamp: Date.now(),
+        data: {
+          stays,
+          agendaItems: userAgendaItems.length > 0 ? userAgendaItems : SHOWCASE_AGENDA_ITEMS,
+          checklistItems: userChecklistItems.length > 0 ? userChecklistItems : SHOWCASE_CHECKLIST_ITEMS,
+          activeStayId
+        }
       },
       null,
       2
     );
-  }, [user, stays, userAgendaItems, userChecklistItems, activeStayId]);
+  }, [stays, userAgendaItems, userChecklistItems, activeStayId]);
 
   return (
     <StayContext.Provider
@@ -1195,7 +1527,10 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toggleChecklistComplete,
         deleteChecklistItem,
         createFromStarterTemplate,
-        exportDataJson
+        exportDataJson,
+        importCsvRows,
+        restoreDataBackup,
+        deleteDuplicateItems
       }}
     >
       {children}

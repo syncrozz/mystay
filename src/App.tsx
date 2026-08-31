@@ -13,6 +13,7 @@ import { StaySelectorModal } from './components/StaySelectorModal';
 import { ActivityModal } from './components/ActivityModal';
 import { ShareExportModal } from './components/ShareExportModal';
 import { AuthModal } from './components/AuthModal';
+import { DataSafetyModal } from './components/DataSafetyModal';
 import { SaveSyncFloatingBar } from './components/SaveSyncFloatingBar';
 import { PrivateAccessScreen } from './components/PrivateAccessScreen';
 import { STAY_TYPES } from './utils/constants';
@@ -64,6 +65,7 @@ function StayPlanApp() {
   const [isCreateStayOpen, setIsCreateStayOpen] = useState(false);
   const [editingStay, setEditingStay] = useState<Stay | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isDataSafetyOpen, setIsDataSafetyOpen] = useState(false);
 
   // Activity Modal state
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -130,6 +132,7 @@ function StayPlanApp() {
           onOpenStayList={() => setIsStayListOpen(true)}
           onOpenShare={() => setIsShareOpen(true)}
           onOpenSupport={() => setIsSupportOpen(true)}
+          onOpenDataSafety={() => setIsDataSafetyOpen(true)}
         />
 
         <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6">
@@ -255,6 +258,10 @@ function StayPlanApp() {
           onNewStay={handleOpenNewStay}
           onEditStay={handleOpenEditStay}
         />
+        <DataSafetyModal
+          isOpen={isDataSafetyOpen}
+          onClose={() => setIsDataSafetyOpen(false)}
+        />
         <AuthModal />
         <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       </div>
@@ -269,6 +276,7 @@ function StayPlanApp() {
         onOpenStayList={() => setIsStayListOpen(true)}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
+        onOpenDataSafety={() => setIsDataSafetyOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -482,6 +490,11 @@ function StayPlanApp() {
         stay={activeStay}
         agendaItems={activeAgendaItems}
         checklistItems={activeChecklistItems}
+      />
+
+      <DataSafetyModal
+        isOpen={isDataSafetyOpen}
+        onClose={() => setIsDataSafetyOpen(false)}
       />
 
       {/* Floating Save & Sync notification bar */}

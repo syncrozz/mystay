@@ -1,10 +1,30 @@
 import React, { useState } from 'react';
-import { X, Plus, Calendar, MapPin, Check, Edit2, Copy, Trash2, Download, Sparkles, RefreshCw, CheckCircle2, Shield } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Calendar,
+  MapPin,
+  Check,
+  Edit2,
+  Copy,
+  Trash2,
+  Download,
+  Upload,
+  RefreshCw,
+  CheckCircle2,
+  Shield,
+  ShieldCheck,
+  FileSpreadsheet,
+  Layers,
+  AlertTriangle,
+  Database
+} from 'lucide-react';
 import { useStay } from '../context/StayContext';
 import { useAuth } from '../context/AuthContext';
 import { STAY_TYPES } from '../utils/constants';
 import { formatDateRange } from '../utils/formatters';
 import { Stay } from '../types';
+import { DataSafetyModal } from './DataSafetyModal';
 
 interface StaySelectorModalProps {
   isOpen: boolean;
@@ -25,13 +45,18 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
     setActiveStayId,
     deleteStay,
     duplicateStay,
-    exportDataJson,
     isSyncing,
     refreshFromCloud
   } = useStay();
 
   const { requireAdmin } = useAuth();
   const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
+
+  // Data Safety Modal sub-modal state
+  const [isDataSafetyOpen, setIsDataSafetyOpen] = useState(false);
+  const [dataSafetyInitialTab, setDataSafetyInitialTab] = useState<
+    'overview' | 'export_csv' | 'backup_data' | 'audit_duplicates' | 'import_csv'
+  >('overview');
 
   if (!isOpen) return null;
 
@@ -41,15 +66,11 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
     setTimeout(() => setSyncStatusMsg(null), 5000);
   };
 
-  const handleExport = () => {
-    const jsonStr = exportDataJson();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `stayplan-personal-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const openDataSafetyWithTab = (
+    tab: 'overview' | 'export_csv' | 'backup_data' | 'audit_duplicates' | 'import_csv'
+  ) => {
+    setDataSafetyInitialTab(tab);
+    setIsDataSafetyOpen(true);
   };
 
   const handleCreateNew = () => {
@@ -81,174 +102,255 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
   };
 
   return (
-    <div id="stay-selector-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <>
       <div
-        id="stay-selector-container"
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 md:p-8 space-y-6 text-slate-900"
+        id="stay-selector-backdrop"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
       >
-        {/* Close Button */}
-        <button
-          id="stay-selector-close-btn"
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-          aria-label="Tutup"
+        <div
+          id="stay-selector-container"
+          className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl border border-slate-200 p-5 sm:p-7 md:p-8 space-y-6 text-slate-900"
         >
-          <X className="w-5 h-5" />
-        </button>
+          {/* Close Button */}
+          <button
+            id="stay-selector-close-btn"
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            aria-label="Tutup"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              Rancangan Tersimpan
-            </h2>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Pilih, cipta, atau urus rancangan perjalanan anda
-            </p>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8 sm:pr-0">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                Rancangan Tersimpan
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Pilih, cipta, atau urus rancangan perjalanan anda
+              </p>
+            </div>
+
+            <button
+              id="modal-create-stay-btn"
+              onClick={handleCreateNew}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Rancangan Baharu</span>
+            </button>
           </div>
 
-          <button
-            id="modal-create-stay-btn"
-            onClick={handleCreateNew}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Rancangan Baharu</span>
-          </button>
-        </div>
+          {/* Stays List */}
+          <div className="space-y-3">
+            {stays.map((stay) => {
+              const isActive = stay.id === activeStayId;
+              const typeMeta = STAY_TYPES[stay.type] || STAY_TYPES.custom;
 
-        {/* Stays List */}
-        <div className="space-y-3">
-          {stays.map((stay) => {
-            const isActive = stay.id === activeStayId;
-            const typeMeta = STAY_TYPES[stay.type] || STAY_TYPES.custom;
-
-            return (
-              <div
-                key={stay.id}
-                className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                  isActive
-                    ? 'bg-teal-50/60 border-teal-400 ring-2 ring-teal-400/20'
-                    : 'bg-slate-50/70 hover:bg-slate-50 border-slate-200'
-                }`}
-              >
+              return (
                 <div
-                  className="flex items-start gap-3.5 cursor-pointer flex-1"
-                  onClick={() => {
-                    setActiveStayId(stay.id);
-                    onClose();
-                  }}
+                  key={stay.id}
+                  className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isActive
+                      ? 'bg-teal-50/60 border-teal-400 ring-2 ring-teal-400/20'
+                      : 'bg-slate-50/70 hover:bg-slate-50 border-slate-200'
+                  }`}
                 >
-                  <span className="text-2xl p-2 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                    {typeMeta.icon}
-                  </span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900">{stay.title}</h3>
-                      {isActive && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-teal-600 text-white">
-                          <Check className="w-3 h-3" />
-                          <span>Aktif</span>
+                  <div
+                    className="flex items-start gap-3.5 cursor-pointer flex-1"
+                    onClick={() => {
+                      setActiveStayId(stay.id);
+                      onClose();
+                    }}
+                  >
+                    <span className="text-2xl p-2 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      {typeMeta.icon}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900">{stay.title}</h3>
+                        {isActive && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-teal-600 text-white">
+                            <Check className="w-3 h-3" />
+                            <span>Aktif</span>
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          {stay.location || 'Tiada lokasi'}
                         </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        {stay.location || 'Tiada lokasi'}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        {formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}
-                      </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          {formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Actions Bar (Right of Card) */}
-                <div className="flex items-center justify-end gap-1.5 self-end sm:self-center">
-                  {!isActive && (
+                  {/* Actions Bar (Right of Card) */}
+                  <div className="flex items-center justify-end gap-1.5 self-end sm:self-center">
+                    {!isActive && (
+                      <button
+                        onClick={() => {
+                          setActiveStayId(stay.id);
+                          onClose();
+                        }}
+                        className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Buka
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => {
-                        setActiveStayId(stay.id);
-                        onClose();
-                      }}
-                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => handleEdit(stay)}
+                      title="Edit Rancangan"
+                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
                     >
-                      Buka
+                      <Edit2 className="w-4 h-4" />
                     </button>
-                  )}
 
-                  <button
-                    onClick={() => handleEdit(stay)}
-                    title="Edit Rancangan"
-                    className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => handleDuplicate(stay.id)}
+                      title="Salin Rancangan"
+                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
 
-                  <button
-                    onClick={() => handleDuplicate(stay.id)}
-                    title="Salin Rancangan"
-                    className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(stay)}
-                    title="Padam Rancangan"
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => handleDelete(stay)}
+                      title="Padam Rancangan"
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+
+            {stays.length === 0 && (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <p className="text-xs font-semibold text-slate-500">Belum ada rancangan.</p>
+                <button
+                  onClick={handleCreateNew}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                >
+                  + Rancangan Baharu
+                </button>
               </div>
-            );
-          })}
-
-          {stays.length === 0 && (
-            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <p className="text-xs font-semibold text-slate-500">Belum ada rancangan.</p>
-              <button
-                onClick={handleCreateNew}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-              >
-                + Rancangan Baharu
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Footer Actions: Cloud Sync & Backup Export */}
-        <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefreshCloud}
-              disabled={isSyncing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-700 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors font-medium cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Menyelaras...' : 'Refresh dari Cloud'}</span>
-            </button>
-            {syncStatusMsg && (
-              <span className="text-teal-700 font-semibold text-[11px] inline-flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {syncStatusMsg}
-              </span>
             )}
           </div>
 
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium cursor-pointer"
-            title="Muat turun salinan sandaran JSON"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Eksport Sandaran JSON</span>
-          </button>
+          {/* SES v4.4 Data Safety & Portability Area */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-teal-700" />
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                  Data Safety & Portability (SES v4.4)
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => openDataSafetyWithTab('overview')}
+                className="text-[11px] text-teal-700 hover:text-teal-900 font-bold underline cursor-pointer"
+              >
+                Pusat Keselamatan
+              </button>
+            </div>
+
+            {/* Visual Four Action Buttons Grid as requested by standard */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
+              {/* 1. Simpan CSV */}
+              <button
+                id="btn-modal-simpan-csv"
+                type="button"
+                onClick={() => openDataSafetyWithTab('export_csv')}
+                className="p-2.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-slate-800 hover:text-teal-950 flex flex-col items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer text-center"
+              >
+                <Download className="w-4 h-4 text-teal-700" />
+                <span className="text-[11px]">↓ Simpan CSV</span>
+              </button>
+
+              {/* 2. Backup Data */}
+              <button
+                id="btn-modal-backup-data"
+                type="button"
+                onClick={() => openDataSafetyWithTab('backup_data')}
+                className="p-2.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-800 hover:text-blue-950 flex flex-col items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer text-center"
+              >
+                <Database className="w-4 h-4 text-blue-700" />
+                <span className="text-[11px]">▣ Backup Data</span>
+              </button>
+
+              {/* 3. Audit Duplikasi */}
+              <button
+                id="btn-modal-audit-duplikasi"
+                type="button"
+                onClick={() => openDataSafetyWithTab('audit_duplicates')}
+                className="p-2.5 rounded-xl bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-800 hover:text-amber-950 flex flex-col items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer text-center"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-700" />
+                <span className="text-[11px]">♢ Audit Duplikasi</span>
+              </button>
+
+              {/* 4. Import CSV */}
+              <button
+                id="btn-modal-import-csv"
+                type="button"
+                onClick={() => openDataSafetyWithTab('import_csv')}
+                className="p-2.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-slate-800 hover:text-emerald-950 flex flex-col items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer text-center"
+              >
+                <Upload className="w-4 h-4 text-emerald-700" />
+                <span className="text-[11px]">↑ Import CSV</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Footer Actions: Cloud Sync */}
+          <div className="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleRefreshCloud}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-700 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors font-medium cursor-pointer"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 text-teal-600 ${isSyncing ? 'animate-spin' : ''}`}
+                />
+                <span>{isSyncing ? 'Menyelaras...' : 'Refresh dari Cloud'}</span>
+              </button>
+              {syncStatusMsg && (
+                <span className="text-teal-700 font-semibold text-[11px] inline-flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {syncStatusMsg}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => openDataSafetyWithTab('backup_data')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium cursor-pointer"
+              title="Urus salinan keselamatan dan sandaran"
+            >
+              <Database className="w-3.5 h-3.5 text-slate-500" />
+              <span>Backup Data</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Sub-modal: Data Safety & Portability Center */}
+      <DataSafetyModal
+        isOpen={isDataSafetyOpen}
+        onClose={() => setIsDataSafetyOpen(false)}
+        initialTab={dataSafetyInitialTab}
+      />
+    </>
   );
 };
+
