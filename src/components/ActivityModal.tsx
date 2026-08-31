@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, MapPin, User, Tag, Sparkles, Check, Save } from 'lucide-react';
+import { X, Clock, MapPin, User, Calendar, ChevronDown, Save } from 'lucide-react';
 import { AgendaItem, TimeSlot, ActivityPriority, Stay } from '../types';
 import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
-import { toTitleCase } from '../utils/formatters';
+import { toTitleCase, getDateForDay, getDayOptionsForStay, getDayContextLabel } from '../utils/formatters';
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -81,6 +81,10 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
 
   if (!isOpen) return null;
 
+  const dayOptions = getDayOptionsForStay(stay);
+  const selectedDateInfo = getDateForDay(stay.startDate, dayNumber);
+  const selectedDayContext = dayNumber > 0 ? getDayContextLabel(stay, dayNumber) : null;
+
   return (
     <div id="activity-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
@@ -103,7 +107,7 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
             {isEditing ? 'Edit Agenda' : 'Tambah Agenda'}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-            Rancang aktiviti mengikut slot waktu tanpa terikat jadual jam yang ketat.
+            Rancang aktiviti mengikut tarikh dan slot waktu tanpa terikat jadual jam yang ketat.
           </p>
         </div>
 
@@ -124,50 +128,75 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
             />
           </div>
 
-          {/* 2. Day & Time of Day Selector */}
-          <div className="space-y-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                Waktu Hari
+          {/* 2. DATE-FIRST AGENDA ASSIGNMENT */}
+          <div className="space-y-3.5 p-3.5 sm:p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Tarikh Agenda <span className="text-rose-500">*</span>
               </label>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-500 font-medium">Hari:</span>
+
+              <div className="relative">
+                <div className="absolute left-3.5 top-3 text-teal-600 pointer-events-none">
+                  <Calendar className="w-4 h-4" />
+                </div>
                 <select
+                  id="activity-date-select"
                   value={dayNumber}
                   onChange={(e) => setDayNumber(Number(e.target.value))}
-                  className="px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-bold focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                  className="w-full pl-10 pr-9 py-2.5 sm:py-3 text-sm sm:text-base bg-white border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold text-slate-900 cursor-pointer appearance-none shadow-2xs"
                 >
-                  <option value={0}>📋 Belum Dijadualkan</option>
-                  {Array.from({ length: stay.durationDays || 3 }).map((_, idx) => (
-                    <option key={idx + 1} value={idx + 1}>
-                      Hari {idx + 1}
+                  {dayOptions.map((opt) => (
+                    <option key={opt.dayNumber} value={opt.dayNumber}>
+                      {opt.dayNumber === 0
+                        ? '📋 Belum Dijadualkan (Perancangan)'
+                        : `📅 ${opt.label} — ${opt.secondary}`}
                     </option>
                   ))}
                 </select>
+                <div className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
               </div>
+
+              {/* Secondary Context & Day Number Badge */}
+              {selectedDateInfo && dayNumber > 0 && selectedDayContext && (
+                <div className="flex flex-wrap items-center gap-2 mt-2 px-0.5">
+                  <span className="text-xs font-bold text-teal-900 bg-teal-100/90 border border-teal-300/80 px-2.5 py-0.5 rounded-lg shadow-2xs">
+                    {selectedDateInfo.secondaryLabel}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-lg shadow-2xs">
+                    {selectedDayContext.icon} {selectedDayContext.label}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* 4 Primary Time of Day Blocks */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {(['morning', 'midday', 'afternoon', 'evening'] as TimeSlot[]).map((slotKey) => {
-                const meta = TIME_SLOTS[slotKey];
-                const isSelected = timeSlot === slotKey;
-                return (
-                  <button
-                    key={slotKey}
-                    type="button"
-                    onClick={() => setTimeSlot(slotKey)}
-                    className={`py-2 sm:py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-teal-600 border-teal-600 text-white shadow-xs font-bold'
-                        : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 font-semibold'
-                    }`}
-                  >
-                    <span className="text-lg sm:text-xl">{meta.icon}</span>
-                    <span className="text-[11px] sm:text-xs whitespace-nowrap">{meta.label}</span>
-                  </button>
-                );
-              })}
+            <div className="space-y-1.5 pt-1">
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Slot Waktu
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(['morning', 'midday', 'afternoon', 'evening'] as TimeSlot[]).map((slotKey) => {
+                  const meta = TIME_SLOTS[slotKey];
+                  const isSelected = timeSlot === slotKey;
+                  return (
+                    <button
+                      key={slotKey}
+                      type="button"
+                      onClick={() => setTimeSlot(slotKey)}
+                      className={`py-2 sm:py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-teal-600 border-teal-600 text-white shadow-xs font-bold'
+                          : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 font-semibold'
+                      }`}
+                    >
+                      <span className="text-lg sm:text-xl">{meta.icon}</span>
+                      <span className="text-[11px] sm:text-xs whitespace-nowrap">{meta.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

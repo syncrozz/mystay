@@ -85,19 +85,153 @@ export function formatStaySummary(stay: Partial<Stay>): string {
 }
 
 /**
+ * Helper to safely parse a YYYY-MM-DD or date string without timezone skew.
+ */
+export function parseDateString(dateStr?: string): Date | null {
+  if (!dateStr) return null;
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Returns date information for a specific dayNumber (1-based index) of a stay.
+ */
+export function getDateForDay(startDateStr: string | undefined, dayNumber: number) {
+  if (dayNumber === 0) {
+    return {
+      dayNumber: 0,
+      fullDateString: '',
+      dateFormatted: 'Belum Dijadualkan',
+      dayName: '',
+      dayNameFull: '',
+      dayOfMonth: '',
+      monthShort: '',
+      year: 0,
+      displayLabel: '📋 Belum Dijadualkan',
+      secondaryLabel: ''
+    };
+  }
+
+  const baseDate = parseDateString(startDateStr);
+  if (!baseDate) {
+    return {
+      dayNumber,
+      fullDateString: '',
+      dateFormatted: `Hari ${dayNumber}`,
+      dayName: `Hari ${dayNumber}`,
+      dayNameFull: `Hari ${dayNumber}`,
+      dayOfMonth: `${dayNumber}`,
+      monthShort: '',
+      year: 0,
+      displayLabel: `Hari ${dayNumber}`,
+      secondaryLabel: ''
+    };
+  }
+
+  const targetDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + (dayNumber - 1));
+  const dayName = targetDate.toLocaleDateString('ms-MY', { weekday: 'short' });
+  const dayNameFull = targetDate.toLocaleDateString('ms-MY', { weekday: 'long' });
+  const dayOfMonth = targetDate.getDate().toString();
+  const monthShort = targetDate.toLocaleDateString('ms-MY', { month: 'short' });
+  const year = targetDate.getFullYear();
+
+  const dateFormatted = `${dayOfMonth} ${monthShort} ${year}`;
+  const displayLabel = `${dayOfMonth} ${monthShort} ${year}`;
+  const secondaryLabel = `Hari ${dayNumber} · ${dayName}`;
+
+  const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const d = String(targetDate.getDate()).padStart(2, '0');
+  const fullDateString = `${year}-${m}-${d}`;
+
+  return {
+    dayNumber,
+    fullDateString,
+    dateFormatted,
+    dayName,
+    dayNameFull,
+    dayOfMonth,
+    monthShort,
+    year,
+    displayLabel,
+    secondaryLabel
+  };
+}
+
+/**
+ * Converts a calendar date string (YYYY-MM-DD) into its 1-based dayNumber offset from startDate.
+ */
+export function getDayNumberFromDate(startDateStr: string | undefined, selectedDateStr: string): number {
+  if (!startDateStr || !selectedDateStr) return 1;
+  const start = parseDateString(startDateStr);
+  const selected = parseDateString(selectedDateStr);
+  if (!start || !selected) return 1;
+
+  const diffTime = selected.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(1, diffDays + 1);
+}
+
+export interface DayOption {
+  dayNumber: number;
+  label: string;
+  secondary: string;
+  dateFormatted: string;
+  dateIso: string;
+  contextIcon: string;
+  contextLabel: string;
+}
+
+/**
+ * Returns clean day options for date-first selectors in Activity Modal and other controls.
+ */
+export function getDayOptionsForStay(stay: Partial<Stay>): DayOption[] {
+  const duration = stay.durationDays || 3;
+  const options: DayOption[] = [
+    {
+      dayNumber: 0,
+      label: 'Belum Dijadualkan',
+      secondary: 'Perancangan / Backlog',
+      dateFormatted: 'Belum Dijadualkan',
+      dateIso: '',
+      contextIcon: '📋',
+      contextLabel: 'Belum Dijadualkan'
+    }
+  ];
+
+  for (let d = 1; d <= duration; d++) {
+    const dateInfo = getDateForDay(stay.startDate, d);
+    const context = getDayContextLabel(stay, d);
+
+    options.push({
+      dayNumber: d,
+      label: dateInfo.displayLabel,
+      secondary: `${dateInfo.secondaryLabel} (${context.label})`,
+      dateFormatted: dateInfo.dateFormatted,
+      dateIso: dateInfo.fullDateString,
+      contextIcon: context.icon,
+      contextLabel: context.label
+    });
+  }
+
+  return options;
+}
+
+/**
  * Generates contextual day badge label:
  * e.g.
  * Day 1 (Travel): "🚗 Perjalanan"
- * Day 2 (Stay Day 1): "🏠 Stay Day 1"
- * Day 3 (Stay Day 2): "🏠 Stay Day 2"
- * Day 5 (Return Travel): "🚗 Perjalanan Balik" (or "🚗 Perjalanan" if day 1)
+ * Day 2..N-1 (Stay): "🏠 Stay"
+ * Day N (Return Travel): "🚗 Perjalanan Balik"
  */
 export function getDayContextLabel(stay: Partial<Stay>, dayNumber: number): {
   type: DayType;
   label: string;
   shortLabel: string;
   icon: string;
-  stayDayIndex?: number;
 } {
   const type = getDayType(stay, dayNumber);
   const total = stay.durationDays || 1;
@@ -119,20 +253,11 @@ export function getDayContextLabel(stay: Partial<Stay>, dayNumber: number): {
     };
   }
 
-  // Calculate sequential stay day index (e.g. Stay Day 1, Stay Day 2)
-  let stayIndex = 0;
-  for (let d = 1; d <= dayNumber; d++) {
-    if (getDayType(stay, d) === 'stay_day') {
-      stayIndex++;
-    }
-  }
-
   return {
     type: 'stay_day',
-    label: `Stay Day ${stayIndex}`,
-    shortLabel: `Stay Day ${stayIndex}`,
-    icon: '🏠',
-    stayDayIndex: stayIndex
+    label: 'Stay',
+    shortLabel: 'Stay',
+    icon: '🏠'
   };
 }
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Stay, AgendaItem, TimeSlot, ActivityPriority } from '../types';
 import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
-import { getDayContextLabel, formatStaySummary } from '../utils/formatters';
+import { getDayContextLabel, formatStaySummary, getDateForDay } from '../utils/formatters';
 import {
   X,
   Sparkles,
@@ -332,6 +332,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
             {Array.from({ length: duration }).map((_, idx) => {
               const dayNum = idx + 1;
               const dayContext = getDayContextLabel(stay, dayNum);
+              const dateInfo = getDateForDay(stay.startDate, dayNum);
               const isTravel = dayContext.type === 'travel_day';
               const itemsInDay = getItemsForDay(dayNum);
               const dayWajibCount = itemsInDay.filter((i) => i.priority === 'must_do').length;
@@ -352,9 +353,9 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-base">{dayContext.icon}</span>
                       <div>
-                        <h4 className="text-xs font-black">{dayContext.label}</h4>
-                        <p className="text-[10px] text-stone-500">
-                          {isTravel ? 'Hari Perjalanan' : 'Hari Stay Utama'}
+                        <h4 className="text-xs font-black">{dateInfo.displayLabel}</h4>
+                        <p className="text-[10px] text-stone-500 font-medium">
+                          {dateInfo.secondaryLabel} · {dayContext.label}
                         </p>
                       </div>
                     </div>
@@ -412,11 +413,15 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                               onChange={(e) => handleItemMove(item.id, Number(e.target.value))}
                               className="text-[11px] font-semibold bg-amber-50/80 text-amber-900 border border-amber-200 rounded-md px-1.5 py-0.5"
                             >
-                              {Array.from({ length: duration }).map((_, dIdx) => (
-                                <option key={dIdx + 1} value={dIdx + 1}>
-                                  Hari {dIdx + 1}
-                                </option>
-                              ))}
+                              {Array.from({ length: duration }).map((_, dIdx) => {
+                                const optDayNum = dIdx + 1;
+                                const optDateInfo = getDateForDay(stay.startDate, optDayNum);
+                                return (
+                                  <option key={optDayNum} value={optDayNum}>
+                                    {optDateInfo.dayOfMonth} {optDateInfo.monthShort} ({optDateInfo.dayName})
+                                  </option>
+                                );
+                              })}
                               <option value={0}>📋 Belum Dijadualkan</option>
                             </select>
                           </div>

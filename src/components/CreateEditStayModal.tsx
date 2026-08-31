@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, MapPin, Wifi, Phone, KeyRound, Users, Plus, Trash2, Sparkles, Check, FileText, Car, Home, Save } from 'lucide-react';
 import { Stay, StayType, DayType } from '../types';
 import { STAY_TYPES, DAY_TYPE_CONFIG } from '../utils/constants';
-import { getDayType, getStaySummaryCounts, getDayContextLabel, toTitleCase, getLocalTodayDate, getLocalDateWithOffset } from '../utils/formatters';
+import { getDayType, getStaySummaryCounts, getDayContextLabel, toTitleCase, getLocalTodayDate, getLocalDateWithOffset, getDateForDay } from '../utils/formatters';
 
 // Helper to calculate difference in calendar days (inclusive of start & end day)
 function getDaysDifference(startDateStr: string, endDateStr: string): number {
@@ -470,9 +470,10 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                   {Array.from({ length: durationDays }).map((_, idx) => {
                     const dayNum = idx + 1;
                     const isTravel = (dayTypes[dayNum] || (dayNum === 1 || (dayNum === durationDays && durationDays >= 2) ? 'travel_day' : 'stay_day')) === 'travel_day';
+                    const dateInfo = startDate ? getDateForDay(startDate, dayNum) : null;
                     
                     // Compute readable label
-                    let label = isTravel ? 'Perjalanan' : 'Stay Day';
+                    let label = isTravel ? 'Perjalanan' : 'Stay';
                     if (isTravel && dayNum === durationDays && durationDays >= 2) {
                       label = 'Perjalanan Balik';
                     }
@@ -482,7 +483,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                         key={dayNum}
                         type="button"
                         onClick={() => toggleDayType(dayNum)}
-                        className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                           isTravel
                             ? 'bg-orange-50/90 border-orange-300 text-orange-950 hover:bg-orange-100/80'
                             : 'bg-amber-50/70 border-amber-300 text-amber-950 hover:bg-amber-100/70'
@@ -491,7 +492,9 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                         <div className="flex items-center gap-2">
                           <span className="text-base">{isTravel ? '🚗' : '🏠'}</span>
                           <div>
-                            <span className="text-xs font-bold block leading-tight">Hari {dayNum}</span>
+                            <span className="text-xs font-bold block leading-tight">
+                              {dateInfo ? `${dateInfo.dayOfMonth} ${dateInfo.monthShort} · ${dateInfo.dayName}` : `Hari ${dayNum}`}
+                            </span>
                             <span className="text-[10px] font-semibold text-stone-500">{label}</span>
                           </div>
                         </div>
@@ -508,7 +511,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                   })}
                 </div>
                 <p className="text-[10px] text-stone-500 italic">
-                  💡 Tip: Klik pada mana-mana hari di atas untuk menukar antara 🚗 Hari Perjalanan dan 🏠 Hari Stay mengikut kesesuaian anda.
+                  💡 Tip: Klik pada mana-mana tarikh di atas untuk menukar antara 🚗 Hari Perjalanan dan 🏠 Hari Stay mengikut kesesuaian anda.
                 </p>
               </div>
             </div>

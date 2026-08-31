@@ -167,7 +167,7 @@ export const DAY_TYPE_CONFIG = {
   },
   stay_day: {
     label: 'Hari Penginapan (Aktiviti)',
-    shortLabel: 'Stay Day',
+    shortLabel: 'Stay',
     icon: '🏠',
     badgeClass: 'bg-teal-100 text-teal-950 border-teal-200/80',
     cardBorder: 'border-slate-200 hover:border-teal-300',

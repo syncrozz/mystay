@@ -3,7 +3,7 @@ import { Stay, AgendaItem, TimeSlot, ActivityPriority } from '../types';
 import { useStay } from '../context/StayContext';
 import { useAuth } from '../context/AuthContext';
 import { PRIORITY_CONFIG, TIME_SLOTS } from '../utils/constants';
-import { getDayContextLabel, toTitleCase, parseActivityLines } from '../utils/formatters';
+import { getDayContextLabel, toTitleCase, parseActivityLines, getDateForDay } from '../utils/formatters';
 import { OrganisePlanModal } from './OrganisePlanModal';
 import {
   Plus,
@@ -524,7 +524,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   <div className="flex flex-wrap items-center justify-between md:justify-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                     {/* Day Assignment Dropdown */}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-slate-400 font-medium">Hari:</span>
+                      <span className="text-[11px] text-slate-400 font-medium">Tarikh:</span>
                       <select
                         value={item.dayNumber || 0}
                         onChange={(e) => handleAssignDay(item, Number(e.target.value))}
@@ -538,9 +538,10 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         {Array.from({ length: duration }).map((_, idx) => {
                           const dNum = idx + 1;
                           const ctx = getDayContextLabel(stay, dNum);
+                          const dInfo = getDateForDay(stay.startDate, dNum);
                           return (
                             <option key={dNum} value={dNum}>
-                              {ctx.icon} {ctx.label}
+                              {ctx.icon} {dInfo.displayLabel} ({dInfo.dayName})
                             </option>
                           );
                         })}

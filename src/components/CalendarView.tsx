@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Stay, AgendaItem, TimeSlot } from '../types';
 import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
-import { getDayContextLabel, formatStaySummary } from '../utils/formatters';
+import { getDayContextLabel, formatStaySummary, getDateForDay } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import {
   Calendar as CalendarIcon,
@@ -42,46 +42,7 @@ export function CalendarView({
 
   // Helper to compute date for day index (1-based)
   const getDayDateInfo = (dayIndex: number) => {
-    if (!stay.startDate) {
-      return {
-        dayNumber: dayIndex,
-        dateFormatted: `Hari ${dayIndex}`,
-        dayName: `Hari ${dayIndex}`,
-        dayOfMonth: `${dayIndex}`,
-        monthShort: ''
-      };
-    }
-
-    try {
-      const start = new Date(stay.startDate);
-      const targetDate = new Date(start);
-      targetDate.setDate(start.getDate() + (dayIndex - 1));
-
-      const dayName = targetDate.toLocaleDateString('ms-MY', { weekday: 'short' });
-      const dayOfMonth = targetDate.getDate().toString();
-      const monthShort = targetDate.toLocaleDateString('ms-MY', { month: 'short' });
-      const dateFormatted = targetDate.toLocaleDateString('ms-MY', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'short'
-      });
-
-      return {
-        dayNumber: dayIndex,
-        dateFormatted,
-        dayName,
-        dayOfMonth,
-        monthShort
-      };
-    } catch {
-      return {
-        dayNumber: dayIndex,
-        dateFormatted: `Hari ${dayIndex}`,
-        dayName: `Hari ${dayIndex}`,
-        dayOfMonth: `${dayIndex}`,
-        monthShort: ''
-      };
-    }
+    return getDateForDay(stay.startDate, dayIndex);
   };
 
   // Sort items for a day: morning -> midday -> afternoon -> evening -> flexible
@@ -392,16 +353,17 @@ export function CalendarView({
                   </span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-900">
-                      {activeDayContext.label} ({activeDayDateInfo.dateFormatted})
-                    </h3>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {activeDayDateInfo.dateFormatted}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <span className="text-xs font-bold text-teal-900 bg-teal-100/90 border border-teal-300/80 px-2 py-0.5 rounded-md">
+                      {activeDayDateInfo.secondaryLabel}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
+                      {activeDayContext.icon} {activeDayContext.label}
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    {activeDayContext.type === 'travel_day'
-                      ? 'Hari Perjalanan & Logistik'
-                      : 'Hari Penginapan Penuh'} · {activeDayDetailItems.length} agenda dirancang
-                  </p>
                 </div>
               </div>
 
