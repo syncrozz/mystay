@@ -158,9 +158,8 @@ function StayPlanApp() {
             <div className="pt-1">
               <button
                 onClick={handleOpenNewStay}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
                 <span>+ Rancang Perjalanan</span>
               </button>
             </div>
@@ -315,35 +314,8 @@ function StayPlanApp() {
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 sm:flex items-center gap-1.5 w-full md:w-auto shrink-0 pt-1 md:pt-0">
-              <button
-                id="hero-plan-btn"
-                type="button"
-                onClick={() => setActiveTab('plan')}
-                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'plan'
-                    ? 'bg-teal-600 text-white shadow-2xs'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
-              >
-                <span>Perancangan</span>
-              </button>
-
-              <button
-                id="hero-calendar-btn"
-                type="button"
-                onClick={() => setActiveTab('calendar')}
-                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'calendar'
-                    ? 'bg-teal-600 text-white shadow-2xs'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Kalendar</span>
-              </button>
-
+            {/* Secondary Actions: Edit & Kongsi */}
+            <div className="flex items-center gap-1.5 shrink-0 pt-1 md:pt-0">
               <button
                 id="hero-edit-stay-btn"
                 type="button"
