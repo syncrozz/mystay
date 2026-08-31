@@ -653,7 +653,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
             {filteredItems.map((item) => {
               const isWajib = item.priority === 'must_do';
               const isBacklog = !item.dayNumber || item.dayNumber === 0;
@@ -661,84 +661,88 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               return (
                 <div
                   key={item.id}
-                  className={`p-4 rounded-2xl border bg-white shadow-2xs hover:shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border bg-white shadow-2xs hover:shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 ${
                     item.isCompleted ? 'bg-slate-50/80 border-slate-200 opacity-75' : isWajib ? 'border-amber-300/80' : 'border-slate-200'
                   }`}
                 >
-                  {/* Left Column: Checkbox, Title, Details */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => toggleAgendaComplete(item.id)}
-                      className="mt-0.5 text-slate-400 hover:text-teal-600 transition-colors shrink-0 cursor-pointer"
-                    >
-                      {item.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      ) : (
-                        <Circle className="w-5 h-5" />
-                      )}
-                    </button>
+                  {/* Left Column on Desktop / Top Content on Mobile */}
+                  <div className="space-y-1 flex-1 min-w-0">
+                    {/* Row 1: Checkbox + Tajuk Aktiviti + Priority */}
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleAgendaComplete(item.id)}
+                          className="text-slate-400 hover:text-teal-600 transition-colors shrink-0 cursor-pointer"
+                          title={item.isCompleted ? 'Tanda belum selesai' : 'Tanda selesai'}
+                        >
+                          {item.isCompleted ? (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                          ) : (
+                            <Circle className="w-4.5 h-4.5 text-slate-300 hover:text-slate-400" />
+                          )}
+                        </button>
 
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`text-sm font-bold leading-snug ${
+                          className={`text-xs sm:text-sm font-bold leading-snug truncate ${
                             item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
                           }`}
                         >
                           {item.title}
                         </span>
-
-                        {/* Quick 1-Click Priority Toggle */}
-                        <button
-                          type="button"
-                          onClick={() => handleTogglePriority(item)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border transition-all cursor-pointer active:scale-95 ${
-                            isWajib
-                              ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                              : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                          }`}
-                          title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
-                        >
-                          <span>{isWajib ? '🫪 Wajib' : '🌿 Pilihan'}</span>
-                        </button>
                       </div>
 
-                      {item.description && (
-                        <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
-                      )}
+                      {/* Quick 1-Click Priority Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePriority(item)}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border transition-all shrink-0 cursor-pointer active:scale-95 ${
+                          isWajib
+                            ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                        title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
+                      >
+                        <span>{isWajib ? '★ Wajib' : '🌿 Pilihan'}</span>
+                      </button>
+                    </div>
 
-                      {/* Metadata Chips: Location, PIC */}
-                      <div className="flex flex-wrap items-center gap-3 pt-0.5 text-[11px] text-slate-500">
-                        {item.locationName && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            <span>{item.locationName}</span>
-                          </span>
+                    {/* Optional Location Row (Hanya muncul jika ada) */}
+                    {item.locationName && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 pl-7 -mt-0.5">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{item.locationName}</span>
+                      </div>
+                    )}
+
+                    {/* Optional Description / PIC */}
+                    {(item.description || item.personInCharge) && (
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 pl-7">
+                        {item.description && (
+                          <span className="line-clamp-1">{item.description}</span>
                         )}
-
                         {item.personInCharge && (
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3 text-slate-400" />
+                          <span className="inline-flex items-center gap-0.5 text-teal-900 font-medium">
+                            <User className="w-2.5 h-2.5 text-teal-600 shrink-0" />
                             <span>{item.personInCharge}</span>
                           </span>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Right Column: Day Assignment, Time Slot, Actions */}
-                  <div className="flex flex-wrap items-center justify-between md:justify-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    {/* Day Assignment Dropdown */}
+                  {/* Row 2: Tarikh + Slot Masa + Edit/Delete dalam satu baris */}
+                  <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto pl-7 md:pl-0 shrink-0">
+                    {/* Left side of Row 2: Tarikh & Slot Masa */}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-slate-400 font-medium">Tarikh:</span>
+                      {/* Tarikh Dropdown (Actual Date as indicator) */}
                       <select
                         value={item.dayNumber || 0}
                         onChange={(e) => handleAssignDay(item, Number(e.target.value))}
-                        className={`text-xs font-bold rounded-xl px-2.5 py-1.5 border transition-all cursor-pointer ${
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-all cursor-pointer shadow-2xs ${
                           isBacklog
                             ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                            : 'bg-teal-50 text-teal-950 border-teal-300 font-black'
+                            : 'bg-teal-50 text-teal-950 border-teal-200 font-black'
                         }`}
                       >
                         <option value={0}>📋 Belum Set</option>
@@ -748,39 +752,37 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                           const dInfo = getDateForDay(stay.startDate, dNum);
                           return (
                             <option key={dNum} value={dNum}>
-                              {ctx.icon} {dInfo.displayLabel}
+                              {ctx.icon} {dInfo.dateFormatted}
                             </option>
                           );
                         })}
                       </select>
+
+                      <span className="text-slate-300 font-bold text-xs select-none">·</span>
+
+                      {/* Time Slot Dropdown */}
+                      <select
+                        value={item.timeSlot || 'flexible'}
+                        onChange={(e) => handleAssignSlot(item, e.target.value as TimeSlot)}
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-all cursor-pointer shadow-2xs ${
+                          TIME_SLOTS[item.timeSlot || 'flexible']?.selectClass || 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <option value="morning" className="bg-amber-50 text-amber-950 font-bold">🌅 Pagi</option>
+                        <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tghri</option>
+                        <option value="afternoon" className="bg-sky-50 text-sky-950 font-bold">🌤️ Petang</option>
+                        <option value="evening" className="bg-purple-50 text-purple-950 font-bold">🌙 Malam</option>
+                        <option value="flexible" className="bg-orange-50 text-orange-950 font-bold">🍃 Fleksibel</option>
+                      </select>
                     </div>
 
-                    {/* Time Slot Dropdown (if assigned) */}
-                    {!isBacklog && (
-                      <div className="flex items-center gap-1.5">
-                        <select
-                          value={item.timeSlot || 'flexible'}
-                          onChange={(e) => handleAssignSlot(item, e.target.value as TimeSlot)}
-                          className={`text-xs font-bold rounded-xl px-2.5 py-1.5 border transition-all cursor-pointer shadow-2xs ${
-                            TIME_SLOTS[item.timeSlot || 'flexible']?.selectClass || 'bg-slate-50 border-slate-200 text-slate-700'
-                          }`}
-                        >
-                          <option value="morning" className="bg-amber-50 text-amber-950 font-bold">🌅 Pagi</option>
-                          <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tghri</option>
-                          <option value="afternoon" className="bg-sky-50 text-sky-950 font-bold">🌤️ Petang</option>
-                          <option value="evening" className="bg-purple-50 text-purple-950 font-bold">🌙 Malam</option>
-                          <option value="flexible" className="bg-orange-50 text-orange-950 font-bold">🍃 Fleksibel</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Edit & Delete Buttons */}
-                    <div className="flex items-center gap-1 ml-1">
+                    {/* Right side of Row 2: Edit & Delete Buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
                       {onEditItem && (
                         <button
                           type="button"
                           onClick={() => handleEditClick(item)}
-                          className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                           title="Edit Maklumat"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -790,7 +792,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDeleteClick(item.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Padam"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

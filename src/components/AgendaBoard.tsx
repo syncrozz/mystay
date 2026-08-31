@@ -362,7 +362,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 rounded-xl border transition-all ${
+                      className={`p-3 sm:p-3.5 rounded-xl border transition-all ${
                         isWajib ? 'border-l-4 border-l-teal-600 border-teal-200' : 'border-slate-200'
                       } ${
                         item.isCompleted
@@ -370,27 +370,27 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           : 'bg-white hover:shadow-2xs'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2.5">
                         {/* Checkbox and Content */}
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex items-start gap-2.5 flex-1 min-w-0">
                           <button
                             type="button"
                             onClick={() => onToggleComplete(item.id)}
-                            className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border transition-all shrink-0 cursor-pointer ${
+                            className={`mt-0.5 w-4.5 h-4.5 rounded-md flex items-center justify-center border transition-all shrink-0 cursor-pointer ${
                               item.isCompleted
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                 : 'border-slate-300 bg-white hover:border-teal-500'
                             }`}
                             title={item.isCompleted ? 'Tanda belum selesai' : 'Tanda selesai'}
                           >
-                            {item.isCompleted && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            {item.isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
                           </button>
 
-                          <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="space-y-1 flex-1 min-w-0">
                             {/* Title & Specific Time Row */}
                             <div className="flex flex-wrap items-center gap-2">
                               <h4
-                                className={`text-sm sm:text-base font-bold leading-snug ${
+                                className={`text-xs sm:text-sm font-bold leading-snug ${
                                   item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
                                 }`}
                               >
@@ -399,19 +399,19 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
 
                               {/* Specific Time */}
                               {item.timeSpecific && (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-teal-950 bg-teal-100/70 border border-teal-200/80 px-2 py-0.5 rounded-md">
-                                  <Clock className="w-3 h-3 text-teal-700" />
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-950 bg-teal-100/70 border border-teal-200/80 px-1.5 py-0.2 rounded-md">
+                                  <Clock className="w-2.5 h-2.5 text-teal-700" />
                                   {item.timeSpecific}
                                 </span>
                               )}
                             </div>
 
                             {/* Secondary Metadata Chips & Priority Toggle */}
-                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                               {/* Day/Date badge if in all dates view */}
                               {selectedDay === 0 && (
-                                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-50 text-teal-950 border border-teal-200">
-                                  📅 {getDateForDay(stay.startDate, item.dayNumber).displayLabel}
+                                <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-md bg-teal-50 text-teal-950 border border-teal-200">
+                                  📅 {getDateForDay(stay.startDate, item.dayNumber).dateFormatted}
                                 </span>
                               )}
 
@@ -419,19 +419,19 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleTogglePriority(item)}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] sm:text-[11px] rounded-md border font-extrabold transition-all cursor-pointer active:scale-95 ${
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md border font-black transition-all cursor-pointer active:scale-95 ${
                                   isWajib
-                                    ? 'bg-teal-100 text-teal-950 border-teal-300 hover:bg-teal-200'
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
                                     : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                                 }`}
                                 title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
                               >
-                                <span>{isWajib ? '🫪 Wajib' : '🌿 Pilihan'}</span>
+                                <span>{isWajib ? '★ Wajib' : '🌿 Pilihan'}</span>
                               </button>
 
                               {/* Location */}
                               {item.locationName && (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 px-1.5 py-0.2 rounded-md">
                                   <MapPin className="w-3 h-3 text-slate-400" />
                                   {item.locationName}
                                 </span>
@@ -439,8 +439,8 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
 
                               {/* PIC */}
                               {item.personInCharge && (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-950 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md">
-                                  <User className="w-3 h-3 text-teal-600" />
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-950 bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded-md">
+                                  <User className="w-2.5 h-2.5 text-teal-600" />
                                   PIC: {item.personInCharge}
                                 </span>
                               )}
@@ -456,12 +456,12 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                         </div>
 
                         {/* Quick Day Switcher & Actions */}
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           {/* Move to another day dropdown */}
                           <select
                             value={item.dayNumber || 0}
                             onChange={(e) => handleMoveDay(item, Number(e.target.value))}
-                            className="text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
+                            className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs"
                             title="Tukar tarikh agenda atau kembalikan ke Belum Set"
                           >
                             {Array.from({ length: daysCount }).map((_, dIdx) => {
@@ -470,7 +470,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                               const dCtx = getDayContextLabel(stay, dNum);
                               return (
                                 <option key={dNum} value={dNum}>
-                                  {dCtx.icon} {dInfo.displayLabel}
+                                  {dCtx.icon} {dInfo.dateFormatted}
                                 </option>
                               );
                             })}
@@ -480,7 +480,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           <button
                             type="button"
                             onClick={() => onEditItem(item)}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                             title="Edit aktiviti"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -489,7 +489,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           <button
                             type="button"
                             onClick={() => onDeleteItem(item.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Padam aktiviti"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
