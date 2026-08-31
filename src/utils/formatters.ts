@@ -238,14 +238,46 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
 }
 
 /**
- * Automatically converts text to Title Case.
- * Capitalizes the first letter of every word (including after spaces, hyphens, slashes, or parentheses).
- * Preserves trailing and intermediate whitespace during typing.
+ * Automatically converts text to Title Case in a non-destructive manner:
+ * - Capitalizes the first letter of each word.
+ * - If user intentionally includes uppercase characters (e.g. acronyms like DIY, KFC, KPMBP,
+ *   or camelCase like McD, iPhone, eWallet), preserves existing capitalization.
  */
 export function toTitleCase(str: string): string {
   if (!str) return '';
 
   return str.replace(/[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]+/g, (word) => {
-    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    // If the word contains uppercase characters after the first character, preserve as-is (e.g. DIY, KFC, iPhone, McD)
+    if (word.slice(1) !== word.slice(1).toLowerCase()) {
+      return word;
+    }
+    // Otherwise capitalize the first letter and keep the rest
+    return word.charAt(0).toUpperCase() + word.slice(1);
   });
+}
+
+/**
+ * Helper function to parse single-line or multiline paste text into clean activity titles.
+ * - Splits multiline input into individual lines
+ * - Trims whitespace and ignores blank lines
+ * - Strips numbered list markers (e.g. 1., 2), 3 -) and bullets (e.g. -, *, •, –, —)
+ * - Converts each title to Title Case
+ */
+export function parseActivityLines(rawText: string): string[] {
+  if (!rawText) return [];
+  const lines = rawText.split(/\r?\n/);
+  const results: string[] = [];
+
+  for (const line of lines) {
+    const cleaned = line
+      .trim()
+      .replace(/^(\d+[\.\)]\s*|[-*•–—]\s*)+/, '')
+      .trim();
+
+    if (cleaned) {
+      results.push(toTitleCase(cleaned));
+    }
+  }
+
+  return results;
 }

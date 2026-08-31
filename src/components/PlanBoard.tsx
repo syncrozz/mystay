@@ -3,7 +3,7 @@ import { Stay, AgendaItem, TimeSlot, ActivityPriority } from '../types';
 import { useStay } from '../context/StayContext';
 import { useAuth } from '../context/AuthContext';
 import { PRIORITY_CONFIG, TIME_SLOTS } from '../utils/constants';
-import { getDayContextLabel, toTitleCase } from '../utils/formatters';
+import { getDayContextLabel, toTitleCase, parseActivityLines } from '../utils/formatters';
 import { OrganisePlanModal } from './OrganisePlanModal';
 import {
   Plus,
@@ -77,32 +77,53 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const backlogCount = items.filter((i) => !i.dayNumber || i.dayNumber === 0).length;
   const scheduledCount = totalItems - backlogCount;
 
-  // Handle Frictionless Quick Add (Instant Optimistic, Zero-Delay)
-  const handleQuickAdd = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const clean = quickTitle.trim();
-    if (!clean) return;
+  // Helper to add parsed activities via existing addAgendaItem flow with single requireAdmin auth
+  const addActivitiesBatch = (titles: string[]) => {
+    if (titles.length === 0) return;
 
     requireAdmin(() => {
       // Clear input immediately so user can type next idea without delay
       setQuickTitle('');
-      
-      // Add item optimistically in background
-      addAgendaItem({
-        stayId: stay.id,
-        title: toTitleCase(clean),
-        dayNumber: 0, // 0 = Belum dijadualkan / Backlog Pool
-        timeSlot: 'flexible',
-        priority: quickPriority,
-        isCompleted: false,
-        locationName: '',
-        personInCharge: '',
-        description: '',
-        notes: ''
-      }).catch((err) => {
-        console.error('Failed adding plan item:', err);
+
+      // Add item(s) using existing addAgendaItem flow
+      titles.forEach((title) => {
+        addAgendaItem({
+          stayId: stay.id,
+          title,
+          dayNumber: 0, // 0 = Belum dijadualkan / Backlog Pool
+          timeSlot: 'flexible',
+          priority: quickPriority,
+          isCompleted: false,
+          locationName: '',
+          personInCharge: '',
+          description: '',
+          notes: ''
+        }).catch((err) => {
+          console.error('Failed adding plan item:', err);
+        });
       });
     }, 'Sila masukkan PIN Admin untuk menambah aktiviti.');
+  };
+
+  // Handle Frictionless Quick Add (Single-line submit & form submit fallback)
+  const handleQuickAdd = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const parsed = parseActivityLines(quickTitle);
+    if (parsed.length === 0) return;
+
+    addActivitiesBatch(parsed);
+  };
+
+  // Handle Multiline Paste directly on the quick-add input
+  const handleQuickPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasteText = e.clipboardData?.getData('text');
+    if (pasteText && (pasteText.includes('\n') || pasteText.includes('\r'))) {
+      const parsed = parseActivityLines(pasteText);
+      if (parsed.length > 0) {
+        e.preventDefault();
+        addActivitiesBatch(parsed);
+      }
+    }
   };
 
   // Add idea directly from quick Malaysian stay ideas chip (Admin Gated, Instant)
@@ -244,6 +265,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   type="text"
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(toTitleCase(e.target.value))}
+                  onPaste={handleQuickPaste}
                   placeholder="Cth: Makan Nasi Dagang / Pergi Pantai..."
                   className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all animate-flash-5s"
                 />
@@ -290,6 +312,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   type="text"
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(toTitleCase(e.target.value))}
+                  onPaste={handleQuickPaste}
                   placeholder="Tambah aktiviti dirancang..."
                   className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all animate-flash-5s"
                 />
