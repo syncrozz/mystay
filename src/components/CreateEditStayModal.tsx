@@ -493,7 +493,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                           <span className="text-base">{isTravel ? '🚗' : '🏠'}</span>
                           <div>
                             <span className="text-xs font-bold block leading-tight">
-                              {dateInfo ? `${dateInfo.dayOfMonth} ${dateInfo.monthShort} · ${dateInfo.dayName}` : `Hari ${dayNum}`}
+                              {dateInfo ? `${dateInfo.dayOfMonth} ${dateInfo.monthShort}` : `Hari ${dayNum}`}
                             </span>
                             <span className="text-[10px] font-semibold text-stone-500">{label}</span>
                           </div>

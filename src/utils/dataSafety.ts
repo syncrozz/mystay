@@ -354,7 +354,7 @@ export function auditDuplicateRecords(
       const duplicates = items.slice(1);
       const stay = stayMap.get(primary.stayId);
       const stayTitle = stay?.title || 'Rancangan';
-      const dayLabel = primary.dayNumber === 0 ? 'Pool Perancangan (Belum Dijadualkan)' : `Hari ${primary.dayNumber}`;
+      const dayLabel = primary.dayNumber === 0 ? 'Pool Perancangan (Belum Set)' : `Hari ${primary.dayNumber}`;
 
       groups.push({
         groupId: `dup_agenda_${key}`,

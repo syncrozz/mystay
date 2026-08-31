@@ -403,7 +403,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                               }`}
                             >
                               <option value="morning">🌅 Pagi</option>
-                              <option value="midday">☀️ Tengah Hari</option>
+                              <option value="midday">☀️ Tghri</option>
                               <option value="afternoon">🌤️ Petang</option>
                               <option value="evening">🌙 Malam</option>
                               <option value="flexible">🍃 Fleksibel</option>
@@ -420,11 +420,11 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                                 const optDateInfo = getDateForDay(stay.startDate, optDayNum);
                                 return (
                                   <option key={optDayNum} value={optDayNum}>
-                                    {optDateInfo.dayOfMonth} {optDateInfo.monthShort} ({optDateInfo.dayName})
+                                    {optDateInfo.dayOfMonth} {optDateInfo.monthShort}
                                   </option>
                                 );
                               })}
-                              <option value={0}>📋 Belum Dijadualkan</option>
+                              <option value={0}>📋 Belum Set</option>
                             </select>
                           </div>
                         </div>
@@ -443,13 +443,13 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
               );
             })}
 
-            {/* Backlog Column: 📋 Belum Dijadualkan */}
+            {/* Backlog Column: 📋 Belum Set */}
             <div className="rounded-2xl border border-stone-300 bg-stone-100/60 flex flex-col overflow-hidden shadow-2xs">
               <div className="p-3.5 border-b border-stone-200 bg-stone-200/80 text-stone-900 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base">📋</span>
                   <div>
-                    <h4 className="text-xs font-black">Belum Dijadualkan</h4>
+                    <h4 className="text-xs font-black">Belum Set</h4>
                     <p className="text-[10px] text-stone-500">Pilihan santai / simpanan</p>
                   </div>
                 </div>
@@ -478,7 +478,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                         onChange={(e) => handleItemMove(item.id, Number(e.target.value))}
                         className="text-[11px] font-bold bg-amber-600 text-white rounded-md px-2 py-0.5 hover:bg-amber-700"
                       >
-                        <option value={0}>Belum Dijadualkan</option>
+                        <option value={0}>Belum Set</option>
                         {Array.from({ length: duration }).map((_, dIdx) => (
                           <option key={dIdx + 1} value={dIdx + 1}>
                             Hari {dIdx + 1}
@@ -505,7 +505,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
         {/* Modal Footer Controls */}
         <div className="px-6 py-4 border-t border-stone-200 bg-stone-50 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <p className="text-xs text-stone-500 text-center sm:text-left">
-            💡 Anda sentiasa boleh memindah, menukar waktu, atau membiarkan aktiviti dalam senarai Belum Dijadualkan kemudian.
+            💡 Anda sentiasa boleh memindah, menukar waktu, atau membiarkan aktiviti dalam senarai Belum Set kemudian.
           </p>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">

@@ -564,7 +564,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                     className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-slate-800 hover:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer shadow-2xs"
                   >
                     <option value="all">Semua Tarikh ({items.length})</option>
-                    <option value="0">📋 Belum Dijadualkan ({backlogCount})</option>
+                    <option value="0">📋 Belum Set ({backlogCount})</option>
                     {Array.from({ length: duration }).map((_, idx) => {
                       const dNum = idx + 1;
                       const dCtx = getDayContextLabel(stay, dNum);
@@ -572,7 +572,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       const dayItemCount = items.filter((i) => i.dayNumber === dNum).length;
                       return (
                         <option key={dNum} value={dNum.toString()}>
-                          {dCtx.icon} {dInfo.displayLabel} ({dInfo.dayName}) · {dayItemCount} aktiviti
+                          {dCtx.icon} {dInfo.displayLabel} · {dayItemCount} aktiviti
                         </option>
                       );
                     })}
@@ -741,14 +741,14 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                             : 'bg-teal-50 text-teal-950 border-teal-300 font-black'
                         }`}
                       >
-                        <option value={0}>📋 Belum Dijadualkan</option>
+                        <option value={0}>📋 Belum Set</option>
                         {Array.from({ length: duration }).map((_, idx) => {
                           const dNum = idx + 1;
                           const ctx = getDayContextLabel(stay, dNum);
                           const dInfo = getDateForDay(stay.startDate, dNum);
                           return (
                             <option key={dNum} value={dNum}>
-                              {ctx.icon} {dInfo.displayLabel} ({dInfo.dayName})
+                              {ctx.icon} {dInfo.displayLabel}
                             </option>
                           );
                         })}
@@ -766,7 +766,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                           }`}
                         >
                           <option value="morning" className="bg-amber-50 text-amber-950 font-bold">🌅 Pagi</option>
-                          <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tengah Hari</option>
+                          <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tghri</option>
                           <option value="afternoon" className="bg-sky-50 text-sky-950 font-bold">🌤️ Petang</option>
                           <option value="evening" className="bg-purple-50 text-purple-950 font-bold">🌙 Malam</option>
                           <option value="flexible" className="bg-orange-50 text-orange-950 font-bold">🍃 Fleksibel</option>

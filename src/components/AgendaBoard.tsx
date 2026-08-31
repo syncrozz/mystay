@@ -117,7 +117,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                   <span className="p-1 rounded-md bg-amber-500 text-white text-xs">📋</span>
                   <div>
                     <h3 className="text-xs sm:text-sm font-black text-amber-950">
-                      Belum Dijadualkan ({backlogItems.length})
+                      Belum Set ({backlogItems.length})
                     </h3>
                     <p className="text-[11px] text-amber-800">
                       Klik &quot;+ {targetDateInfo.dayOfMonth} {targetDateInfo.monthShort}&quot; untuk masukkan aktiviti ke dalam jadual {targetDateInfo.dateFormatted}.
@@ -213,7 +213,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                   title={`${dateInfo.dateFormatted} (${dayContext.label})`}
                 >
                   <span>{dayContext.icon}</span>
-                  <span>{dateInfo.dayOfMonth} {dateInfo.monthShort} · {dateInfo.dayName}</span>
+                  <span>{dateInfo.dayOfMonth} {dateInfo.monthShort}</span>
                   {mustCount > 0 && (
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
@@ -462,7 +462,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                             value={item.dayNumber || 0}
                             onChange={(e) => handleMoveDay(item, Number(e.target.value))}
                             className="text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
-                            title="Tukar tarikh agenda atau kembalikan ke Belum Dijadualkan"
+                            title="Tukar tarikh agenda atau kembalikan ke Belum Set"
                           >
                             {Array.from({ length: daysCount }).map((_, dIdx) => {
                               const dNum = dIdx + 1;
@@ -470,11 +470,11 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                               const dCtx = getDayContextLabel(stay, dNum);
                               return (
                                 <option key={dNum} value={dNum}>
-                                  {dCtx.icon} {dInfo.displayLabel} ({dInfo.dayName})
+                                  {dCtx.icon} {dInfo.displayLabel}
                                 </option>
                               );
                             })}
-                            <option value={0}>📋 Belum Dijadualkan</option>
+                            <option value={0}>📋 Belum Set</option>
                           </select>
 
                           <button

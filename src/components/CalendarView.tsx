@@ -96,7 +96,7 @@ export function CalendarView({
               onClick={onNavigateToPlan}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 rounded-xl transition-all cursor-pointer"
             >
-              <span>Belum Dijadualkan ({backlogItems.length})</span>
+              <span>Belum Set ({backlogItems.length})</span>
             </button>
           )}
           <button

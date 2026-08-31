@@ -148,7 +148,7 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
                   {dayOptions.map((opt) => (
                     <option key={opt.dayNumber} value={opt.dayNumber}>
                       {opt.dayNumber === 0
-                        ? '📋 Belum Dijadualkan (Perancangan)'
+                        ? '📋 Belum Set (Perancangan)'
                         : `📅 ${opt.label} — ${opt.secondary}`}
                     </option>
                   ))}

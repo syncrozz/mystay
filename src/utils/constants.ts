@@ -137,7 +137,7 @@ export const TIME_SLOTS: Record<TimeSlot, {
     headerButton: 'text-amber-950 bg-amber-200/80 hover:bg-amber-300'
   },
   midday: {
-    label: 'Tengah Hari',
+    label: 'Tghri',
     icon: '☀️',
     bgBadge: 'bg-rose-100/90 text-rose-950 border-rose-300 font-bold',
     activeButton: 'bg-rose-100 border-rose-400 text-rose-950 ring-2 ring-rose-300/80 shadow-xs font-bold',

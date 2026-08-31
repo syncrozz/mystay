@@ -105,13 +105,13 @@ export function getDateForDay(startDateStr: string | undefined, dayNumber: numbe
     return {
       dayNumber: 0,
       fullDateString: '',
-      dateFormatted: 'Belum Dijadualkan',
+      dateFormatted: 'Belum Set',
       dayName: '',
       dayNameFull: '',
       dayOfMonth: '',
       monthShort: '',
       year: 0,
-      displayLabel: '📋 Belum Dijadualkan',
+      displayLabel: '📋 Belum Set',
       secondaryLabel: ''
     };
   }
@@ -139,9 +139,9 @@ export function getDateForDay(startDateStr: string | undefined, dayNumber: numbe
   const monthShort = targetDate.toLocaleDateString('ms-MY', { month: 'short' });
   const year = targetDate.getFullYear();
 
-  const dateFormatted = `${dayOfMonth} ${monthShort} ${year}`;
-  const displayLabel = `${dayOfMonth} ${monthShort} ${year}`;
-  const secondaryLabel = `Hari ${dayNumber} · ${dayName}`;
+  const dateFormatted = `${dayOfMonth} ${monthShort}`;
+  const displayLabel = `${dayOfMonth} ${monthShort}`;
+  const secondaryLabel = `Hari ${dayNumber}`;
 
   const m = String(targetDate.getMonth() + 1).padStart(2, '0');
   const d = String(targetDate.getDate()).padStart(2, '0');
@@ -193,12 +193,12 @@ export function getDayOptionsForStay(stay: Partial<Stay>): DayOption[] {
   const options: DayOption[] = [
     {
       dayNumber: 0,
-      label: 'Belum Dijadualkan',
+      label: 'Belum Set',
       secondary: 'Perancangan / Backlog',
-      dateFormatted: 'Belum Dijadualkan',
+      dateFormatted: 'Belum Set',
       dateIso: '',
       contextIcon: '📋',
-      contextLabel: 'Belum Dijadualkan'
+      contextLabel: 'Belum Set'
     }
   ];
 
