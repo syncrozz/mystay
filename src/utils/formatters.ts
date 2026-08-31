@@ -198,7 +198,7 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
 
       slotItems.forEach((item) => {
         const priorityTag = item.priority === 'must_do' 
-          ? '⭐ [WAJIB]' 
+          ? '🫪 [WAJIB]' 
           : item.priority === 'food' 
           ? '🍽️ [MAKAN]' 
           : item.priority === 'rest' 

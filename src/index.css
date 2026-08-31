@@ -26,6 +26,32 @@ html, body {
   animation: shake 0.4s ease-in-out;
 }
 
+@keyframes flash-5s {
+  0%, 75%, 100% {
+    background-color: rgb(248 250 252);
+    border-color: rgb(226 232 240);
+    box-shadow: 0 0 0 0 rgba(13, 148, 136, 0);
+  }
+  85%, 95% {
+    background-color: rgb(240 253 250);
+    border-color: rgb(20 184 166);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.35);
+  }
+  90% {
+    background-color: rgb(204 251 241);
+    border-color: rgb(13, 148, 136);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.5);
+  }
+}
+
+.animate-flash-5s {
+  animation: flash-5s 5s ease-in-out infinite;
+}
+
+.animate-flash-5s:focus {
+  animation: none;
+}
+
 @media print {
   header,
   footer,

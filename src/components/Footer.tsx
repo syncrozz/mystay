@@ -27,7 +27,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSupport }) => {
               onClick={onOpenSupport}
               className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
-              Bantuan & Sokongan
+              Support ♥️
             </button>
           </div>
         </div>

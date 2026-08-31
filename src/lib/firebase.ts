@@ -23,7 +23,7 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Initialize Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore with IndexedDB persistent local cache & multi-tab coordination
+// Initialize Firestore with IndexedDB persistent local cache & auto-detecting long polling
 let firestoreInstance: Firestore;
 try {
   const customDbId =
@@ -34,6 +34,7 @@ try {
   firestoreInstance = initializeFirestore(
     app,
     {
+      experimentalAutoDetectLongPolling: true,
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
       })
@@ -41,11 +42,26 @@ try {
     customDbId
   );
 } catch {
-  // Graceful fallback if instance already exists
-  firestoreInstance =
-    firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
-      ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-      : getFirestore(app);
+  try {
+    const customDbId =
+      firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+        ? firebaseConfig.firestoreDatabaseId
+        : undefined;
+
+    firestoreInstance = initializeFirestore(
+      app,
+      {
+        experimentalAutoDetectLongPolling: true
+      },
+      customDbId
+    );
+  } catch {
+    // Graceful fallback if instance already exists
+    firestoreInstance =
+      firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+        ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+        : getFirestore(app);
+  }
 }
 
 export const db = firestoreInstance;

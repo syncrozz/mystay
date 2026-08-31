@@ -304,7 +304,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
               📝 {totalPlanned} Perkara Dirancang
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-900">
-              ⭐ {wajibCount} Wajib
+              🫪 {wajibCount} Wajib
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-emerald-900">
               🌿 {optionalCount} Pilihan
@@ -387,7 +387,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                                 isWajib ? 'bg-amber-100 text-amber-900' : 'bg-emerald-50 text-emerald-800'
                               }`}
                             >
-                              {isWajib ? '⭐ Wajib' : '🌿 Pilihan'}
+                              {isWajib ? '🫪 Wajib' : '🌿 Pilihan'}
                             </span>
                           </div>
 
@@ -460,7 +460,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                     <div className="flex items-start justify-between gap-1.5">
                       <span className="font-bold text-stone-800 line-clamp-2">{item.title}</span>
                       <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-stone-100 text-stone-600">
-                        {item.priority === 'must_do' ? '⭐ Wajib' : '🌿 Pilihan'}
+                        {item.priority === 'must_do' ? '🫪 Wajib' : '🌿 Pilihan'}
                       </span>
                     </div>
 

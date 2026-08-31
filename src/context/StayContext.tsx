@@ -486,10 +486,15 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSyncError(null);
       },
       (error) => {
-        console.error('Firestore stays subscription error:', error);
+        console.warn('Firestore stays subscription notice:', error);
         staysListenerActiveRef.current = false;
-        setSyncError(error.message || 'Ralat sambungan Firestore');
-        setSyncStatus('ERROR');
+        if (error.code === 'unavailable' || !navigator.onLine) {
+          setSyncStatus('OFFLINE');
+          setSyncError('Beroperasi dalam mod luar talian (Offline).');
+        } else {
+          setSyncError(error.message || 'Ralat sambungan Firestore');
+          setSyncStatus('ERROR');
+        }
         setIsLoadingStays(false);
       }
     );
@@ -611,31 +616,8 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatedAt: now
       };
 
-      const starterChecklist: ChecklistItem[] = [
-        { id: `chk_${now}_1`, stayId, userId: currentUid, category: 'essentials', text: 'Pakaian & pakaian solat', isCompleted: false, createdAt: now, updatedAt: now },
-        { id: `chk_${now}_2`, stayId, userId: currentUid, category: 'essentials', text: 'Pengecas telefon & ubatan harian', isCompleted: false, createdAt: now, updatedAt: now },
-        { id: `chk_${now}_3`, stayId, userId: currentUid, category: 'food_gifts', text: 'Buah tangan / bekalan makanan', isCompleted: false, createdAt: now, updatedAt: now }
-      ];
-
-      const starterAgenda: AgendaItem = {
-        id: `agn_${now}_1`,
-        stayId,
-        userId: currentUid,
-        dayNumber: 1,
-        timeSlot: 'afternoon',
-        timeSpecific: '03:00 PM',
-        title: 'Ketibaan & Daftar Masuk',
-        description: 'Tiba di lokasi, susun barang dan rehat santai.',
-        priority: 'must_do',
-        isCompleted: false,
-        createdAt: now,
-        updatedAt: now
-      };
-
-      // Optimistic state update
+      // Optimistic state update: Create stay with pure clean state (no auto-seeded agenda/checklist)
       setUserStays((prev) => [newStay, ...prev]);
-      setUserChecklistItems((prev) => [...prev, ...starterChecklist]);
-      setUserAgendaItems((prev) => [...prev, starterAgenda]);
       setActiveStayIdState(stayId);
 
       try {
@@ -643,19 +625,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsSyncing(true);
 
         const stayDocRef = doc(db, 'stays', stayId);
-        const batch = writeBatch(db);
-
-        batch.set(stayDocRef, sanitizeForFirestore<Stay>(newStay));
-
-        starterChecklist.forEach((item) => {
-          const itemRef = doc(collection(db, 'stays', stayId, 'checklistItems'), item.id);
-          batch.set(itemRef, sanitizeForFirestore<ChecklistItem>(item));
-        });
-
-        const agendaRef = doc(collection(db, 'stays', stayId, 'agendaItems'), starterAgenda.id);
-        batch.set(agendaRef, sanitizeForFirestore<AgendaItem>(starterAgenda));
-
-        await batch.commit();
+        await setDoc(stayDocRef, sanitizeForFirestore<Stay>(newStay));
 
         setSyncStatus('SYNCED');
         setLastSyncTime(Date.now());

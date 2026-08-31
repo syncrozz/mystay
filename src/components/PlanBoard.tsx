@@ -245,7 +245,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(toTitleCase(e.target.value))}
                   placeholder="Cth: Makan Nasi Dagang / Pergi Pantai..."
-                  className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all animate-flash-5s"
                 />
                 <button
                   type="submit"
@@ -291,7 +291,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(toTitleCase(e.target.value))}
                   placeholder="Tambah aktiviti dirancang..."
-                  className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all animate-flash-5s"
                 />
               </div>
 
@@ -306,7 +306,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    ⭐ Wajib
+                    🫪 Wajib
                   </button>
                   <button
                     type="button"
@@ -382,7 +382,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                     : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                ⭐ Wajib ({wajibCount})
+                🫪 Wajib ({wajibCount})
               </button>
 
               <button
@@ -470,7 +470,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                           }`}
                           title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
                         >
-                          <span>{isWajib ? '⭐ Wajib' : '🌿 Pilihan'}</span>
+                          <span>{isWajib ? '🫪 Wajib' : '🌿 Pilihan'}</span>
                         </button>
                       </div>
 

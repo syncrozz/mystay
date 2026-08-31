@@ -152,7 +152,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                   className="bg-white border border-teal-200/90 rounded-xl p-2.5 shadow-2xs flex items-center justify-between gap-3 text-xs min-w-[220px] max-w-sm"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs">{isWajib ? '⭐' : '🌿'}</span>
+                    <span className="text-xs">{isWajib ? '🫪' : '🌿'}</span>
                     <span className="font-bold text-slate-900 truncate">{bItem.title}</span>
                   </div>
 
@@ -215,7 +215,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           : 'bg-teal-200 text-teal-950'
                       }`}
                     >
-                      ⭐ {mustCount}
+                      🫪 {mustCount}
                     </span>
                   )}
                 </button>
@@ -407,7 +407,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                                 }`}
                                 title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
                               >
-                                <span>{isWajib ? '⭐ Wajib' : '🌿 Pilihan'}</span>
+                                <span>{isWajib ? '🫪 Wajib' : '🌿 Pilihan'}</span>
                               </button>
 
                               {/* Location */}

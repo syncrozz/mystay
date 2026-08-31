@@ -346,8 +346,8 @@ function StayPlanApp() {
             onClick={() => setActiveTab('plan')}
             className={`pb-2 px-3 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'plan'
-                ? 'border-teal-600 text-teal-950 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-red-600 text-red-600 font-black'
+                : 'border-transparent text-red-600/75 hover:text-red-600'
             }`}
           >
             <span>Perancangan ({activeAgendaItems.length})</span>
@@ -358,8 +358,8 @@ function StayPlanApp() {
             onClick={() => setActiveTab('calendar')}
             className={`pb-2 px-3 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'calendar'
-                ? 'border-teal-600 text-teal-950 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-blue-600 text-blue-600 font-black'
+                : 'border-transparent text-blue-600/75 hover:text-blue-600'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -371,8 +371,8 @@ function StayPlanApp() {
             onClick={() => setActiveTab('checklist')}
             className={`pb-2 px-3 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'checklist'
-                ? 'border-teal-600 text-teal-950 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-amber-500 text-amber-500 font-black'
+                : 'border-transparent text-amber-500/75 hover:text-amber-500'
             }`}
           >
             <ListChecks className="w-3.5 h-3.5" />
@@ -384,8 +384,8 @@ function StayPlanApp() {
             onClick={() => setActiveTab('info')}
             className={`pb-2 px-3 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'info'
-                ? 'border-teal-600 text-teal-950 font-black'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'border-emerald-600 text-emerald-600 font-black'
+                : 'border-transparent text-emerald-600/75 hover:text-emerald-600'
             }`}
           >
             <Home className="w-3.5 h-3.5" />

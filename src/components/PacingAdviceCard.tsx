@@ -81,7 +81,7 @@ export const PacingAdviceCard: React.FC<PacingAdviceCardProps> = ({
       <div className="grid grid-cols-4 gap-2 pt-1">
         <div className="p-2.5 rounded-xl bg-teal-50/70 border border-teal-200/70 text-center">
           <p className="text-lg font-black text-teal-950 leading-none">{mustDos}</p>
-          <p className="text-[10px] font-semibold text-teal-700 mt-1">⭐ Wajib</p>
+          <p className="text-[10px] font-semibold text-teal-700 mt-1">🫪 Wajib</p>
         </div>
         <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-center">
           <p className="text-lg font-black text-emerald-900 leading-none">{optionals}</p>
