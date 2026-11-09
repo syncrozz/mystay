@@ -5,9 +5,11 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  provider?: string;
   role: UserRole;
   createdAt: number;
   updatedAt: number;
+  lastLoginAt?: number;
 }
 
 export type StayType =

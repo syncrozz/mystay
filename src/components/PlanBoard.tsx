@@ -76,6 +76,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const [sortBy, setSortBy] = useState<SortOption>('date_asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOrganiseModalOpen, setIsOrganiseModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<AgendaItem | null>(null);
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const duration = stay.durationDays || 3;
 
@@ -214,6 +216,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           console.error('Failed adding plan item:', err);
         });
       });
+      setFeedbackToast(`Ditambah ${titles.length} aktiviti!`);
+      setTimeout(() => setFeedbackToast(null), 2500);
     }, 'Sila masukkan PIN Admin untuk menambah aktiviti.');
   };
 
@@ -293,11 +297,25 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }
   };
 
-  // Handle Delete Item
-  const handleDeleteClick = (itemId: string) => {
-    requireAdmin(async () => {
-      await deleteAgendaItem(itemId);
+  // Accidental Deletion Protection
+  const handleDeletePrompt = (item: AgendaItem) => {
+    requireAdmin(() => {
+      setItemToDelete(item);
     }, 'Sila sahkan PIN Admin untuk memadam aktiviti.');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    const deletedTitle = itemToDelete.title;
+    const targetId = itemToDelete.id;
+    setItemToDelete(null);
+    try {
+      await deleteAgendaItem(targetId);
+      setFeedbackToast(`Aktiviti "${deletedTitle}" telah dipadam.`);
+      setTimeout(() => setFeedbackToast(null), 2500);
+    } catch (e) {
+      console.error('Delete activity error:', e);
+    }
   };
 
   // Handle Susun Agenda
@@ -791,7 +809,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteClick(item.id)}
+                        onClick={() => handleDeletePrompt(item)}
                         className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         title="Padam"
                       >
@@ -834,6 +852,47 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
             </button>
           </div>
         </>
+      )}
+
+      {/* Accidental Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-1">
+              <h4 className="text-base font-bold text-slate-900">Padam Aktiviti?</h4>
+              <p className="text-xs text-slate-600 line-clamp-2 px-2">
+                Adakah anda pasti ingin memadam <strong>&ldquo;{itemToDelete.title}&rdquo;</strong>?
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setItemToDelete(null)}
+                className="flex-1 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                Ya, Padam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Feedback Toast */}
+      {feedbackToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in slide-in-from-bottom-2 fade-in duration-200">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{feedbackToast}</span>
+        </div>
       )}
 
       {/* Smart Organiser Modal */}

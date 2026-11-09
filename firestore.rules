@@ -1,20 +1,79 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User Profile Documents
-    match /users/{userId} {
-      allow read, write: if true;
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Central Stays Collection & all nested subcollections (agendaItems, checklistItems, etc.)
-    match /stays/{stayId} {
-      allow read, write: if true;
+    // Hardened Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      match /{allSubcollections=**} {
-        allow read, write: if true;
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Relational Sync Gate: Verifies that the parent stay exists and is owned by the authenticated caller
+    function isParentStayOwner(stayId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/stays/$(stayId)) &&
+        get(/databases/$(database)/documents/stays/$(stayId)).data.userId == request.auth.uid;
+    }
+
+    // User Profile Documents
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isOwner(userId) && incoming().uid == request.auth.uid;
+      allow update: if isOwner(userId) && incoming().uid == existing().uid;
+      allow delete: if isOwner(userId);
+    }
+
+    // Central Stays Collection & nested subcollections
+    // STRICT OWNER ISOLATION: Zero access for admin_device or third-party users
+    match /stays/{stayId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && isValidId(stayId);
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+
+      // Agenda Items subcollection
+      // RELATIONAL INTEGRITY: Child document MUST inherit parent stay ownership.
+      // A child document is NOT accessible merely because its own userId field claims ownership.
+      match /agendaItems/{itemId} {
+        allow get: if isParentStayOwner(stayId) && resource.data.userId == request.auth.uid;
+        allow list: if isParentStayOwner(stayId) && resource.data.userId == request.auth.uid;
+        allow create: if isParentStayOwner(stayId) && incoming().userId == request.auth.uid && incoming().stayId == stayId && isValidId(itemId);
+        allow update: if isParentStayOwner(stayId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+        allow delete: if (isParentStayOwner(stayId) || !exists(/databases/$(database)/documents/stays/$(stayId))) && existing().userId == request.auth.uid;
+      }
+
+      // Checklist Items subcollection
+      // RELATIONAL INTEGRITY: Child document MUST inherit parent stay ownership.
+      // A child document is NOT accessible merely because its own userId field claims ownership.
+      match /checklistItems/{itemId} {
+        allow get: if isParentStayOwner(stayId) && resource.data.userId == request.auth.uid;
+        allow list: if isParentStayOwner(stayId) && resource.data.userId == request.auth.uid;
+        allow create: if isParentStayOwner(stayId) && incoming().userId == request.auth.uid && incoming().stayId == stayId && isValidId(itemId);
+        allow update: if isParentStayOwner(stayId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+        allow delete: if (isParentStayOwner(stayId) || !exists(/databases/$(database)/documents/stays/$(stayId))) && existing().userId == request.auth.uid;
       }
     }
   }
 }
-

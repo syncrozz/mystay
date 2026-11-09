@@ -15,8 +15,8 @@ import { ShareExportModal } from './components/ShareExportModal';
 import { AuthModal } from './components/AuthModal';
 import { DataSafetyModal } from './components/DataSafetyModal';
 import { SaveSyncFloatingBar } from './components/SaveSyncFloatingBar';
-import { PrivateAccessScreen } from './components/PrivateAccessScreen';
-import { STAY_TYPES } from './utils/constants';
+import { LoginScreen } from './components/LoginScreen';
+import { STAY_TYPES, ASSETS } from './utils/constants';
 import { formatDateRange, formatStaySummary, getLocalTodayDate, getLocalDateWithOffset } from './utils/formatters';
 import { Stay, AgendaItem, TimeSlot } from './types';
 import {
@@ -33,7 +33,8 @@ import {
   FolderKanban,
   ShieldCheck,
   Lock,
-  Compass
+  Compass,
+  Loader2
 } from 'lucide-react';
 
 function StayPlanApp() {
@@ -57,7 +58,7 @@ function StayPlanApp() {
     refreshFromCloud
   } = useStay();
 
-  const { user, isUnlocked, isAdminMode, openAdminModal } = useAuth();
+  const { user, isLoading: isAuthLoading, isAdminMode, openAdminModal } = useAuth();
 
   // Modals state
   const [isSupportOpen, setIsSupportOpen] = useState(false);
@@ -118,9 +119,36 @@ function StayPlanApp() {
     setIsCreateStayOpen(true);
   };
 
-  // If app is not unlocked by the owner PIN, render the Private Access Screen
-  if (!isUnlocked) {
-    return <PrivateAccessScreen />;
+  // 1. Initial authentication loading state
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans text-slate-900">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative">
+            <img
+              src={ASSETS.LOGO}
+              alt="StayPlan"
+              className="w-16 h-16 rounded-2xl shadow-sm object-cover border border-slate-200 animate-pulse"
+              referrerPolicy="no-referrer"
+            />
+            <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-teal-500"></span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+            <span>Memuatkan sesi StayPlan...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Mandatory Google Authentication Gate (SES v4.5 Phase 5)
+  // Every user MUST authenticate using Google Authentication before accessing the workspace.
+  if (!user) {
+    return <LoginScreen />;
   }
 
   // If owner has 0 stays or no active stay, render clean, structured workspace empty state

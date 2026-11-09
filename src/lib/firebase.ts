@@ -3,9 +3,10 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInAnonymously,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
   User
 } from 'firebase/auth';
 import {
@@ -62,9 +63,10 @@ export const db = firestoreInstance;
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInAnonymously,
   firebaseSignOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
 };
 export type { User };
 

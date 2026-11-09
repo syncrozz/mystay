@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, MapPin, Wifi, Phone, KeyRound, Users, Plus, Trash2, Sparkles, Check, FileText, Car, Home, Save } from 'lucide-react';
+import { X, Calendar, MapPin, Wifi, Phone, KeyRound, Users, Plus, Trash2, Check, FileText, Car, Home, Save, ArrowRight, Sparkles } from 'lucide-react';
 import { Stay, StayType, DayType } from '../types';
 import { STAY_TYPES, DAY_TYPE_CONFIG } from '../utils/constants';
 import { getDayType, getStaySummaryCounts, getDayContextLabel, toTitleCase, getLocalTodayDate, getLocalDateWithOffset, getDateForDay } from '../utils/formatters';
@@ -16,7 +16,6 @@ function getDaysDifference(startDateStr: string, endDateStr: string): number {
   return Math.max(1, days);
 }
 
-// Helper to add days to a date string (YYYY-MM-DD)
 function addDaysToDate(startDateStr: string, daysToAdd: number): string {
   if (!startDateStr) return '';
   const [sy, sm, sd] = startDateStr.split('-').map(Number);
@@ -27,7 +26,6 @@ function addDaysToDate(startDateStr: string, daysToAdd: number): string {
   return `${y}-${m}-${d}`;
 }
 
-// Helper to construct fresh day types for N days (Day 1 = Travel, Day N = Travel if N>=2, Days 2..N-1 = Stay)
 function getDefaultDayTypes(totalDays: number): Record<number, DayType> {
   const result: Record<number, DayType> = {};
   for (let d = 1; d <= totalDays; d++) {
@@ -52,7 +50,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
   const isEditing = !!initialStay;
 
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<StayType>('balik_kampung');
+  const [type, setType] = useState<StayType>('homestay');
   const [durationDays, setDurationDays] = useState(3);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -69,7 +67,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
   const [ruleInput, setRuleInput] = useState('');
   const [houseRules, setHouseRules] = useState<string[]>([]);
   const [dayTypes, setDayTypes] = useState<Record<number, DayType>>({});
-  const [activeTab, setActiveTab] = useState<'basic' | 'stay_info' | 'companions'>('basic');
+  const [activeTab, setActiveTab] = useState<'quick' | 'stay_info' | 'companions'>('quick');
 
   useEffect(() => {
     if (initialStay) {
@@ -90,7 +88,6 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       setCompanions(initialStay.companions || []);
       setHouseRules(initialStay.houseRules || []);
 
-      // Build day types from initialStay or default
       const initialDayTypes: Record<number, DayType> = {};
       for (let d = 1; d <= totalD; d++) {
         if (initialStay.dayTypes && initialStay.dayTypes[d]) {
@@ -100,10 +97,10 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
         }
       }
       setDayTypes(initialDayTypes);
+      setActiveTab('quick');
     } else {
-      // Default new stay - clean blank form
       setTitle('');
-      setType('balik_kampung');
+      setType('homestay');
       const defaultDuration = 3;
       setDurationDays(defaultDuration);
       const today = getLocalTodayDate();
@@ -120,42 +117,22 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       setImportantNotes('');
       setCompanions([]);
       setHouseRules([]);
-      // Default day types: Day 1 & Day 3 Travel, Day 2 Stay
       setDayTypes({
         1: 'travel_day',
         2: 'stay_day',
         3: 'travel_day'
       });
+      setActiveTab('quick');
     }
   }, [initialStay, isOpen]);
-
-  // When type changes, auto-suggest duration if not manually set
-  const handleTypeSelect = (newType: StayType) => {
-    setType(newType);
-    if (!isEditing) {
-      const defaultD = STAY_TYPES[newType].defaultDays;
-      setDurationDays(defaultD);
-      if (startDate) {
-        const end = addDaysToDate(startDate, defaultD - 1);
-        setEndDate(end);
-      }
-      setDayTypes(getDefaultDayTypes(defaultD));
-    }
-  };
 
   const handleStartDateChange = (dateVal: string) => {
     setStartDate(dateVal);
     if (dateVal) {
-      if (endDate) {
-        if (endDate >= dateVal) {
-          const days = getDaysDifference(dateVal, endDate);
-          setDurationDays(days);
-          setDayTypes(getDefaultDayTypes(days));
-        } else {
-          const newEnd = addDaysToDate(dateVal, durationDays - 1);
-          setEndDate(newEnd);
-          setDayTypes(getDefaultDayTypes(durationDays));
-        }
+      if (endDate && endDate >= dateVal) {
+        const days = getDaysDifference(dateVal, endDate);
+        setDurationDays(days);
+        setDayTypes(getDefaultDayTypes(days));
       } else {
         const newEnd = addDaysToDate(dateVal, durationDays - 1);
         setEndDate(newEnd);
@@ -167,17 +144,12 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
   const handleEndDateChange = (dateVal: string) => {
     setEndDate(dateVal);
     if (dateVal) {
-      if (startDate) {
-        if (dateVal >= startDate) {
-          const days = getDaysDifference(startDate, dateVal);
-          setDurationDays(days);
-          setDayTypes(getDefaultDayTypes(days));
-        } else {
-          setStartDate(dateVal);
-          setDurationDays(1);
-          setDayTypes(getDefaultDayTypes(1));
-        }
+      if (startDate && dateVal >= startDate) {
+        const days = getDaysDifference(startDate, dateVal);
+        setDurationDays(days);
+        setDayTypes(getDefaultDayTypes(days));
       } else {
+        setStartDate(dateVal);
         setDurationDays(1);
         setDayTypes(getDefaultDayTypes(1));
       }
@@ -191,7 +163,6 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       const end = addDaysToDate(startDate, validDays - 1);
       setEndDate(end);
     }
-    // Ensures Day 1 is travel, Day validDays is travel (if >=2), intermediate days are stay days
     setDayTypes(getDefaultDayTypes(validDays));
   };
 
@@ -235,8 +206,8 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       title: toTitleCase(title.trim()),
       type,
       durationDays,
-      startDate,
-      endDate,
+      startDate: startDate || getLocalTodayDate(),
+      endDate: endDate || getLocalDateWithOffset(durationDays - 1),
       location: toTitleCase(location.trim()) || 'Lokasi Belum Ditetapkan',
       address: address.trim(),
       wifiSsid: wifiSsid.trim(),
@@ -253,22 +224,21 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
     onClose();
   };
 
-  // Compute summary for live preview
   const currentSummary = getStaySummaryCounts({ durationDays, dayTypes });
 
   if (!isOpen) return null;
 
   return (
-    <div id="stay-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div id="stay-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div
         id="stay-modal-container"
-        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-stone-200 p-6 md:p-8 space-y-6"
+        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-3xl shadow-2xl border border-slate-200 p-5 sm:p-7 space-y-5"
       >
         {/* Close Button */}
         <button
           id="stay-modal-close-btn"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full transition-colors"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
           aria-label="Tutup"
         >
           <X className="w-5 h-5" />
@@ -276,56 +246,142 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
 
         {/* Modal Header */}
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">
-            {isEditing ? 'Edit Rancangan' : 'Rancang Perjalanan'}
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+            {isEditing ? 'Kemaskini Rancangan' : 'Rancang Perjalanan Baharu'}
           </h2>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            {isEditing ? 'Ubah maklumat dan tetapan percutian anda.' : 'Cipta pantas dengan maklumat asas — butiran lanjut boleh dilengkapkan bila-bila masa.'}
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 gap-2 text-xs font-bold">
+        <div className="flex border-b border-slate-200 gap-1 sm:gap-2 text-xs font-bold">
           <button
             type="button"
-            onClick={() => setActiveTab('basic')}
-            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'basic'
+            onClick={() => setActiveTab('quick')}
+            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer ${
+              activeTab === 'quick'
                 ? 'border-teal-600 text-teal-950 font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Maklumat Asas
+            {isEditing ? 'Maklumat Asas' : '1. Cipta Pantas (Wajib)'}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('stay_info')}
-            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer ${
               activeTab === 'stay_info'
                 ? 'border-teal-600 text-teal-950 font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Info Homestay & Wi-Fi
+            {isEditing ? 'Info Penginapan & Wi-Fi' : '2. Info Homestay & Wi-Fi (Pilihan)'}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('companions')}
-            className={`pb-2 px-3 border-b-2 transition-all cursor-pointer ${
+            className={`pb-2.5 px-3 border-b-2 transition-all cursor-pointer ${
               activeTab === 'companions'
                 ? 'border-teal-600 text-teal-950 font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Ahli / Tetamu ({companions.length})
+            Ahli / Tetamu {companions.length > 0 ? `(${companions.length})` : ''}
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* TAB 1: BASIC */}
-          {activeTab === 'basic' && (
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+          {/* TAB 1: QUICK CREATE (SES v4.5 Step 1) */}
+          {activeTab === 'quick' && (
             <div className="space-y-4">
-              {/* Stay Type Selection */}
+              {/* Stay Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nama Rancangan / Percutian <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={title}
+                  onChange={(e) => setTitle(toTitleCase(e.target.value))}
+                  placeholder="Cth: Percutian Santai Cameron Highlands / Balik Raya Muar"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold text-slate-900 shadow-2xs"
+                />
+              </div>
+
+              {/* Destination / Location */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Destinasi / Kawasan Lokasi
+                </label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(toTitleCase(e.target.value))}
+                    placeholder="Cth: Tanah Rata / Muar / Port Dickson"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Date Pickers (Tarikh Mula & Tarikh Akhir) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Tarikh Mula <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={startDate}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 font-bold text-slate-800 cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Tarikh Akhir <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={endDate}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
+                    className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 font-bold text-slate-800 cursor-pointer"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 flex items-center justify-between pt-1">
+                  <span className="text-xs font-bold text-slate-700">
+                    Tempoh: <span className="text-teal-700">{durationDays} Hari</span> ({Math.max(0, durationDays - 1)} Malam)
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {[2, 3, 4, 5].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => handleDurationChange(d)}
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                          durationDays === d
+                            ? 'bg-teal-600 text-white border-teal-600 shadow-2xs'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                        }`}
+                      >
+                        {d}H
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stay Type Selection (Pilihan Ringkas) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Jenis Perjalanan
+                  Kategori Perjalanan
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {(Object.keys(STAY_TYPES) as StayType[]).map((tKey) => {
@@ -335,251 +391,132 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                       <button
                         key={tKey}
                         type="button"
-                        onClick={() => handleTypeSelect(tKey)}
-                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        onClick={() => setType(tKey)}
+                        className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
                           isSelected
-                            ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-400/20 text-teal-950'
+                            ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-400/20 text-teal-950 font-bold'
                             : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xl">{item.icon}</span>
-                          {isSelected && <Check className="w-4 h-4 text-teal-600 font-bold" />}
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="text-xs">{item.label}</span>
                         </div>
-                        <div className="mt-1.5">
-                          <p className="text-xs font-bold">{item.label}</p>
-                          <p className="text-[10px] text-slate-500 line-clamp-1">{item.desc}</p>
-                        </div>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-teal-600" />}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Title Input */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Tajuk Rancangan <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(toTitleCase(e.target.value))}
-                  placeholder="Nama Rancangan (Cth: Percutian Pantai / Balik Kampung)"
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium text-slate-900"
-                />
-              </div>
-
-              {/* Date Pickers (Tarikh Mula & Tarikh Akhir) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Tarikh Mula
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 font-medium"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Tarikh Akhir
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => handleEndDateChange(e.target.value)}
-                      className="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 text-stone-800 font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Duration (Placed below Date Pickers & automatically calculated from selected dates) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                    Tempoh Tinggal (Hari)
-                  </label>
-                  <span className="text-[11px] text-amber-800 font-bold bg-amber-100/90 border border-amber-300/80 px-2 py-0.5 rounded-md">
-                    {durationDays} Hari ({Math.max(0, durationDays - 1)} Malam) · Auto-dikira
+              {/* Day Types overview */}
+              <div className="p-3.5 rounded-2xl bg-teal-50/50 border border-teal-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-teal-950">
+                    Konfigurasi Hari: {currentSummary.stayDaysCount} Hari Stay · {currentSummary.travelDaysCount} Hari Perjalanan
                   </span>
+                  <span className="text-[11px] text-teal-800">Klik untuk ubah jenis hari</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  {[2, 3, 4, 5, 6, 7].map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => handleDurationChange(d)}
-                      className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${
-                        durationDays === d
-                          ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                          : 'bg-stone-50 hover:bg-stone-100 border-stone-300 text-stone-700'
-                      }`}
-                    >
-                      {d}H {d > 1 ? `(${d - 1}M)` : ''}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-stone-500 mt-1">
-                  💡 Memilih tarikh mula & akhir akan mengira tempoh hari secara automatik (dan menetapkan Hari 1 & Hari Akhir sebagai Hari Perjalanan 🚗).
-                </p>
-              </div>
-
-              {/* Location Input */}
-              <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Bandar / Kawasan Lokasi
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(toTitleCase(e.target.value))}
-                    placeholder="Cth: Parit Bakar, Muar / Tanah Rata, Cameron Highlands"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-              </div>
-
-              {/* Day Types & Summary Configuration */}
-              <div className="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-3.5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                  <div>
-                    <label className="block text-xs font-extrabold text-amber-950 uppercase tracking-wider">
-                      Konfigurasi Jenis Hari (Travel Day vs Stay Day)
-                    </label>
-                    <p className="text-[11px] text-stone-500">
-                      Hari bertolak dan pulang tidak disamakan dengan hari aktiviti/penginapan penuh.
-                    </p>
-                  </div>
-                  <span className="self-start sm:self-auto text-xs font-bold text-amber-900 bg-amber-100/90 border border-amber-300/80 px-2.5 py-1 rounded-lg">
-                    {currentSummary.totalDays} Hari · {currentSummary.nights} Malam · {currentSummary.stayDaysCount} Hari Aktiviti
-                  </span>
-                </div>
-
-                {/* Day Type Toggle List */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                <div className="flex flex-wrap gap-1.5">
                   {Array.from({ length: durationDays }).map((_, idx) => {
                     const dayNum = idx + 1;
                     const isTravel = (dayTypes[dayNum] || (dayNum === 1 || (dayNum === durationDays && durationDays >= 2) ? 'travel_day' : 'stay_day')) === 'travel_day';
-                    const dateInfo = startDate ? getDateForDay(startDate, dayNum) : null;
-                    
-                    // Compute readable label
-                    let label = isTravel ? 'Perjalanan' : 'Stay';
-                    if (isTravel && dayNum === durationDays && durationDays >= 2) {
-                      label = 'Perjalanan Balik';
-                    }
-
                     return (
                       <button
                         key={dayNum}
                         type="button"
                         onClick={() => toggleDayType(dayNum)}
-                        className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           isTravel
-                            ? 'bg-orange-50/90 border-orange-300 text-orange-950 hover:bg-orange-100/80'
-                            : 'bg-amber-50/70 border-amber-300 text-amber-950 hover:bg-amber-100/70'
+                            ? 'bg-amber-100 text-amber-950 border-amber-300'
+                            : 'bg-teal-100 text-teal-950 border-teal-300'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">{isTravel ? '🚗' : '🏠'}</span>
-                          <div>
-                            <span className="text-xs font-bold block leading-tight">
-                              {dateInfo ? `${dateInfo.dayOfMonth} ${dateInfo.monthShort}` : `Hari ${dayNum}`}
-                            </span>
-                            <span className="text-[10px] font-semibold text-stone-500">{label}</span>
-                          </div>
-                        </div>
-
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold border ${
-                          isTravel
-                            ? 'bg-orange-200/80 text-orange-900 border-orange-300'
-                            : 'bg-amber-200/80 text-amber-900 border-amber-300'
-                        }`}>
-                          {isTravel ? 'Travel' : 'Stay'}
-                        </span>
+                        {isTravel ? '🚗' : '🏠'} H{dayNum} ({isTravel ? 'Travel' : 'Stay'})
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-stone-500 italic">
-                  💡 Tip: Klik pada mana-mana tarikh di atas untuk menukar antara 🚗 Hari Perjalanan dan 🏠 Hari Stay mengikut kesesuaian anda.
-                </p>
               </div>
+
+              {/* Fast-path helper notice for Step 1 */}
+              {!isEditing && (
+                <div className="p-3 bg-slate-100 rounded-xl text-xs text-slate-600 flex items-center justify-between gap-2">
+                  <span>💡 Maklumat Wi-Fi, kunci, dan ahli keluarga boleh ditambah kemudian.</span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('stay_info')}
+                    className="text-teal-700 font-bold hover:underline shrink-0"
+                  >
+                    Isi sekarang →
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* TAB 2: STAY INFO & WIFI */}
+          {/* TAB 2: STAY INFO & SENSITIVE DETAILS (SES v4.5 Step 2) */}
           {activeTab === 'stay_info' && (
             <div className="space-y-4">
-              {/* Full Address */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                  Alamat Penuh / Navigasi
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Alamat Penuh Penginapan
                 </label>
                 <textarea
                   rows={2}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Cth: No 24, Jalan Kenanga, 84000 Muar, Johor"
-                  className="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
               {/* Wi-Fi Details */}
-              <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/80 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                  <Wifi className="w-4 h-4 text-amber-600" />
-                  <span>Maklumat Wi-Fi Penginapan</span>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                  <Wifi className="w-4 h-4 text-teal-600" />
+                  <span>Maklumat Wi-Fi Penginapan (Pilihan)</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-stone-600 mb-1">Nama Wi-Fi (SSID)</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nama Wi-Fi (SSID)</label>
                     <input
                       type="text"
                       value={wifiSsid}
                       onChange={(e) => setWifiSsid(e.target.value)}
                       placeholder="Cth: Homestay_WiFi_5G"
-                      className="w-full px-3 py-2 text-xs bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-stone-600 mb-1">Kata Laluan Wi-Fi</label>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Kata Laluan Wi-Fi</label>
                     <input
                       type="text"
                       value={wifiPassword}
                       onChange={(e) => setWifiPassword(e.target.value)}
                       placeholder="Cth: password1234"
-                      className="w-full px-3 py-2 text-xs bg-white border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 font-mono"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Host & Gate Pin */}
+              {/* Host & Smartlock Key */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Nama Tuan Rumah / Host
                   </label>
                   <input
                     type="text"
                     value={hostName}
                     onChange={(e) => setHostName(toTitleCase(e.target.value))}
-                    placeholder="Cth: Tok Wan / En. Firdaus"
-                    className="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white"
+                    placeholder="Cth: En. Firdaus / Tok Wan"
+                    className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                     No. Telefon Host / Bantuan
                   </label>
                   <input
@@ -587,32 +524,32 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                     value={hostContact}
                     onChange={(e) => setHostContact(e.target.value)}
                     placeholder="Cth: +6012-3456789"
-                    className="w-full px-3.5 py-2 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white"
+                    className="w-full px-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white"
                   />
                 </div>
               </div>
 
-              {/* Key / Gate Pin */}
+              {/* Smartlock PIN / Gate Code */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                  Info Kunci / Kod Smartlock
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Kod Smartlock / Lokasi Kunci
                 </label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
                   <input
                     type="text"
                     value={gatePin}
                     onChange={(e) => setGatePin(e.target.value)}
-                    placeholder="Cth: #4829# atau Kunci bawah pasu kanan pintu"
-                    className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white"
+                    placeholder="Cth: #4829# atau Kunci dalam masterlock kod 1234"
+                    className="w-full pl-10 pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white font-mono"
                   />
                 </div>
               </div>
 
-              {/* House Rules */}
+              {/* Notes & House Rules */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                  Peraturan / Nota Khas Rumah
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Nota Khas & Peraturan Penginapan
                 </label>
                 <div className="flex gap-2 mb-2">
                   <input
@@ -625,26 +562,26 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                         handleAddRule();
                       }
                     }}
-                    placeholder="Cth: Check-out pukul 12 PM / Dilarang merokok"
-                    className="flex-1 px-3 py-2 text-xs bg-stone-50 border border-stone-300 rounded-lg focus:bg-white"
+                    placeholder="Cth: Check-out pukul 12 PM / Jangan buang sampah dlm mangkuk tandas"
+                    className="flex-1 px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={handleAddRule}
-                    className="px-3 py-2 bg-stone-200 hover:bg-stone-300 text-xs font-bold text-stone-800 rounded-lg"
+                    className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-800 rounded-xl cursor-pointer"
                   >
                     Tambah
                   </button>
                 </div>
                 {houseRules.length > 0 && (
-                  <ul className="space-y-1.5 text-xs text-stone-700">
+                  <ul className="space-y-1.5 text-xs text-slate-700">
                     {houseRules.map((rule, idx) => (
-                      <li key={idx} className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-200">
+                      <li key={idx} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
                         <span>• {rule}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveRule(idx)}
-                          className="text-stone-400 hover:text-rose-600"
+                          className="text-slate-400 hover:text-rose-600 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -660,14 +597,14 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
           {activeTab === 'companions' && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Senarai Ahli Keluarga / Tetamu yang Terlibat
                 </label>
-                <p className="text-xs text-stone-500 mb-3">
+                <p className="text-xs text-slate-500 mb-3">
                   Mudah untuk menetapkan siapa yang bertanggungjawab (PIC) bagi aktiviti atau makanan tertentu.
                 </p>
 
-                <div className="flex gap-2 mb-4">
+                <div className="flex gap-2 mb-3">
                   <input
                     type="text"
                     value={companionInput}
@@ -679,12 +616,12 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                       }
                     }}
                     placeholder="Cth: Mak & Ayah / Abang Long / Cucu-cucu"
-                    className="flex-1 px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
                   />
                   <button
                     type="button"
                     onClick={handleAddCompanion}
-                    className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-2xs"
+                    className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-2xs cursor-pointer"
                   >
                     Tambah
                   </button>
@@ -694,30 +631,30 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                   {companions.map((comp, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-300 text-xs font-medium text-stone-800"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-300 text-xs font-medium text-slate-800"
                     >
-                      <Users className="w-3.5 h-3.5 text-stone-500" />
+                      <Users className="w-3.5 h-3.5 text-slate-500" />
                       <span>{comp}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveCompanion(idx)}
-                        className="text-stone-400 hover:text-rose-600 ml-1"
+                        className="text-slate-400 hover:text-rose-600 ml-1 cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </span>
                   ))}
                   {companions.length === 0 && (
-                    <p className="text-xs text-stone-400 italic">Belum ada ahli ditambah.</p>
+                    <p className="text-xs text-slate-400 italic">Belum ada ahli ditambah.</p>
                   )}
                 </div>
               </div>
 
               {/* Quick companion presets */}
-              <div className="pt-3 border-t border-stone-200">
-                <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">Cadangan Pantas:</p>
+              <div className="pt-3 border-t border-slate-200">
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Cadangan Pantas:</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {['Mak & Ayah', 'Tok Wan & Tok Mak', 'Anak-anak', 'Adik-beradik', 'Keluarga Mertua', 'Tetamu Istimewa'].map((preset) => (
+                  {['Mak & Ayah', 'Tok Wan & Tok Mak', 'Anak-anak', 'Adik-beradik', 'Keluarga Mertua'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -726,7 +663,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                           setCompanions([...companions, preset]);
                         }
                       }}
-                      className="px-2.5 py-1 text-xs bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
+                      className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
                     >
                       + {preset}
                     </button>
@@ -737,42 +674,41 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
           )}
 
           {/* Form Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-stone-200">
-            <div className="flex gap-2">
-              {activeTab !== 'basic' && (
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+            <div>
+              {activeTab === 'quick' && !isEditing ? (
                 <button
                   type="button"
-                  onClick={() => setActiveTab(activeTab === 'companions' ? 'stay_info' : 'basic')}
-                  className="px-4 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl"
+                  onClick={() => setActiveTab('stay_info')}
+                  className="text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                 >
-                  Sebelumnya
+                  Tambah Info Lanjut →
                 </button>
-              )}
-              {activeTab !== 'companions' && (
+              ) : activeTab !== 'quick' ? (
                 <button
                   type="button"
-                  onClick={() => setActiveTab(activeTab === 'basic' ? 'stay_info' : 'companions')}
-                  className="px-4 py-2 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-xl"
+                  onClick={() => setActiveTab('quick')}
+                  className="text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                 >
-                  Seterusnya
+                  ← Kembali ke Asas
                 </button>
-              )}
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-xl transition-colors"
+                className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 active:scale-98 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-98 rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>Simpan</span>
+                <span>{isEditing ? 'Simpan Perubahan' : 'Simpan & Mula Rancang'}</span>
               </button>
             </div>
           </div>

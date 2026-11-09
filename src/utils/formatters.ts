@@ -275,25 +275,34 @@ export function formatDateRange(startDateStr?: string, endDateStr?: string, dura
   }
 }
 
-export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], checklistItems?: ChecklistItem[]): string {
+export function generateWhatsAppMessage(
+  stay: Stay,
+  agendaItems: AgendaItem[],
+  checklistItems?: ChecklistItem[],
+  includeSensitiveInfo: boolean = false
+): string {
   const stayAgendas = agendaItems.filter((a) => a.stayId === stay.id);
   const summaryStr = formatStaySummary(stay);
-  
+
   let msg = `🌟 *STAYPLAN: ${stay.title.toUpperCase()}*\n`;
-  msg += `_"Plan the stay, not just the calendar."_\n\n`;
-  
+  msg += `_"Plan the stay, don't miss something."_\n\n`;
+
   msg += `📍 *Lokasi:* ${stay.location || 'Tidak dinyatakan'}\n`;
   if (stay.address) msg += `🗺️ *Alamat:* ${stay.address}\n`;
   msg += `📅 *Tempoh:* ${formatDateRange(stay.startDate, stay.endDate, stay.durationDays)} (${summaryStr})\n`;
-  
+
   if (stay.companions && stay.companions.length > 0) {
     msg += `👥 *Bersama:* ${stay.companions.join(', ')}\n`;
   }
-  
+
   if (stay.wifiSsid) {
-    msg += `📶 *WiFi:* ${stay.wifiSsid} ${stay.wifiPassword ? `(Kata laluan: ${stay.wifiPassword})` : ''}\n`;
+    if (includeSensitiveInfo && stay.wifiPassword) {
+      msg += `📶 *WiFi:* ${stay.wifiSsid} (Kata laluan: ${stay.wifiPassword})\n`;
+    } else {
+      msg += `📶 *WiFi:* ${stay.wifiSsid}\n`;
+    }
   }
-  
+
   if (stay.hostContact) {
     msg += `📞 *Hubungi:* ${stay.hostName ? `${stay.hostName} ` : ''}(${stay.hostContact})\n`;
   }
@@ -346,9 +355,11 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
     msg += `───────────────────────\n`;
   }
 
-  if (stay.importantNotes || (stay.houseRules && stay.houseRules.length > 0)) {
+  if (stay.importantNotes || (stay.houseRules && stay.houseRules.length > 0) || (includeSensitiveInfo && stay.gatePin)) {
     msg += `\n💡 *NOTA PENTING & PERATURAN:*\n`;
-    if (stay.gatePin) msg += `🔑 *Kunci/Pin:* ${stay.gatePin}\n`;
+    if (includeSensitiveInfo && stay.gatePin) {
+      msg += `🔑 *Kunci/PIN Akses:* ${stay.gatePin}\n`;
+    }
     if (stay.importantNotes) msg += `• ${stay.importantNotes}\n`;
     if (stay.houseRules) {
       stay.houseRules.forEach((rule) => {
@@ -357,7 +368,7 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
     }
   }
 
-  msg += `\n📱 _Disediakan dengan kasih sayang melalui StayPlan (stayplan.syncrozz.com)_`;
+  msg += `\n📱 _Disediakan melalui StayPlan (Plan the stay, don't miss something)_`;
 
   return msg;
 }
