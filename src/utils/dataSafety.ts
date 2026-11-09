@@ -671,10 +671,11 @@ export function validateCsvRows(
       ? (rawPriority as ActivityPriority)
       : 'must_do';
 
-    const validCategories: ChecklistCategory[] = ['essentials', 'house_homestay', 'food_gifts', 'kids_elderly', 'custom'];
-    const category: ChecklistCategory = validCategories.includes(rawCategory as ChecklistCategory)
-      ? (rawCategory as ChecklistCategory)
-      : 'essentials';
+    const validCategories: ChecklistCategory[] = ['essentials', 'house_homestay', 'food_gifts', 'custom'];
+    const normalizedRawCategory = rawCategory === 'kids_elderly' ? 'custom' : rawCategory;
+    const category: ChecklistCategory = validCategories.includes(normalizedRawCategory as ChecklistCategory)
+      ? (normalizedRawCategory as ChecklistCategory)
+      : 'custom';
 
     const isCompleted = rawCompleted === 'YA' || rawCompleted === 'YES' || rawCompleted === 'TRUE' || rawCompleted === '1';
 

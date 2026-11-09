@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   X,
-  Plus,
   Calendar,
   MapPin,
   Check,
@@ -31,13 +30,15 @@ interface StaySelectorModalProps {
   onClose: () => void;
   onNewStay: () => void;
   onEditStay: (stay: Stay) => void;
+  onSelectStay?: (stayId: string) => void;
 }
 
 export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
   isOpen,
   onClose,
   onNewStay,
-  onEditStay
+  onEditStay,
+  onSelectStay
 }) => {
   const {
     stays,
@@ -137,7 +138,6 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
               onClick={handleCreateNew}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
               <span>+ Rancangan Baharu</span>
             </button>
           </div>
@@ -161,6 +161,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
                     className="flex items-start gap-3.5 cursor-pointer flex-1"
                     onClick={() => {
                       setActiveStayId(stay.id);
+                      if (onSelectStay) onSelectStay(stay.id);
                       onClose();
                     }}
                   >
@@ -179,10 +180,6 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                         <span className="inline-flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          {stay.location || 'Tiada lokasi'}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           {formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}
                         </span>
@@ -196,6 +193,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
                       <button
                         onClick={() => {
                           setActiveStayId(stay.id);
+                          if (onSelectStay) onSelectStay(stay.id);
                           onClose();
                         }}
                         className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"

@@ -26,7 +26,7 @@ export const ShowcaseIntroHero: React.FC<ShowcaseIntroHeroProps> = ({
   onExploreDemo,
   onOpenWalkthrough
 }) => {
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, signInWithGoogle } = useAuth();
 
   return (
     <section
@@ -51,7 +51,7 @@ export const ShowcaseIntroHero: React.FC<ShowcaseIntroHeroProps> = ({
 
           <div className="space-y-1.5">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-stone-900 tracking-tight font-sans">
-              “Plan the stay, Don&apos;t miss something.”
+              “Smart stays, kept on track.”
             </h1>
             <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-normal">
               Platform perancangan agenda ringkas untuk perjalanan atau short stay 2–4 hari. Senaraikan apa yang ingin dilakukan, susun mengikut hari, dan lihat keseluruhan perjalanan dalam kalendar.
@@ -74,7 +74,7 @@ export const ShowcaseIntroHero: React.FC<ShowcaseIntroHeroProps> = ({
             <button
               id="hero-start-planning-btn"
               type="button"
-              onClick={() => openAuthModal('Log masuk dengan Google untuk mula merancang stay peribadi anda di ruang selamat.')}
+              onClick={() => signInWithGoogle()}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-stone-900 hover:bg-stone-800 text-white text-xs font-black rounded-2xl shadow-xs active:scale-98 transition-all cursor-pointer"
             >
               <span>🔐 Mula Rancang</span>

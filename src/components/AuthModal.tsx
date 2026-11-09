@@ -1,6 +1,8 @@
 import React from 'react';
-import { AdminModeModal } from './AdminModeModal';
 
+/**
+ * AuthModal has been removed as Google Authentication is used directly.
+ */
 export const AuthModal: React.FC = () => {
-  return <AdminModeModal />;
+  return null;
 };

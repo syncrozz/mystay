@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Stay, AgendaItem, TimeSlot } from '../types';
-import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
-import { getDayContextLabel, formatStaySummary, getDateForDay } from '../utils/formatters';
+import { TIME_SLOTS } from '../utils/constants';
+import { getDayContextLabel, formatStaySummary, getDateForDay, getTodayStayDayInfo } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import {
   Calendar as CalendarIcon,
@@ -39,6 +39,7 @@ export function CalendarView({
   const stayAgendas = agendaItems.filter((item) => item.stayId === stay.id);
   const backlogItems = stayAgendas.filter((item) => !item.dayNumber || item.dayNumber === 0);
   const staySummary = formatStaySummary(stay);
+  const todayInfo = getTodayStayDayInfo(stay);
 
   // Helper to compute date for day index (1-based)
   const getDayDateInfo = (dayIndex: number) => {
@@ -81,8 +82,13 @@ export function CalendarView({
       {/* Calendar Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
         <div>
-          <h1 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-            Kalendar Perjalanan
+          <h1 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <span>Kalendar Perjalanan</span>
+            {todayInfo.isTodayInStay && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-950 border border-teal-300">
+                Hari Ini: Hari {todayInfo.dayNumber}
+              </span>
+            )}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
             {duration} Hari ({staySummary})
@@ -96,12 +102,12 @@ export function CalendarView({
               onClick={onNavigateToPlan}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-teal-950 bg-teal-50 hover:bg-teal-100 border border-teal-300 rounded-xl transition-all cursor-pointer"
             >
-              <span>Belum Set ({backlogItems.length})</span>
+              <span>Belum Dijadualkan ({backlogItems.length})</span>
             </button>
           )}
           <button
             type="button"
-            onClick={() => handleAddClick(1, 'morning')}
+            onClick={() => handleAddClick(todayInfo.isTodayInStay ? todayInfo.dayNumber : 1, 'morning')}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -114,6 +120,7 @@ export function CalendarView({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
         {Array.from({ length: duration }).map((_, idx) => {
           const dayNum = idx + 1;
+          const isToday = todayInfo.isTodayInStay && dayNum === todayInfo.dayNumber;
           const dateInfo = getDayDateInfo(dayNum);
           const dayContext = getDayContextLabel(stay, dayNum);
           const dayItems = getSortedDayItems(dayNum);
@@ -128,7 +135,9 @@ export function CalendarView({
               key={dayNum}
               id={`calendar-day-card-${dayNum}`}
               className={`bg-white rounded-2xl border shadow-2xs transition-all flex flex-col overflow-hidden group ${
-                isTravel
+                isToday
+                  ? 'border-teal-500 ring-2 ring-teal-500/30 shadow-md'
+                  : isTravel
                   ? 'border-amber-200/90 hover:border-amber-300'
                   : 'border-slate-200 hover:border-teal-300'
               }`}
@@ -136,7 +145,9 @@ export function CalendarView({
               {/* Day Card Header with Obvious Day Context */}
               <div
                 className={`p-4 border-b flex items-center justify-between transition-colors ${
-                  isTravel
+                  isToday
+                    ? 'bg-teal-50/80 border-teal-200'
+                    : isTravel
                     ? 'bg-amber-50/70 border-amber-200/80'
                     : 'bg-slate-50/90 border-slate-200'
                 }`}
@@ -168,16 +179,24 @@ export function CalendarView({
 
                   <div>
                     {/* Semantic Context Label: 🚗 Perjalanan / 🏠 Stay Day 1 */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span
                         className={`text-xs font-bold px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${
-                          isTravel
+                          isToday
+                            ? 'bg-teal-600 text-white border-teal-700'
+                            : isTravel
                             ? 'bg-amber-100 text-amber-950 border-amber-300/80'
                             : 'bg-teal-50 text-teal-950 border-teal-200/80'
                         }`}
                       >
                         <span>{dayContext.icon} {dayContext.label}</span>
                       </span>
+
+                      {isToday && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-900 shadow-2xs">
+                          Hari Ini
+                        </span>
+                      )}
                     </div>
 
                     <span className="text-[11px] text-slate-500 block mt-1">
@@ -260,7 +279,7 @@ export function CalendarView({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs shrink-0" title={slotMeta.label}>
-                                {slotMeta.icon}
+                                {item.emoji || slotMeta.icon}
                               </span>
                               <span
                                 className={`text-xs font-bold truncate ${
@@ -395,7 +414,6 @@ export function CalendarView({
               ) : (
                 activeDayDetailItems.map((item) => {
                   const slotMeta = TIME_SLOTS[item.timeSlot] || TIME_SLOTS.morning;
-                  const pConfig = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.optional;
                   return (
                     <div
                       key={item.id}
@@ -435,9 +453,6 @@ export function CalendarView({
                               {item.timeSpecific}
                             </span>
                           )}
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md border ${pConfig.badgeClass}`}>
-                            {pConfig.label}
-                          </span>
                         </div>
 
                         <h4

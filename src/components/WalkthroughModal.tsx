@@ -62,7 +62,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({
   onClose,
   onExploreDemo
 }) => {
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   if (!isOpen) return null;
@@ -95,7 +95,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({
             <span>Bagaimana StayPlan Berfungsi</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight">
-            “Plan the stay, don&apos;t miss something.”
+            “Smart stays, kept on track.”
           </h2>
           <p className="text-xs sm:text-sm text-stone-600">
             Kitaran perancangan pantas dari idea rawak kepada agenda harian yang santai dan seimbang.

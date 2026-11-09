@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, MapPin, User, Calendar, ChevronDown, Save } from 'lucide-react';
+import { X, Clock, MapPin, User, Calendar, ChevronDown, Save, Bookmark, Trash2 } from 'lucide-react';
 import { AgendaItem, TimeSlot, ActivityPriority, Stay } from '../types';
-import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
+import { TIME_SLOTS } from '../utils/constants';
 import { toTitleCase, getDateForDay, getDayOptionsForStay, getDayContextLabel } from '../utils/formatters';
+import { useStay } from '../context/StayContext';
 
 interface ActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (itemData: Omit<AgendaItem, 'id'>) => void;
+  onDelete?: (itemId: string) => void;
   initialItem?: AgendaItem | null;
   defaultDayNumber?: number;
   defaultTimeSlot?: TimeSlot;
@@ -18,11 +20,13 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   initialItem,
   defaultDayNumber = 1,
   defaultTimeSlot = 'morning',
   stay
 }) => {
+  const { addActivityLibraryItem } = useStay();
   const isEditing = !!initialItem;
 
   const [title, setTitle] = useState('');
@@ -30,10 +34,11 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
   const [dayNumber, setDayNumber] = useState(defaultDayNumber);
   const [timeSlot, setTimeSlot] = useState<TimeSlot>(defaultTimeSlot);
   const [timeSpecific, setTimeSpecific] = useState('');
-  const [priority, setPriority] = useState<ActivityPriority>('must_do');
+  const [priority, setPriority] = useState<ActivityPriority>('undecided');
   const [locationName, setLocationName] = useState('');
   const [personInCharge, setPersonInCharge] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [saveToLibrary, setSaveToLibrary] = useState(false);
 
   useEffect(() => {
     if (initialItem) {
@@ -42,20 +47,22 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
       setDayNumber(initialItem.dayNumber);
       setTimeSlot(initialItem.timeSlot);
       setTimeSpecific(initialItem.timeSpecific || '');
-      setPriority(initialItem.priority);
+      setPriority(initialItem.priority || 'undecided');
       setLocationName(initialItem.locationName || '');
       setPersonInCharge(initialItem.personInCharge || '');
       setIsCompleted(initialItem.isCompleted || false);
+      setSaveToLibrary(false);
     } else {
       setTitle('');
       setDescription('');
       setDayNumber(defaultDayNumber);
       setTimeSlot(defaultTimeSlot);
       setTimeSpecific('');
-      setPriority('must_do');
+      setPriority('undecided');
       setLocationName('');
       setPersonInCharge('');
       setIsCompleted(false);
+      setSaveToLibrary(false);
     }
   }, [initialItem, defaultDayNumber, defaultTimeSlot, isOpen]);
 
@@ -63,12 +70,21 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
 
+    const trimmedTitle = toTitleCase(title.trim());
+
+    if (saveToLibrary) {
+      addActivityLibraryItem({
+        name: trimmedTitle,
+        emoji: '📌'
+      }).catch(console.error);
+    }
+
     onSave({
       stayId: stay.id,
       dayNumber,
       timeSlot,
       timeSpecific: timeSpecific.trim(),
-      title: toTitleCase(title.trim()),
+      title: trimmedTitle,
       description: description.trim(),
       priority,
       locationName: toTitleCase(locationName.trim()),
@@ -243,32 +259,6 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
               </div>
             </div>
 
-            {/* Keutamaan Selector */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Keutamaan
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {(Object.keys(PRIORITY_CONFIG) as ActivityPriority[]).map((pKey) => {
-                  const pConfig = PRIORITY_CONFIG[pKey];
-                  const isSelected = priority === pKey;
-                  return (
-                    <button
-                      key={pKey}
-                      type="button"
-                      onClick={() => setPriority(pKey)}
-                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? `${pConfig.badgeClass} ring-2 ring-teal-500/30 shadow-2xs`
-                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-bold">{pConfig.label}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* PIC (Person In Charge) */}
             <div>
@@ -317,22 +307,56 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
             </div>
           </div>
 
+          {/* Option: Simpan sebagai Aktiviti Kebiasaan */}
+          {!isEditing && (
+            <label className="flex items-center gap-2.5 p-3 rounded-xl bg-teal-50/70 border border-teal-200/80 cursor-pointer select-none hover:bg-teal-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={saveToLibrary}
+                onChange={(e) => setSaveToLibrary(e.target.checked)}
+                className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300"
+              />
+              <div className="flex items-center gap-1.5 text-xs text-teal-950 font-semibold">
+                <Bookmark className="w-3.5 h-3.5 text-teal-600" />
+                <span>Simpan juga sebagai Aktiviti Kebiasaan (Pautan Pantas) untuk perjalanan akan datang</span>
+              </div>
+            </label>
+          )}
+
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-98 rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>Simpan</span>
-            </button>
+          <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200">
+            {isEditing && onDelete ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (initialItem) {
+                    onDelete(initialItem.id);
+                    onClose();
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Padam Aktiviti</span>
+              </button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-98 rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Simpan</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

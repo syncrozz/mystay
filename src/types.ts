@@ -5,9 +5,11 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  provider?: string;
   role: UserRole;
   createdAt: number;
   updatedAt: number;
+  lastLoginAt?: number;
 }
 
 export type StayType =
@@ -23,7 +25,18 @@ export type TimeSlot = 'morning' | 'midday' | 'afternoon' | 'evening' | 'flexibl
 
 export type SyncStatus = 'SAVED' | 'SAVING' | 'SYNCING' | 'SYNCED' | 'ERROR' | 'OFFLINE';
 
-export type ActivityPriority = 'must_do' | 'optional' | 'food' | 'rest' | 'logistics';
+export type ActivityPriority = 'must_do' | 'optional' | 'undecided' | 'food' | 'rest' | 'logistics';
+
+export interface ActivityLibraryItem {
+  id: string;
+  userId: string;
+  name: string;
+  emoji?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface AgendaItem {
   id: string;
@@ -33,6 +46,8 @@ export interface AgendaItem {
   timeSlot: TimeSlot;
   timeSpecific?: string; // e.g. "08:30 AM" or "Lepas Subuh"
   title: string;
+  emoji?: string;
+  sourceLibraryId?: string;
   description?: string;
   priority: ActivityPriority;
   locationName?: string;
@@ -43,7 +58,7 @@ export interface AgendaItem {
   updatedAt?: number;
 }
 
-export type ChecklistCategory = 'essentials' | 'house_homestay' | 'food_gifts' | 'kids_elderly' | 'custom';
+export type ChecklistCategory = 'essentials' | 'house_homestay' | 'food_gifts' | 'custom';
 
 export interface ChecklistItem {
   id: string;

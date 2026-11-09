@@ -88,12 +88,19 @@ export function formatStaySummary(stay: Partial<Stay>): string {
  * Helper to safely parse a YYYY-MM-DD or date string without timezone skew.
  */
 export function parseDateString(dateStr?: string): Date | null {
-  if (!dateStr) return null;
-  const parts = dateStr.split('-').map(Number);
-  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/[-/]/).map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    if (parts[0] >= 1000) {
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    if (parts[2] >= 1000) {
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
   }
-  const d = new Date(dateStr);
+  const d = new Date(trimmed);
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -110,33 +117,22 @@ export function getDateForDay(startDateStr: string | undefined, dayNumber: numbe
       dayNameFull: '',
       dayOfMonth: '',
       monthShort: '',
+      monthLong: '',
       year: 0,
       displayLabel: '📋 Belum Set',
       secondaryLabel: ''
     };
   }
 
-  const baseDate = parseDateString(startDateStr);
-  if (!baseDate) {
-    return {
-      dayNumber,
-      fullDateString: '',
-      dateFormatted: `Hari ${dayNumber}`,
-      dayName: `Hari ${dayNumber}`,
-      dayNameFull: `Hari ${dayNumber}`,
-      dayOfMonth: `${dayNumber}`,
-      monthShort: '',
-      year: 0,
-      displayLabel: `Hari ${dayNumber}`,
-      secondaryLabel: ''
-    };
-  }
+  // Gracefully fallback to today if startDateStr is absent or invalid
+  const baseDate = parseDateString(startDateStr) || parseDateString(getLocalTodayDate()) || new Date();
 
   const targetDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + (dayNumber - 1));
   const dayName = targetDate.toLocaleDateString('ms-MY', { weekday: 'short' });
   const dayNameFull = targetDate.toLocaleDateString('ms-MY', { weekday: 'long' });
   const dayOfMonth = targetDate.getDate().toString();
   const monthShort = targetDate.toLocaleDateString('ms-MY', { month: 'short' });
+  const monthLong = targetDate.toLocaleDateString('ms-MY', { month: 'long' });
   const year = targetDate.getFullYear();
 
   const dateFormatted = `${dayOfMonth} ${monthShort}`;
@@ -155,6 +151,7 @@ export function getDateForDay(startDateStr: string | undefined, dayNumber: numbe
     dayNameFull,
     dayOfMonth,
     monthShort,
+    monthLong,
     year,
     displayLabel,
     secondaryLabel
@@ -262,38 +259,46 @@ export function getDayContextLabel(stay: Partial<Stay>, dayNumber: number): {
 }
 
 export function formatDateRange(startDateStr?: string, endDateStr?: string, durationDays: number = 3): string {
-  if (!startDateStr) return `${durationDays} Hari`;
+  const effectiveStart = startDateStr || getLocalTodayDate();
   try {
-    const start = new Date(startDateStr);
+    const start = parseDateString(effectiveStart) || new Date();
     const startFormatted = start.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' });
-    if (!endDateStr) return `${startFormatted} (${durationDays} Hari)`;
-    const end = new Date(endDateStr);
+    const effectiveDuration = Math.max(1, durationDays || 1);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + (effectiveDuration - 1));
     const endFormatted = end.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `${startFormatted} – ${endFormatted} (${durationDays} Hari ${durationDays > 1 ? `${durationDays - 1} Malam` : ''})`;
+    return `${startFormatted} – ${endFormatted} (${effectiveDuration} Hari ${effectiveDuration > 1 ? `${effectiveDuration - 1} Malam` : ''})`;
   } catch {
     return `${durationDays} Hari`;
   }
 }
 
-export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], checklistItems?: ChecklistItem[]): string {
+export function generateWhatsAppMessage(
+  stay: Stay,
+  agendaItems: AgendaItem[],
+  checklistItems?: ChecklistItem[],
+  includeSensitiveInfo: boolean = false
+): string {
   const stayAgendas = agendaItems.filter((a) => a.stayId === stay.id);
-  const summaryStr = formatStaySummary(stay);
-  
+
   let msg = `🌟 *STAYPLAN: ${stay.title.toUpperCase()}*\n`;
-  msg += `_"Plan the stay, not just the calendar."_\n\n`;
-  
-  msg += `📍 *Lokasi:* ${stay.location || 'Tidak dinyatakan'}\n`;
+  msg += `_"Smart stays, kept on track."_\n\n`;
+
+  if (stay.location) msg += `📍 *Lokasi:* ${stay.location}\n`;
   if (stay.address) msg += `🗺️ *Alamat:* ${stay.address}\n`;
-  msg += `📅 *Tempoh:* ${formatDateRange(stay.startDate, stay.endDate, stay.durationDays)} (${summaryStr})\n`;
-  
+  msg += `📅 *Tempoh:* ${formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}\n`;
+
   if (stay.companions && stay.companions.length > 0) {
     msg += `👥 *Bersama:* ${stay.companions.join(', ')}\n`;
   }
-  
+
   if (stay.wifiSsid) {
-    msg += `📶 *WiFi:* ${stay.wifiSsid} ${stay.wifiPassword ? `(Kata laluan: ${stay.wifiPassword})` : ''}\n`;
+    if (includeSensitiveInfo && stay.wifiPassword) {
+      msg += `📶 *WiFi:* ${stay.wifiSsid} (Kata laluan: ${stay.wifiPassword})\n`;
+    } else {
+      msg += `📶 *WiFi:* ${stay.wifiSsid}\n`;
+    }
   }
-  
+
   if (stay.hostContact) {
     msg += `📞 *Hubungi:* ${stay.hostName ? `${stay.hostName} ` : ''}(${stay.hostContact})\n`;
   }
@@ -302,53 +307,60 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
   msg += `   📋 *AGENDA & HARI PERJALANAN*   \n`;
   msg += `═══════════════════════\n`;
 
-  for (let day = 1; day <= stay.durationDays; day++) {
+  const slotOrderRank: Record<TimeSlot, number> = {
+    morning: 1,
+    midday: 2,
+    afternoon: 3,
+    evening: 4,
+    flexible: 5
+  };
+
+  const effectiveStartDate =
+    stay.startDate && parseDateString(stay.startDate)
+      ? stay.startDate
+      : getLocalTodayDate();
+
+  const totalDays = Math.max(1, stay.durationDays || 2);
+
+  for (let day = 1; day <= totalDays; day++) {
     const dayItems = stayAgendas.filter((a) => a.dayNumber === day);
     const dayContext = getDayContextLabel(stay, day);
-    msg += `\n📌 *HARI ${day}: ${dayContext.icon} ${dayContext.label}*\n`;
+    const dateInfo = getDateForDay(effectiveStartDate, day);
+    const fullDateStr = `${dateInfo.dayNameFull}, ${dateInfo.dayOfMonth} ${dateInfo.monthShort}`;
+
+    msg += `\n📌 *HARI ${day}: ${fullDateStr} (${dayContext.icon} ${dayContext.label})*\n\n`;
 
     if (dayItems.length === 0) {
-      msg += `  _(Tiada aktiviti dirancang lagi)_\n`;
+      msg += `_(Tiada aktiviti dirancang lagi)_\n───────────────────────\n`;
       continue;
     }
 
-    const slotOrder: TimeSlot[] = ['morning', 'midday', 'afternoon', 'evening', 'flexible'];
+    const sortedDayItems = [...dayItems].sort((a, b) => {
+      const slotDiff = (slotOrderRank[a.timeSlot] || 5) - (slotOrderRank[b.timeSlot] || 5);
+      if (slotDiff !== 0) return slotDiff;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
 
-    for (const slot of slotOrder) {
-      const slotItems = dayItems.filter((i) => i.timeSlot === slot);
-      if (slotItems.length === 0) continue;
+    sortedDayItems.forEach((item) => {
+      const statusIcon = item.isCompleted ? '✅' : '*';
+      const timeStr = item.timeSpecific ? ` (${item.timeSpecific})` : '';
+      const locStr = item.locationName ? ` 📍 ${item.locationName}` : '';
+      const picStr = item.personInCharge ? ` [PIC: ${item.personInCharge}]` : '';
 
-      const slotMeta = TIME_SLOTS[slot];
-      msg += `\n${slotMeta.icon} *${slotMeta.label}*\n`;
+      msg += `${statusIcon} ${item.title}${timeStr}${locStr}${picStr}\n`;
+      if (item.description) {
+        msg += `   _${item.description}_\n`;
+      }
+    });
 
-      slotItems.forEach((item) => {
-        const priorityTag = item.priority === 'must_do' 
-          ? '🫪 [WAJIB]' 
-          : item.priority === 'food' 
-          ? '🍽️ [MAKAN]' 
-          : item.priority === 'rest' 
-          ? '☕ [REHAT]' 
-          : item.priority === 'logistics' 
-          ? '🚗 [LOGISTIK]' 
-          : '🌴 [PILIHAN]';
-
-        const statusIcon = item.isCompleted ? '✅' : '•';
-        const timeStr = item.timeSpecific ? ` (${item.timeSpecific})` : '';
-        const locStr = item.locationName ? ` 📍 ${item.locationName}` : '';
-        const picStr = item.personInCharge ? ` [PIC: ${item.personInCharge}]` : '';
-
-        msg += `${statusIcon} ${priorityTag} *${item.title}*${timeStr}${locStr}${picStr}\n`;
-        if (item.description) {
-          msg += `   _${item.description}_\n`;
-        }
-      });
-    }
     msg += `───────────────────────\n`;
   }
 
-  if (stay.importantNotes || (stay.houseRules && stay.houseRules.length > 0)) {
+  if (stay.importantNotes || (stay.houseRules && stay.houseRules.length > 0) || (includeSensitiveInfo && stay.gatePin)) {
     msg += `\n💡 *NOTA PENTING & PERATURAN:*\n`;
-    if (stay.gatePin) msg += `🔑 *Kunci/Pin:* ${stay.gatePin}\n`;
+    if (includeSensitiveInfo && stay.gatePin) {
+      msg += `🔑 *Kunci/PIN Akses:* ${stay.gatePin}\n`;
+    }
     if (stay.importantNotes) msg += `• ${stay.importantNotes}\n`;
     if (stay.houseRules) {
       stay.houseRules.forEach((rule) => {
@@ -357,7 +369,7 @@ export function generateWhatsAppMessage(stay: Stay, agendaItems: AgendaItem[], c
     }
   }
 
-  msg += `\n📱 _Disediakan dengan kasih sayang melalui StayPlan (stayplan.syncrozz.com)_`;
+  msg += `\n📱 _Disediakan melalui StayPlan_`;
 
   return msg;
 }
@@ -406,3 +418,155 @@ export function parseActivityLines(rawText: string): string[] {
 
   return results;
 }
+
+export const TIME_SLOT_HIERARCHY: Record<TimeSlot, number> = {
+  morning: 1,
+  midday: 2,
+  afternoon: 3,
+  evening: 4,
+  flexible: 5
+};
+
+/**
+ * Returns current time slot ('morning', 'midday', 'afternoon', 'evening') based on current hour.
+ * - 05:00 – 11:59: morning (Pagi)
+ * - 12:00 – 14:29: midday (Tengah Hari)
+ * - 14:30 – 18:59: afternoon (Petang)
+ * - 19:00 – 04:59: evening (Malam)
+ */
+export function getCurrentTimeSlot(now: Date = new Date()): TimeSlot {
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const totalMinutes = hour * 60 + minute;
+
+  if (totalMinutes >= 300 && totalMinutes < 720) {
+    return 'morning';
+  }
+  if (totalMinutes >= 720 && totalMinutes < 870) {
+    return 'midday';
+  }
+  if (totalMinutes >= 870 && totalMinutes < 1140) {
+    return 'afternoon';
+  }
+  return 'evening';
+}
+
+/**
+ * Determines whether an agenda item's slot falls on the current slot or subsequent slots.
+ * Flexible items are always included.
+ */
+export function isSlotOnward(slot: TimeSlot, currentSlot: TimeSlot): boolean {
+  if (slot === 'flexible') return true;
+  const currentRank = TIME_SLOT_HIERARCHY[currentSlot] || 1;
+  const slotRank = TIME_SLOT_HIERARCHY[slot] || 1;
+  return slotRank >= currentRank;
+}
+
+export function getTimeSlotLabel(slot: TimeSlot): { label: string; icon: string; timeRange: string } {
+  switch (slot) {
+    case 'morning':
+      return { label: 'Pagi', icon: '🌅', timeRange: '5:00 AM – 11:59 AM' };
+    case 'midday':
+      return { label: 'Tengah Hari', icon: '☀️', timeRange: '12:00 PM – 2:30 PM' };
+    case 'afternoon':
+      return { label: 'Petang', icon: '🌤️', timeRange: '2:30 PM – 7:00 PM' };
+    case 'evening':
+      return { label: 'Malam', icon: '🌙', timeRange: '7:00 PM – Lewat Malam' };
+    case 'flexible':
+    default:
+      return { label: 'Fleksibel', icon: '🍃', timeRange: 'Bila-bila masa' };
+  }
+}
+
+export interface TodayStayDayInfo {
+  todayStr: string;
+  dayNumber: number; // 1-based index (capped between 1 and duration)
+  isTodayInStay: boolean;
+  isBeforeStay: boolean;
+  isAfterStay: boolean;
+  currentSlot: TimeSlot;
+  currentSlotInfo: { label: string; icon: string; timeRange: string };
+  todayFormatted: string;
+  dayContext: ReturnType<typeof getDayContextLabel>;
+  dateInfo: ReturnType<typeof getDateForDay>;
+}
+
+/**
+ * Computes live contextual stay day information for today's date.
+ */
+export function getTodayStayDayInfo(stay: Partial<Stay>, now: Date = new Date()): TodayStayDayInfo {
+  const todayStr = getLocalTodayDate();
+  const duration = stay.durationDays || 3;
+  const currentSlot = getCurrentTimeSlot(now);
+  const currentSlotInfo = getTimeSlotLabel(currentSlot);
+
+  const dayOfMonth = now.getDate();
+  const monthShort = now.toLocaleDateString('ms-MY', { month: 'short' });
+  const dayName = now.toLocaleDateString('ms-MY', { weekday: 'long' });
+  const todayFormatted = `${dayName}, ${dayOfMonth} ${monthShort}`;
+
+  if (!stay.startDate) {
+    const fallbackDay = 1;
+    const dateInfo = getDateForDay(undefined, fallbackDay);
+    const dayContext = getDayContextLabel(stay, fallbackDay);
+    return {
+      todayStr,
+      dayNumber: fallbackDay,
+      isTodayInStay: false,
+      isBeforeStay: false,
+      isAfterStay: false,
+      currentSlot,
+      currentSlotInfo,
+      todayFormatted,
+      dayContext,
+      dateInfo
+    };
+  }
+
+  const start = parseDateString(stay.startDate);
+  const today = parseDateString(todayStr);
+
+  if (!start || !today) {
+    const fallbackDay = 1;
+    const dateInfo = getDateForDay(stay.startDate, fallbackDay);
+    const dayContext = getDayContextLabel(stay, fallbackDay);
+    return {
+      todayStr,
+      dayNumber: fallbackDay,
+      isTodayInStay: false,
+      isBeforeStay: false,
+      isAfterStay: false,
+      currentSlot,
+      currentSlotInfo,
+      todayFormatted,
+      dayContext,
+      dateInfo
+    };
+  }
+
+  const diffTime = today.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  const rawDayNumber = diffDays + 1;
+
+  const isTodayInStay = rawDayNumber >= 1 && rawDayNumber <= duration;
+  const isBeforeStay = rawDayNumber < 1;
+  const isAfterStay = rawDayNumber > duration;
+
+  const clampedDayNumber = Math.min(Math.max(1, rawDayNumber), duration);
+  const dateInfo = getDateForDay(stay.startDate, clampedDayNumber);
+  const dayContext = getDayContextLabel(stay, clampedDayNumber);
+
+  return {
+    todayStr,
+    dayNumber: clampedDayNumber,
+    isTodayInStay,
+    isBeforeStay,
+    isAfterStay,
+    currentSlot,
+    currentSlotInfo,
+    todayFormatted,
+    dayContext,
+    dateInfo
+  };
+}
+

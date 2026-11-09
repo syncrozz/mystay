@@ -250,7 +250,7 @@ export const PrivateAccessScreen: React.FC = () => {
 
         {/* Footer info */}
         <p className="text-center text-xs text-stone-500 font-medium">
-          StayPlan Personal • Plan the stay, don&apos;t miss something
+          StayPlan Personal • Smart stays, kept on track.
         </p>
 
       </div>

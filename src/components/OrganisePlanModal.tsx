@@ -65,6 +65,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
     const restItems = stayAgendas.filter((i) => i.priority === 'rest');
     const logisticsItems = stayAgendas.filter((i) => i.priority === 'logistics');
     const optionalItems = stayAgendas.filter((i) => i.priority === 'optional');
+    const undecidedItems = stayAgendas.filter((i) => !i.priority || i.priority === 'undecided');
 
     // Slot cycle for natural pacing
     const slotCycle: TimeSlot[] = ['morning', 'midday', 'afternoon', 'evening'];
@@ -159,11 +160,14 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
       }
     }
 
-    // 5. Assign Optional Items (spread out, but keep 20-30% in backlog if total is high so user isn't exhausted)
+    // 5. Assign Undecided & Optional Items (spread out, keeping overflow in backlog if total exceeds pacing cap)
     const maxItemsTotal = duration * 4; // Cap at ~3-4 per day max for realistic pacing
     let assignedCount = Object.keys(nextProposal).length;
 
-    for (const item of optionalItems) {
+    const remainingToDistribute = [...undecidedItems, ...optionalItems];
+    for (const item of remainingToDistribute) {
+      if (nextProposal[item.id]) continue;
+
       if (assignedCount < maxItemsTotal) {
         const match = findBestDayAndSlot('stay', item.timeSlot !== 'flexible' ? item.timeSlot : undefined);
         if (match) {
@@ -215,8 +219,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
   if (!isOpen) return null;
 
   const totalPlanned = stayAgendas.length;
-  const wajibCount = stayAgendas.filter((i) => i.priority === 'must_do').length;
-  const optionalCount = totalPlanned - wajibCount;
 
   // Handle individual item day/slot change in proposal
   const handleItemMove = (itemId: string, targetDay: number, targetSlot?: TimeSlot) => {
@@ -303,12 +305,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
             <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-950 font-bold">
               📝 {totalPlanned} Perkara Dirancang
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-900">
-              🫪 {wajibCount} Wajib
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-emerald-900">
-              🌿 {optionalCount} Pilihan
-            </span>
             <span className="px-2.5 py-1 rounded-lg bg-white border border-stone-200 text-stone-700">
               🏠 {duration} Hari Aktiviti
             </span>
@@ -335,7 +331,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
               const dateInfo = getDateForDay(stay.startDate, dayNum);
               const isTravel = dayContext.type === 'travel_day';
               const itemsInDay = getItemsForDay(dayNum);
-              const dayWajibCount = itemsInDay.filter((i) => i.priority === 'must_do').length;
 
               return (
                 <div
@@ -370,25 +365,14 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                     {itemsInDay.map((item) => {
                       const p = proposal[item.id] || { dayNumber: item.dayNumber, timeSlot: item.timeSlot };
                       const slotMeta = TIME_SLOTS[p.timeSlot] || TIME_SLOTS.morning;
-                      const isWajib = item.priority === 'must_do';
-
                       return (
                         <div
                           key={item.id}
-                          className={`p-2.5 rounded-xl border bg-white shadow-2xs space-y-1.5 transition-all text-xs ${
-                            isWajib ? 'border-amber-300' : 'border-stone-200'
-                          }`}
+                          className="p-2.5 rounded-xl border border-stone-200 bg-white shadow-2xs space-y-1.5 transition-all text-xs"
                         >
                           <div className="flex items-start justify-between gap-1.5">
                             <span className="font-bold text-stone-900 leading-snug line-clamp-2">
                               {item.title}
-                            </span>
-                            <span
-                              className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                                isWajib ? 'bg-amber-100 text-amber-900' : 'bg-emerald-50 text-emerald-800'
-                              }`}
-                            >
-                              {isWajib ? '🫪 Wajib' : '🌿 Pilihan'}
                             </span>
                           </div>
 
@@ -466,9 +450,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                   >
                     <div className="flex items-start justify-between gap-1.5">
                       <span className="font-bold text-stone-800 line-clamp-2">{item.title}</span>
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-stone-100 text-stone-600">
-                        {item.priority === 'must_do' ? '🫪 Wajib' : '🌿 Pilihan'}
-                      </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-100">

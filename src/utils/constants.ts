@@ -71,6 +71,15 @@ export const PRIORITY_CONFIG: Record<ActivityPriority, {
   iconName: string;
   description: string;
 }> = {
+  undecided: {
+    label: 'Belum Ditentukan',
+    shortLabel: 'Belum Set',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-300 font-medium',
+    borderClass: 'border-l-4 border-l-slate-400',
+    bgLight: 'bg-slate-50/70',
+    iconName: 'HelpCircle',
+    description: 'Keutamaan belum ditentukan untuk perjalanan ini'
+  },
   must_do: {
     label: 'Wajib',
     shortLabel: 'Wajib',
@@ -81,8 +90,8 @@ export const PRIORITY_CONFIG: Record<ActivityPriority, {
     description: 'Aktiviti utama & penting (Mesti buat dalam stay ini)'
   },
   optional: {
-    label: 'Santai',
-    shortLabel: 'Santai',
+    label: 'Pilihan',
+    shortLabel: 'Pilihan',
     badgeClass: 'bg-emerald-100 text-emerald-900 border-emerald-300',
     borderClass: 'border-l-4 border-l-emerald-500',
     bgLight: 'bg-emerald-50/50',
@@ -117,6 +126,19 @@ export const PRIORITY_CONFIG: Record<ActivityPriority, {
     description: 'Perjalanan, check-in, kemas bagasi & persediaan'
   }
 };
+
+export const DEFAULT_ACTIVITY_LIBRARY_SEEDS = [
+  { name: 'Makan Nasi Dagang', emoji: '🍚' },
+  { name: 'Pergi Pantai', emoji: '🏖️' },
+  { name: 'Rehat Santai & Kopi Petang', emoji: '☕' },
+  { name: 'Singgah Rumah Ayah', emoji: '🏡' },
+  { name: 'Beli Keropok Lekor', emoji: '🛍️' },
+  { name: 'Gi Kenduri Ayoh Lie', emoji: '🎉' },
+  { name: 'Makan Kedai Kak Nurul', emoji: '🍜' },
+  { name: 'Jumpa Keluarga', emoji: '👨‍👩‍👧' },
+  { name: 'Bawa Anak Jalan-Jalan', emoji: '🧒' },
+  { name: 'Ziarah Tok', emoji: '👵' }
+];
 
 export const TIME_SLOTS: Record<TimeSlot, {
   label: string;
@@ -176,9 +198,8 @@ export const TIME_SLOTS: Record<TimeSlot, {
 
 export const CHECKLIST_CATEGORIES: Record<ChecklistCategory, { label: string; icon: string }> = {
   essentials: { label: 'Barang Wajib & Dokumen', icon: '🪪' },
-  house_homestay: { label: 'Keperluan Homestay & Rumah', icon: '🏠' },
-  food_gifts: { label: 'Buah Tangan & Makanan', icon: '🎁' },
-  kids_elderly: { label: 'Anak Kecil & Warga Emas', icon: '👶' },
+  house_homestay: { label: 'Penginapan & Keperluan', icon: '🏠' },
+  food_gifts: { label: 'Makanan & Minuman', icon: '🍽️' },
   custom: { label: 'Lain-lain', icon: '📝' }
 };
 
