@@ -25,10 +25,14 @@ import {
   Loader2,
   EyeOff,
   Eye,
+<<<<<<< HEAD
   Bookmark,
   MoreVertical,
   Clock,
   Pencil
+=======
+  Bookmark
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 } from 'lucide-react';
 import { ActivityLibraryModal } from './ActivityLibraryModal';
 
@@ -54,7 +58,10 @@ const TIME_SLOT_ORDER: Record<string, number> = {
 export const PlanBoard: React.FC<PlanBoardProps> = ({
   stay,
   onOpenAddModal,
+<<<<<<< HEAD
   onOpenAddModalForDay,
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   onEditItem,
   onOpenActivityLibrary
 }) => {
@@ -98,8 +105,11 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
       return [];
     }
   });
+<<<<<<< HEAD
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 
   const duration = stay.durationDays || 3;
   const todayInfo = useMemo(() => getTodayStayDayInfo(stay), [stay]);
@@ -508,6 +518,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
 
   // Accidental Deletion Protection
   const handleDeletePrompt = (item: AgendaItem) => {
+<<<<<<< HEAD
     setItemToDelete(item);
   };
 
@@ -524,6 +535,25 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
       console.error('Delete activity error:', e);
       setFeedbackToast(`Aktiviti "${deletedTitle}" telah dipadam.`);
       setTimeout(() => setFeedbackToast(null), 2500);
+    }
+=======
+    requireAdmin(() => {
+      setItemToDelete(item);
+    }, 'Sila sahkan PIN Admin untuk memadam aktiviti.');
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    const deletedTitle = itemToDelete.title;
+    const targetId = itemToDelete.id;
+    setItemToDelete(null);
+    try {
+      await deleteAgendaItem(targetId);
+      setFeedbackToast(`Aktiviti "${deletedTitle}" telah dipadam.`);
+      setTimeout(() => setFeedbackToast(null), 2500);
+    } catch (e) {
+      console.error('Delete activity error:', e);
     }
   };
 
@@ -1131,6 +1161,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </button>
             </div>
           ) : (
+<<<<<<< HEAD
             <div className="space-y-4 relative">
               {/* Outside-click backdrop for three-dot action menu */}
               {activeMenuId && (
@@ -1233,6 +1264,136 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                             ? 'bg-white border-amber-200 text-amber-900'
                             : 'bg-white border-teal-200 text-teal-950'
                         }`}
+=======
+            <div className="space-y-2">
+            {filteredItems.map((item) => {
+              const isBacklog = !item.dayNumber || item.dayNumber === 0;
+
+              return (
+                <div
+                  key={item.id}
+                  className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border bg-white shadow-2xs hover:shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 ${
+                    item.isCompleted ? 'bg-slate-50/80 border-slate-200 opacity-75' : 'border-slate-200'
+                  }`}
+                >
+                  {/* Left Column on Desktop / Top Content on Mobile */}
+                  <div className="space-y-1 flex-1 min-w-0">
+                    {/* Row 1: Checkbox + Tajuk Aktiviti + Priority */}
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleAgendaComplete(item.id)}
+                          className="text-slate-400 hover:text-teal-600 transition-colors shrink-0 cursor-pointer"
+                          title={item.isCompleted ? 'Tanda belum selesai' : 'Tanda selesai'}
+                        >
+                          {item.isCompleted ? (
+                            <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                          ) : (
+                            <Circle className="w-4.5 h-4.5 text-slate-300 hover:text-slate-400" />
+                          )}
+                        </button>
+
+                        {item.emoji && <span className="text-base shrink-0">{item.emoji}</span>}
+                        <span
+                          className={`text-xs sm:text-sm font-bold leading-snug truncate ${
+                            item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
+                          }`}
+                        >
+                          {item.title}
+                        </span>
+                      </div>
+
+                    </div>
+
+                    {/* Optional Location Row (Hanya muncul jika ada) */}
+                    {item.locationName && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 pl-7 -mt-0.5">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{item.locationName}</span>
+                      </div>
+                    )}
+
+                    {/* Optional Description / PIC */}
+                    {(item.description || item.personInCharge) && (
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 pl-7">
+                        {item.description && (
+                          <span className="line-clamp-1">{item.description}</span>
+                        )}
+                        {item.personInCharge && (
+                          <span className="inline-flex items-center gap-0.5 text-teal-900 font-medium">
+                            <User className="w-2.5 h-2.5 text-teal-600 shrink-0" />
+                            <span>{item.personInCharge}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: Tarikh + Slot Masa + Edit/Delete dalam satu baris */}
+                  <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto pl-7 md:pl-0 shrink-0">
+                    {/* Left side of Row 2: Tarikh & Slot Masa */}
+                    <div className="flex items-center gap-1.5">
+                      {/* Tarikh Dropdown (Actual Date as indicator) */}
+                      <select
+                        value={item.dayNumber || 0}
+                        onChange={(e) => handleAssignDay(item, Number(e.target.value))}
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-all cursor-pointer shadow-2xs ${
+                          isBacklog
+                            ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                            : 'bg-teal-50 text-teal-950 border-teal-200 font-black'
+                        }`}
+                      >
+                        <option value={0}>📋 Belum Dijadualkan</option>
+                        {Array.from({ length: duration }).map((_, idx) => {
+                          const dNum = idx + 1;
+                          const ctx = getDayContextLabel(stay, dNum);
+                          const dInfo = getDateForDay(stay.startDate, dNum);
+                          return (
+                            <option key={dNum} value={dNum}>
+                              {ctx.icon} {dInfo.dateFormatted}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      <span className="text-slate-300 font-bold text-xs select-none">·</span>
+
+                      {/* Time Slot Dropdown */}
+                      <select
+                        value={item.timeSlot || 'flexible'}
+                        onChange={(e) => handleAssignSlot(item, e.target.value as TimeSlot)}
+                        className={`text-xs font-bold rounded-lg px-2 py-1 border transition-all cursor-pointer shadow-2xs ${
+                          TIME_SLOTS[item.timeSlot || 'flexible']?.selectClass || 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        <option value="morning" className="bg-amber-50 text-amber-950 font-bold">🌅 Pagi</option>
+                        <option value="midday" className="bg-rose-50 text-rose-950 font-bold">☀️ Tghri</option>
+                        <option value="afternoon" className="bg-sky-50 text-sky-950 font-bold">🌤️ Petang</option>
+                        <option value="evening" className="bg-purple-50 text-purple-950 font-bold">🌙 Malam</option>
+                        <option value="flexible" className="bg-orange-50 text-orange-950 font-bold">🍃 Fleksibel</option>
+                      </select>
+                    </div>
+
+                    {/* Right side of Row 2: Edit & Delete Buttons */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {onEditItem && (
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(item)}
+                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                          title="Edit Maklumat"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePrompt(item)}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        title="Padam"
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                       >
                         {section.items.length} {section.items.length === 1 ? 'aktiviti' : 'aktiviti'}
                       </span>
@@ -1495,12 +1656,27 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                 </section>
               ))}
             </div>
+<<<<<<< HEAD
           )}
+=======
+
+            <button
+              type="button"
+              id="organise-stay-button"
+              onClick={handleOrganiseClick}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0 self-start sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Susun &amp; Agihkan Agenda</span>
+            </button>
+          </div>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
         </>
       )}
 
       {/* Accidental Delete Confirmation Modal */}
       {itemToDelete && (
+<<<<<<< HEAD
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setItemToDelete(null)}
@@ -1509,6 +1685,10 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
             className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
+=======
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -1528,10 +1708,14 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </button>
               <button
                 type="button"
+<<<<<<< HEAD
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConfirmDelete();
                 }}
+=======
+                onClick={handleConfirmDelete}
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                 className="flex-1 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 rounded-xl transition-all shadow-xs cursor-pointer"
               >
                 Ya, Padam

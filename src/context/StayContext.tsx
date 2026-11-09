@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+<<<<<<< HEAD
 import { Stay, AgendaItem, ChecklistItem, StayType, DayType, SyncStatus, ActivityLibraryItem } from '../types';
+=======
+import { Stay, AgendaItem, ChecklistItem, StayType, SyncStatus, ActivityLibraryItem } from '../types';
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 import { SHOWCASE_STAYS, SHOWCASE_AGENDA_ITEMS, SHOWCASE_CHECKLIST_ITEMS } from '../data/defaultStays';
 import { getLocalTodayDate, getLocalDateWithOffset } from '../utils/formatters';
 import { DEFAULT_ACTIVITY_LIBRARY_SEEDS } from '../utils/constants';
@@ -1012,6 +1016,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         prev.map((s) => (s.id === id ? { ...s, ...mergedUpdates } : s))
       );
 
+<<<<<<< HEAD
       // When duration is reduced, delete/prune all agenda items for days beyond the new duration!
       const isDurationReduced = updates.durationDays !== undefined && updates.durationDays < existingStay.durationDays;
       if (isDurationReduced) {
@@ -1052,6 +1057,16 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
 
+=======
+      if (user?.uid) {
+        try {
+          setSyncStatus('SAVING');
+          setIsSyncing(true);
+
+          const stayRef = doc(db, 'stays', id);
+          await updateDoc(stayRef, sanitizedUpdates);
+
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
           setSyncStatus('SYNCED');
           setLastSyncTime(Date.now());
           setSyncError(null);
@@ -1068,7 +1083,11 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLastSyncTime(Date.now());
       }
     },
+<<<<<<< HEAD
     [user, userStays, stays, userAgendaItems, userChecklistItems]
+=======
+    [user]
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   );
 
   const deleteStay = useCallback(

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ChecklistItem, ChecklistCategory, Stay } from '../types';
 import { CHECKLIST_CATEGORIES } from '../utils/constants';
 import { useAuth } from '../context/AuthContext';
+<<<<<<< HEAD
 import {
   Check,
   Plus,
@@ -16,6 +17,9 @@ import {
   X,
   Settings2
 } from 'lucide-react';
+=======
+import { Check, Plus, Trash2, ListChecks, Sparkles, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 import { toTitleCase } from '../utils/formatters';
 import confetti from 'canvas-confetti';
 
@@ -27,6 +31,7 @@ interface PackingChecklistProps {
   onDeleteItem: (id: string) => void;
 }
 
+<<<<<<< HEAD
 export interface SuggestionCategoryGroup {
   category: ChecklistCategory;
   categoryLabel: string;
@@ -35,6 +40,14 @@ export interface SuggestionCategoryGroup {
 
 // Default short-stay suggestions categorized by practical needs (4 categories)
 const DEFAULT_SUGGESTIONS_BY_CATEGORY: SuggestionCategoryGroup[] = [
+=======
+// Optional short-stay suggestions categorized by practical needs
+const SUGGESTIONS_BY_CATEGORY: {
+  category: ChecklistCategory;
+  categoryLabel: string;
+  items: string[];
+}[] = [
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   {
     category: 'essentials',
     categoryLabel: 'Asas & Pakaian',
@@ -47,7 +60,11 @@ const DEFAULT_SUGGESTIONS_BY_CATEGORY: SuggestionCategoryGroup[] = [
   },
   {
     category: 'house_homestay',
+<<<<<<< HEAD
     categoryLabel: 'Penginapan & Keperluan',
+=======
+    categoryLabel: 'Homestay & Penginapan',
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
     items: [
       'Extension plug / soket tambahan',
       'Beg plastik baju kotor',
@@ -57,7 +74,11 @@ const DEFAULT_SUGGESTIONS_BY_CATEGORY: SuggestionCategoryGroup[] = [
   },
   {
     category: 'food_gifts',
+<<<<<<< HEAD
     categoryLabel: 'Makanan & Minuman',
+=======
+    categoryLabel: 'Makanan & Bekalan',
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
     items: [
       'Air mineral botol untuk bilik',
       'Snek & biskut perjalanan',
@@ -66,6 +87,7 @@ const DEFAULT_SUGGESTIONS_BY_CATEGORY: SuggestionCategoryGroup[] = [
     ]
   },
   {
+<<<<<<< HEAD
     category: 'custom',
     categoryLabel: 'Lain-lain',
     items: [
@@ -73,11 +95,17 @@ const DEFAULT_SUGGESTIONS_BY_CATEGORY: SuggestionCategoryGroup[] = [
       'Kit kecemasan / panadol & koyok',
       'Payung lipat',
       'Plastik muntah perjalanan',
+=======
+    category: 'kids_elderly',
+    categoryLabel: 'Anak Kecil & Warga Emas',
+    items: [
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
       'Minyak telon / ubatan demam anak',
       'Lampin pakai buang ekstra',
       'Ubat rutin harian (Darah tinggi / Kencing manis)',
       'Termometer suhu badan'
     ]
+<<<<<<< HEAD
   }
 ];
 
@@ -150,6 +178,21 @@ const normalizeAndMigrateSuggestions = (parsed: any[]): { groups: SuggestionCate
   return { groups, didMigrate };
 };
 
+=======
+  },
+  {
+    category: 'custom',
+    categoryLabel: 'Perjalanan & Keselamatan',
+    items: [
+      'Kad Touch \'n Go (baki mencukupi)',
+      'Kit kecemasan / panadol & koyok',
+      'Payung lipat',
+      'Plastik muntah perjalanan'
+    ]
+  }
+];
+
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 export const PackingChecklist: React.FC<PackingChecklistProps> = ({
   items,
   stay,
@@ -157,6 +200,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
   onToggleItem,
   onDeleteItem
 }) => {
+<<<<<<< HEAD
   const { user, requireAdmin } = useAuth();
   const storageKey = `stayplan_checklist_suggestions_${user?.uid || 'guest'}`;
 
@@ -205,6 +249,9 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
     }
   };
 
+=======
+  const { requireAdmin } = useAuth();
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   const [inputText, setInputText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ChecklistCategory>('essentials');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -251,7 +298,11 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
 
   const handleAddSuggestionItem = (category: ChecklistCategory, text: string) => {
     requireAdmin(() => {
+<<<<<<< HEAD
       if (!normalizedItems.some((i) => i.text.toLowerCase() === text.toLowerCase())) {
+=======
+      if (!items.some((i) => i.text.toLowerCase() === text.toLowerCase())) {
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
         onAddItem({
           stayId: stay.id,
           category,
@@ -286,6 +337,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
     const targetId = itemToDelete.id;
     setItemToDelete(null);
     onDeleteItem(targetId);
+<<<<<<< HEAD
   };
 
   // --- Handlers for Owner Suggestion Customization ---
@@ -377,6 +429,8 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
         saveSuggestions(DEFAULT_SUGGESTIONS_BY_CATEGORY);
       }
     }, 'Sila sahkan PIN Admin untuk menetapkan semula item lazim.');
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   };
 
   const filteredItems = filterCategory === 'all'
@@ -451,10 +505,17 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
             }`}
           >
+<<<<<<< HEAD
             Semua ({normalizedItems.length})
           </button>
           {(Object.keys(CHECKLIST_CATEGORIES) as ChecklistCategory[]).map((catKey) => {
             const count = normalizedItems.filter((i) => i.category === catKey).length;
+=======
+            Semua ({items.length})
+          </button>
+          {(Object.keys(CHECKLIST_CATEGORIES) as ChecklistCategory[]).map((catKey) => {
+            const count = items.filter((i) => i.category === catKey).length;
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             if (count === 0 && filterCategory !== catKey) return null;
             return (
               <button
@@ -486,6 +547,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
         </button>
       </div>
 
+<<<<<<< HEAD
       {/* Suggestions Accordion (Modifiable by Account Owner: Add, Edit, Delete, Reset) */}
       {isSuggestionsOpen && (
         <div className="p-4 sm:p-5 rounded-2xl bg-teal-50/60 border border-teal-200/90 space-y-4 animate-in fade-in duration-150">
@@ -597,6 +659,27 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
                       );
                     }
 
+=======
+      {/* Optional Suggestions Accordion (SES v4.5 3.4 - Purely Optional, Never Auto-Inserted) */}
+      {isSuggestionsOpen && (
+        <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200/80 space-y-3 animate-in fade-in duration-150">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-teal-950">
+              Cadangan Item untuk Short Stay (Klik untuk tambah ke senarai anda):
+            </span>
+            <span className="text-[10px] text-teal-800">Pilihan bebas</span>
+          </div>
+
+          <div className="space-y-3">
+            {SUGGESTIONS_BY_CATEGORY.map((catGroup) => (
+              <div key={catGroup.category} className="space-y-1.5">
+                <span className="text-[11px] font-bold text-teal-900 block">
+                  {catGroup.categoryLabel}
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {catGroup.items.map((sug) => {
+                    const alreadyAdded = items.some((i) => i.text.toLowerCase() === sug.toLowerCase());
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                     return (
                       <button
                         key={sug}
@@ -608,6 +691,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
                             ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-default'
                             : 'bg-white hover:bg-teal-100/70 border-teal-200 text-teal-950 font-medium cursor-pointer shadow-2xs active:scale-95'
                         }`}
+<<<<<<< HEAD
                         title={alreadyAdded ? 'Item sudah berada dalam senarai stay' : 'Klik untuk tambah ke senarai'}
                       >
                         {alreadyAdded ? (
@@ -615,19 +699,29 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
                         ) : (
                           <Plus className="w-3 h-3 text-teal-600 shrink-0" />
                         )}
+=======
+                      >
+                        {alreadyAdded ? <Check className="w-3 h-3 text-emerald-600" /> : <Plus className="w-3 h-3 text-teal-600" />}
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         <span>{sug}</span>
                       </button>
                     );
                   })}
+<<<<<<< HEAD
 
                   {catGroup.items.length === 0 && (
                     <span className="text-[11px] text-slate-400 italic">Tiada item dalam kategori ini.</span>
                   )}
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                 </div>
               </div>
             ))}
           </div>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
         </div>
       )}
 
@@ -684,6 +778,7 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Modal: Tambah Cadangan Item Lazim Baharu */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -838,6 +933,9 @@ export const PackingChecklist: React.FC<PackingChecklistProps> = ({
       )}
 
       {/* Accidental Delete Confirmation Modal (Regular Stay Checklist Item) */}
+=======
+      {/* Accidental Delete Confirmation Modal */}
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
       {itemToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">

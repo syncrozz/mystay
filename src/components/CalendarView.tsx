@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Stay, AgendaItem, TimeSlot } from '../types';
 import { TIME_SLOTS } from '../utils/constants';
+<<<<<<< HEAD
 import { getDayContextLabel, formatStaySummary, getDateForDay, getTodayStayDayInfo } from '../utils/formatters';
+=======
+import { getDayContextLabel, formatStaySummary, getDateForDay } from '../utils/formatters';
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 import { useAuth } from '../context/AuthContext';
 import {
   Calendar as CalendarIcon,

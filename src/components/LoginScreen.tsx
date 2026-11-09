@@ -99,7 +99,11 @@ export const LoginScreen: React.FC = () => {
                 </h1>
 
                 <p className="text-sm sm:text-base text-slate-600 font-semibold mt-1">
+<<<<<<< HEAD
                   &ldquo;Smart stays, kept on track.&rdquo;
+=======
+                  &ldquo;Plan the stay, don&apos;t miss something.&rdquo;
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                 </p>
 
                 <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto mt-1 leading-relaxed">

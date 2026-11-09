@@ -39,6 +39,13 @@ export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) 
       setCopiedPin(true);
       setTimeout(() => setCopiedPin(false), 2000);
     }
+<<<<<<< HEAD
+=======
+  };
+
+  const handleEditClick = () => {
+    onEditStay();
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   };
 
   const handleEditClick = () => {
@@ -92,9 +99,15 @@ export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) 
               </button>
             </div>
             <p className="text-xs text-slate-800 font-medium leading-relaxed">
+<<<<<<< HEAD
               {stay.address || 'Alamat belum ditetapkan'}
             </p>
             {stay.address && (
+=======
+              {stay.address || stay.location || 'Lokasi belum ditetapkan'}
+            </p>
+            {(stay.address || stay.location) && (
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
               <div className="flex items-center gap-2 pt-1">
                 <a
                   href={googleMapsUrl}

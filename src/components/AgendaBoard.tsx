@@ -341,6 +341,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           <div className="space-y-1 flex-1 min-w-0">
                             {/* Title & Specific Time Row */}
                             <div className="flex flex-wrap items-center gap-2">
+                              {item.emoji && <span className="text-base shrink-0">{item.emoji}</span>}
                               <h4
                                 className={`text-xs sm:text-sm font-bold leading-snug ${
                                   item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'

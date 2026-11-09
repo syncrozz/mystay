@@ -279,6 +279,7 @@ export function generateWhatsAppMessage(
   includeSensitiveInfo: boolean = false
 ): string {
   const stayAgendas = agendaItems.filter((a) => a.stayId === stay.id);
+<<<<<<< HEAD
 
   let msg = `🌟 *STAYPLAN: ${stay.title.toUpperCase()}*\n`;
   msg += `_"Smart stays, kept on track."_\n\n`;
@@ -286,6 +287,16 @@ export function generateWhatsAppMessage(
   if (stay.location) msg += `📍 *Lokasi:* ${stay.location}\n`;
   if (stay.address) msg += `🗺️ *Alamat:* ${stay.address}\n`;
   msg += `📅 *Tempoh:* ${formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}\n`;
+=======
+  const summaryStr = formatStaySummary(stay);
+
+  let msg = `🌟 *STAYPLAN: ${stay.title.toUpperCase()}*\n`;
+  msg += `_"Plan the stay, don't miss something."_\n\n`;
+
+  msg += `📍 *Lokasi:* ${stay.location || 'Tidak dinyatakan'}\n`;
+  if (stay.address) msg += `🗺️ *Alamat:* ${stay.address}\n`;
+  msg += `📅 *Tempoh:* ${formatDateRange(stay.startDate, stay.endDate, stay.durationDays)} (${summaryStr})\n`;
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 
   if (stay.companions && stay.companions.length > 0) {
     msg += `👥 *Bersama:* ${stay.companions.join(', ')}\n`;
@@ -347,12 +358,29 @@ export function generateWhatsAppMessage(
       const locStr = item.locationName ? ` 📍 ${item.locationName}` : '';
       const picStr = item.personInCharge ? ` [PIC: ${item.personInCharge}]` : '';
 
+<<<<<<< HEAD
       msg += `${statusIcon} ${item.title}${timeStr}${locStr}${picStr}\n`;
       if (item.description) {
         msg += `   _${item.description}_\n`;
       }
     });
 
+=======
+      const slotMeta = TIME_SLOTS[slot];
+      msg += `\n${slotMeta.icon} *${slotMeta.label}*\n`;
+      slotItems.forEach((item) => {
+        const statusIcon = item.isCompleted ? '✅' : '•';
+        const timeStr = item.timeSpecific ? ` (${item.timeSpecific})` : '';
+        const locStr = item.locationName ? ` 📍 ${item.locationName}` : '';
+        const picStr = item.personInCharge ? ` [PIC: ${item.personInCharge}]` : '';
+
+        msg += `${statusIcon} *${item.title}*${timeStr}${locStr}${picStr}\n`;
+        if (item.description) {
+          msg += `   _${item.description}_\n`;
+        }
+      });
+    }
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
     msg += `───────────────────────\n`;
   }
 
@@ -369,7 +397,11 @@ export function generateWhatsAppMessage(
     }
   }
 
+<<<<<<< HEAD
   msg += `\n📱 _Disediakan melalui StayPlan_`;
+=======
+  msg += `\n📱 _Disediakan melalui StayPlan (Plan the stay, don't miss something)_`;
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 
   return msg;
 }

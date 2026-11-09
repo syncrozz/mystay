@@ -150,6 +150,7 @@ export const ShareExportModal: React.FC<ShareExportModalProps> = ({
                     : '🔒 Dilindungi: Kata laluan Wi-Fi & kod PIN pintu tidak disertakan dalam mesej berkongsi.'}
                 </span>
               </label>
+<<<<<<< HEAD
             </div>
 
             {/* Message Preview */}
@@ -168,6 +169,18 @@ export const ShareExportModal: React.FC<ShareExportModalProps> = ({
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
               <span className="text-xs text-slate-500">
                 Format kemas & ringkas mengikut susunan hari.
+=======
+            </div>
+
+            {/* Message Preview */}
+            <div className="p-4 rounded-2xl bg-slate-900 text-slate-100 font-mono text-xs max-h-72 overflow-y-auto whitespace-pre-wrap border border-slate-800 leading-relaxed selection:bg-teal-500 selection:text-white">
+              {whatsappMessage}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+              <span className="text-xs text-slate-500">
+                Format lengkap dengan emoji & slot masa harian.
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
               </span>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
@@ -178,10 +191,16 @@ export const ShareExportModal: React.FC<ShareExportModalProps> = ({
                   {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   <span>{copied ? 'Berjaya Disalin!' : 'Salin Mesej'}</span>
                 </button>
+<<<<<<< HEAD
                 <a
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+=======
+                <button
+                  type="button"
+                  onClick={handleOpenWhatsapp}
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                   className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 rounded-xl shadow-xs transition-all cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4" />

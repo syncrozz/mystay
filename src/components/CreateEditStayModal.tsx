@@ -214,9 +214,15 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       title: toTitleCase(title.trim()),
       type,
       durationDays,
+<<<<<<< HEAD
       startDate: effectiveStart,
       endDate: effectiveEnd,
       location: '',
+=======
+      startDate: startDate || getLocalTodayDate(),
+      endDate: endDate || getLocalDateWithOffset(durationDays - 1),
+      location: toTitleCase(location.trim()) || 'Lokasi Belum Ditetapkan',
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
       address: address.trim(),
       wifiSsid: wifiSsid.trim(),
       wifiPassword: wifiPassword.trim(),
@@ -319,6 +325,26 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                 />
               </div>
 
+<<<<<<< HEAD
+=======
+              {/* Destination / Location */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Destinasi / Kawasan Lokasi
+                </label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(toTitleCase(e.target.value))}
+                    placeholder="Cth: Tanah Rata / Muar / Port Dickson"
+                    className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
               {/* Date Pickers (Tarikh Mula & Tarikh Akhir) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                 <div>

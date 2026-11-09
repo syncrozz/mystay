@@ -9,6 +9,15 @@ interface ActivityLibraryModalProps {
   onClose: () => void;
 }
 
+<<<<<<< HEAD
+=======
+const COMMON_EMOJIS = [
+  '🍚', '🏖️', '☕', '🏠', '🛍️', '🎉', '🍜', '👨‍👩‍👧', '🧒', '👵',
+  '🚗', '🕌', '🏊', '🧗', '🎣', '📸', '🛒', '🍨', '🥩', '🏕️',
+  '🚶', '🌅', '🚲', '⚽', '🎯'
+];
+
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOpen, onClose }) => {
   const {
     activityLibraryItems,
@@ -20,8 +29,15 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
   } = useStay();
 
   const [newName, setNewName] = useState('');
+<<<<<<< HEAD
   const [editingItem, setEditingItem] = useState<ActivityLibraryItem | null>(null);
   const [editName, setEditName] = useState('');
+=======
+  const [newEmoji, setNewEmoji] = useState('🍚');
+  const [editingItem, setEditingItem] = useState<ActivityLibraryItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmoji, setEditEmoji] = useState('🍚');
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   const [itemToDelete, setItemToDelete] = useState<ActivityLibraryItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,10 +57,18 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
       setIsSubmitting(true);
       await addActivityLibraryItem({
         name: newName.trim(),
+<<<<<<< HEAD
         emoji: '📌',
         sortOrder: activityLibraryItems.length + 1
       });
       setNewName('');
+=======
+        emoji: newEmoji || '📌',
+        sortOrder: activityLibraryItems.length + 1
+      });
+      setNewName('');
+      setNewEmoji('🍚');
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
       showToast(`Aktiviti "${newName.trim()}" berjaya ditambah ke Aktiviti Kebiasaan!`);
     } catch (err) {
       console.error('Failed adding activity library item:', err);
@@ -56,6 +80,10 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
   const handleStartEdit = (item: ActivityLibraryItem) => {
     setEditingItem(item);
     setEditName(item.name);
+<<<<<<< HEAD
+=======
+    setEditEmoji(item.emoji || '📌');
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   };
 
   const handleSaveEdit = async () => {
@@ -63,7 +91,12 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
 
     try {
       await updateActivityLibraryItem(editingItem.id, {
+<<<<<<< HEAD
         name: editName.trim()
+=======
+        name: editName.trim(),
+        emoji: editEmoji || '📌'
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
       });
       setEditingItem(null);
       showToast('Perubahan berjaya disimpan.');
@@ -153,6 +186,7 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
               <span>Tambah Aktiviti Kebiasaan Baharu</span>
             </h3>
 
+<<<<<<< HEAD
             <form onSubmit={handleAddNew} className="flex items-center gap-2">
               <input
                 type="text"
@@ -169,6 +203,55 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
               >
                 + Tambah
               </button>
+=======
+            <form onSubmit={handleAddNew} className="space-y-3">
+              <div className="flex items-center gap-2">
+                {/* Emoji Input / Selector */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newEmoji}
+                    onChange={(e) => setNewEmoji(e.target.value.slice(0, 4))}
+                    className="w-12 h-10 text-center text-lg bg-white border border-slate-200 rounded-xl font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    title="Emoji aktiviti"
+                  />
+                </div>
+
+                {/* Activity Name */}
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nama aktiviti (Cth: Makan Nasi Dagang / Singgah Rumah Ayah)..."
+                  className="flex-1 px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!newName.trim() || isSubmitting}
+                  className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+                >
+                  + Tambah
+                </button>
+              </div>
+
+              {/* Quick Emoji Chips for Fast Selection */}
+              <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase shrink-0">Pilih Emoji:</span>
+                {COMMON_EMOJIS.slice(0, 12).map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setNewEmoji(emoji)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg text-sm transition-all cursor-pointer ${
+                      newEmoji === emoji ? 'bg-teal-200 ring-2 ring-teal-500 scale-110' : 'bg-white hover:bg-slate-200'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             </form>
           </div>
 
@@ -224,23 +307,43 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
                       <div key={item.id} className="p-3 bg-teal-50/60 flex items-center gap-2">
                         <input
                           type="text"
+<<<<<<< HEAD
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           className="flex-1 px-3 py-2 bg-white border border-teal-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
                           placeholder="Nama aktiviti..."
                           autoFocus
+=======
+                          value={editEmoji}
+                          onChange={(e) => setEditEmoji(e.target.value.slice(0, 4))}
+                          className="w-10 h-9 text-center text-base bg-white border border-teal-300 rounded-lg font-bold"
+                        />
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1 px-3 py-1.5 bg-white border border-teal-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none"
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         />
                         <button
                           type="button"
                           onClick={handleSaveEdit}
+<<<<<<< HEAD
                           className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg cursor-pointer"
+=======
+                          className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg cursor-pointer"
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         >
                           Simpan
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingItem(null)}
+<<<<<<< HEAD
                           className="px-2.5 py-2 text-slate-500 hover:text-slate-800 text-xs font-semibold rounded-lg cursor-pointer"
+=======
+                          className="px-2.5 py-1.5 text-slate-500 hover:text-slate-800 text-xs font-semibold rounded-lg cursor-pointer"
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         >
                           Batal
                         </button>
@@ -254,7 +357,11 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
                       className="p-3 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
+<<<<<<< HEAD
                         <div className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0 ml-1" />
+=======
+                        <span className="text-lg w-7 text-center shrink-0">{item.emoji || '📌'}</span>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         <span className="text-xs sm:text-sm font-semibold text-slate-800 truncate">
                           {item.name}
                         </span>
@@ -288,7 +395,11 @@ export const ActivityLibraryModal: React.FC<ActivityLibraryModalProps> = ({ isOp
                           type="button"
                           onClick={() => handleStartEdit(item)}
                           className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors cursor-pointer"
+<<<<<<< HEAD
                           title="Sunting nama"
+=======
+                          title="Sunting nama atau emoji"
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                           aria-label="Sunting"
                         >
                           <Edit3 className="w-3.5 h-3.5" />

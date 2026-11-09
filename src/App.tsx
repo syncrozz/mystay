@@ -16,7 +16,10 @@ import { ShareExportModal } from './components/ShareExportModal';
 import { DataSafetyModal } from './components/DataSafetyModal';
 import { SaveSyncFloatingBar } from './components/SaveSyncFloatingBar';
 import { LoginScreen } from './components/LoginScreen';
+<<<<<<< HEAD
 import { TodayDashboard } from './components/TodayDashboard';
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 import { STAY_TYPES, ASSETS } from './utils/constants';
 import { formatDateRange, formatStaySummary, getLocalTodayDate, getLocalDateWithOffset } from './utils/formatters';
 import { Stay, AgendaItem, TimeSlot } from './types';
@@ -69,6 +72,7 @@ function StayPlanApp() {
 
   const { user, isLoading: isAuthLoading } = useAuth();
 
+<<<<<<< HEAD
   // Navigation mode: 'workspace' is ALWAYS default display as requested:
   // "saya mahu default paparan adalah mengikut tarikh terkini"
   const [viewMode, setViewMode] = useState<'landing' | 'workspace'>('workspace');
@@ -90,6 +94,10 @@ function StayPlanApp() {
       setActiveStayId(stays[0].id);
     }
   }, [stays, activeStayId, setActiveStayId]);
+=======
+  // Navigation mode: 'landing' (My StayPlan landing / Stay selection) vs 'workspace' (Trip Planning Workspace)
+  const [viewMode, setViewMode] = useState<'landing' | 'workspace'>('landing');
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 
   // Modals state
   const [isSupportOpen, setIsSupportOpen] = useState(false);
@@ -110,7 +118,10 @@ function StayPlanApp() {
 
   const handleSelectStay = (stayId: string) => {
     setActiveStayId(stayId);
+<<<<<<< HEAD
     setActiveTab('today');
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
     setViewMode('workspace');
   };
 
@@ -201,6 +212,7 @@ function StayPlanApp() {
     return <LoginScreen />;
   }
 
+<<<<<<< HEAD
   // 3. Post-Login Routing: Contextual Landing View vs Workspace
   // If in workspace mode but stays are still loading from cache/Firestore, show loader to prevent flashing landing
   if (viewMode === 'workspace' && isLoadingStays && !activeStay) {
@@ -218,6 +230,13 @@ function StayPlanApp() {
   // - Single stay user (1 stay): Direct summary card with prominent "Teruskan Merancang →"
   // - Multiple stays user (>1 stay): My StayPlan landing listing all stays for user choice (no silent arbitrary stay opening)
   if (viewMode === 'landing' || (!activeStay && !isLoadingStays)) {
+=======
+  // 3. Post-Login Routing: Contextual Landing View (SES v4.5 Phase 5)
+  // - First-time user (0 stays): Welcoming empty state with explanation & + Rancang Stay Pertama
+  // - Single stay user (1 stay): Direct summary card with prominent "Teruskan Merancang →"
+  // - Multiple stays user (>1 stay): My StayPlan landing listing all stays for user choice (no silent arbitrary stay opening)
+  if (viewMode === 'landing' || !activeStay) {
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
     return (
       <div className="min-h-screen flex flex-col bg-slate-50/60 font-sans text-slate-900">
         <Header
@@ -314,7 +333,11 @@ function StayPlanApp() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+<<<<<<< HEAD
                     Trip Saya
+=======
+                    Rancangan Saya
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                   </h1>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">
                     Selamat kembali{user?.displayName ? `, ${user.displayName}` : ''}! Teruskan merancang stay aktif anda.
@@ -378,6 +401,14 @@ function StayPlanApp() {
                     {/* Metadata chips */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
                       <span className="inline-flex items-center gap-1.5">
+<<<<<<< HEAD
+=======
+                        <MapPin className="w-4 h-4 text-teal-600 shrink-0" />
+                        <span className="font-semibold text-slate-800">{stay.location || 'Lokasi belum ditetapkan'}</span>
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5">
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         <Calendar className="w-4 h-4 text-teal-600 shrink-0" />
                         <span>{formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}</span>
                       </span>
@@ -413,7 +444,11 @@ function StayPlanApp() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+<<<<<<< HEAD
                       Trip Saya
+=======
+                      Rancangan Saya
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                     </h1>
                     <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-950 text-xs font-bold">
                       {stays.length} Stay
@@ -481,6 +516,13 @@ function StayPlanApp() {
                           <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug group-hover:text-teal-950 transition-colors">
                             {stay.title}
                           </h2>
+<<<<<<< HEAD
+=======
+                          <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                            <span className="truncate">{stay.location || 'Lokasi belum ditetapkan'}</span>
+                          </p>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100">
@@ -592,11 +634,47 @@ function StayPlanApp() {
           <button
             onClick={handleNavigateToLanding}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 hover:text-teal-950 transition-all cursor-pointer shadow-2xs group"
+<<<<<<< HEAD
             title="Kembali ke Senarai Trip Saya"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
             <span>Trip Saya</span>
           </button>
+=======
+            title="Kembali ke Senarai Rancangan Saya"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Rancangan Saya</span>
+          </button>
+
+          {stays.length > 1 && (
+            <button
+              onClick={() => setIsStayListOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-xs font-bold text-slate-700 hover:text-teal-950 transition-all cursor-pointer shadow-2xs"
+              title="Tukar ke Rancangan Stay yang lain"
+            >
+              <FolderKanban className="w-3.5 h-3.5 text-teal-600" />
+              <span>Tukar Stay ({stays.length})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Stay Hero Card - Compact Workspace Header */}
+        <section id="stay-hero-banner" className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-2xs space-y-3 relative overflow-hidden w-full">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            {/* Stay Title & Metadata */}
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="px-2.5 py-0.5 rounded-md bg-teal-50 text-teal-950 border border-teal-200 text-[11px] font-bold inline-flex items-center gap-1">
+                  <span>{typeMeta?.icon}</span>
+                  <span>{typeMeta?.label}</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200">
+                  {formatStaySummary(activeStay)}
+                </span>
+              </div>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 
           {stays.length > 1 && (
             <button
@@ -638,8 +716,13 @@ function StayPlanApp() {
               )}
             </div>
 
+<<<<<<< HEAD
             {/* Actions: Tukar Stay / Edit / Kongsi in Same Row */}
             <div className="flex items-center gap-1.5 shrink-0">
+=======
+            {/* Secondary Actions: Edit & Kongsi */}
+            <div className="flex items-center gap-1.5 shrink-0 pt-1 md:pt-0">
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
               {stays.length > 1 && (
                 <button
                   type="button"
@@ -678,13 +761,20 @@ function StayPlanApp() {
         <div className="flex border-b border-slate-200 gap-1 sm:gap-2 text-xs sm:text-sm font-bold overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
           <button
             type="button"
+<<<<<<< HEAD
             onClick={() => setActiveTab('today')}
             className={`pb-2.5 px-3.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
               activeTab === 'today'
+=======
+            onClick={() => setActiveTab('plan')}
+            className={`pb-2.5 px-3.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'plan'
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
                 ? 'border-teal-600 text-teal-900 font-black'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
+<<<<<<< HEAD
             <span className="relative flex h-2 w-2 mr-0.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
@@ -707,6 +797,8 @@ function StayPlanApp() {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
+=======
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             <Compass className="w-4 h-4 text-teal-600" />
             <span>Perancangan</span>
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
@@ -762,7 +854,11 @@ function StayPlanApp() {
             }`}
           >
             <Home className="w-4 h-4 text-emerald-600" />
+<<<<<<< HEAD
             <span>Info</span>
+=======
+            <span>Info Stay</span>
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
           </button>
         </div>
 

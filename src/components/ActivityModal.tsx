@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { X, Clock, MapPin, User, Calendar, ChevronDown, Save, Bookmark, Trash2 } from 'lucide-react';
+=======
+import { X, Clock, MapPin, User, Calendar, ChevronDown, Save, Bookmark } from 'lucide-react';
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
 import { AgendaItem, TimeSlot, ActivityPriority, Stay } from '../types';
 import { TIME_SLOTS } from '../utils/constants';
 import { toTitleCase, getDateForDay, getDayOptionsForStay, getDayContextLabel } from '../utils/formatters';

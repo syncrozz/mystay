@@ -3,6 +3,10 @@ import { ASSETS, STAY_TYPES } from '../utils/constants';
 import { useStay } from '../context/StayContext';
 import { useAuth } from '../context/AuthContext';
 import {
+<<<<<<< HEAD
+=======
+  Share2,
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
   FolderKanban,
   ChevronDown,
   LogOut,
@@ -171,11 +175,16 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons (Responsive Icon Presentation) */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+<<<<<<< HEAD
             {/* All Stays Button (All Trip) */}
+=======
+            {/* All Stays Button (Trip Saya) */}
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             <button
               id="header-all-stays-btn"
               onClick={onOpenStayList || onNavigateToLanding}
               className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+<<<<<<< HEAD
               title="All Trip — Lihat dan pilih semua rancangan tersimpan"
               aria-label="All Trip"
             >
@@ -183,6 +192,27 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="inline text-xs font-bold">All Trip</span>
             </button>
 
+=======
+              title="Trip Saya — Lihat dan pilih semua rancangan tersimpan"
+              aria-label="Trip Saya"
+            >
+              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 shrink-0" />
+              <span className="hidden md:inline text-xs font-bold">Trip Saya</span>
+            </button>
+
+            {/* Share / Export */}
+            <button
+              id="header-share-btn"
+              onClick={onOpenShare}
+              className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              title="Kongsi Rancangan ke WhatsApp atau Cetak"
+              aria-label="Kongsi Rancangan"
+            >
+              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700 shrink-0" />
+              <span className="hidden lg:inline text-xs font-bold text-slate-800">Kongsi</span>
+            </button>
+
+>>>>>>> 2f75de8a23807d68cf375500ffa08930910bb0b6
             {/* New Stay Button (Primary persistent action) */}
             <button
               id="header-new-stay-btn"
