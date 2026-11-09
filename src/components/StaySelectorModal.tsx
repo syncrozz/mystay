@@ -31,13 +31,15 @@ interface StaySelectorModalProps {
   onClose: () => void;
   onNewStay: () => void;
   onEditStay: (stay: Stay) => void;
+  onSelectStay?: (stayId: string) => void;
 }
 
 export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
   isOpen,
   onClose,
   onNewStay,
-  onEditStay
+  onEditStay,
+  onSelectStay
 }) => {
   const {
     stays,
@@ -161,6 +163,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
                     className="flex items-start gap-3.5 cursor-pointer flex-1"
                     onClick={() => {
                       setActiveStayId(stay.id);
+                      if (onSelectStay) onSelectStay(stay.id);
                       onClose();
                     }}
                   >
@@ -196,6 +199,7 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
                       <button
                         onClick={() => {
                           setActiveStayId(stay.id);
+                          if (onSelectStay) onSelectStay(stay.id);
                           onClose();
                         }}
                         className="px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"

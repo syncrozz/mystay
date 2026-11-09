@@ -62,25 +62,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // In StayPlan, the device owner is in Planner/Admin mode by default.
-  // They can lock to "Viewer Mode" when sharing their device with family.
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(PLANNER_MODE_KEY);
-      // Default to true (Planner Mode) so owner has frictionless experience
-      return saved === null ? true : saved === 'true';
-    } catch {
-      return true;
-    }
-  });
-
+  // In StayPlan with Google Authentication, authenticated users are direct planners.
+  // Legacy PIN/Admin Mode is disabled.
+  const isAdminMode = true;
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
-  const [adminModalContext, setAdminModalContext] = useState<string>('');
-  const [pendingAdminCallback, setPendingAdminCallback] = useState<(() => void) | null>(null);
-
-  // Inactivity auto-lock timer for Viewer Mode (optional security after 60 mins)
-  const lastActivityRef = useRef<number>(Date.now());
+  const isAdminModalOpen = false;
+  const adminModalContext = '';
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -171,114 +158,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  /**
-   * Validates PIN to unlock Planner Mode from Viewer Mode.
-   */
-  const validateAndActivateAdmin = useCallback(
-    async (inputPin: string): Promise<{ success: boolean; message?: string }> => {
-      try {
-        const cleanPin = (inputPin || '').trim();
-        if (cleanPin.length === 0) {
-          return { success: false, message: 'Sila masukkan 4-digit PIN.' };
-        }
-
-        // Check against user-stored PIN or default 5313
-        let customHash: string | null = null;
-        try {
-          customHash = localStorage.getItem(PIN_HASH_KEY);
-        } catch {}
-
-        let isValid = false;
-        if (customHash) {
-          const inputHash = await computeSha256(cleanPin);
-          isValid = inputHash === customHash;
-        } else {
-          isValid = cleanPin === DEFAULT_PIN;
-        }
-
-        if (!isValid) {
-          return { success: false, message: 'PIN tidak sah. Sila cuba lagi.' };
-        }
-
-        try {
-          localStorage.setItem(PLANNER_MODE_KEY, 'true');
-        } catch {}
-
-        setIsAdminMode(true);
-        lastActivityRef.current = Date.now();
-
-        // Run pending callback if any
-        if (pendingAdminCallback) {
-          const cb = pendingAdminCallback;
-          setPendingAdminCallback(null);
-          setTimeout(() => {
-            try {
-              cb();
-            } catch (e) {
-              console.error('Error executing callback:', e);
-            }
-          }, 50);
-        }
-
-        setIsAdminModalOpen(false);
-        return { success: true };
-      } catch (err: any) {
-        return { success: false, message: 'Ralat mengesahkan PIN.' };
-      }
-    },
-    [pendingAdminCallback]
-  );
+  // Admin Mode is disabled: all operations proceed directly without PIN prompt
+  const validateAndActivateAdmin = useCallback(async () => ({ success: true }), []);
+  const deactivateAdminMode = useCallback(() => {}, []);
+  const togglePlannerMode = useCallback(() => {}, []);
+  const openAdminModal = useCallback(() => {}, []);
+  const closeAdminModal = useCallback(() => {}, []);
 
   /**
-   * Deactivates Planner Mode into Viewer Mode (Read-Only display).
+   * Directly executes callback since Admin PIN barrier has been removed.
    */
-  const deactivateAdminMode = useCallback(() => {
-    try {
-      localStorage.setItem(PLANNER_MODE_KEY, 'false');
-    } catch {}
-    setIsAdminMode(false);
-    setPendingAdminCallback(null);
+  const requireAdmin = useCallback((callback: () => void) => {
+    callback();
   }, []);
-
-  const togglePlannerMode = useCallback(() => {
-    if (isAdminMode) {
-      deactivateAdminMode();
-    } else {
-      openAdminModal('Sila sahkan PIN untuk kembali ke Mod Perancang.');
-    }
-  }, [isAdminMode, deactivateAdminMode]);
-
-  const openAdminModal = useCallback((contextMessage?: string, onAuthenticated?: () => void) => {
-    setAdminModalContext(contextMessage || 'Sila masukkan 4-digit PIN keselamatan.');
-    if (onAuthenticated) {
-      setPendingAdminCallback(() => onAuthenticated);
-    }
-    setIsAdminModalOpen(true);
-  }, []);
-
-  const closeAdminModal = useCallback(() => {
-    setIsAdminModalOpen(false);
-    setPendingAdminCallback(null);
-  }, []);
-
-  /**
-   * Permission gate:
-   * If in Planner / Admin Mode, callback executes immediately without asking for PIN.
-   * If in Viewer / Family Mode, prompts PIN to authorize the modification.
-   */
-  const requireAdmin = useCallback(
-    (callback: () => void, contextMessage?: string) => {
-      if (isAdminMode) {
-        callback();
-      } else {
-        openAdminModal(
-          contextMessage || 'Mod Paparan aktif. Sila masukkan PIN untuk mengedit.',
-          callback
-        );
-      }
-    },
-    [isAdminMode, openAdminModal]
-  );
 
   const signInWithGoogle = useCallback(async () => {
     try {
@@ -292,7 +184,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
-    deactivateAdminMode();
     try {
       await firebaseSignOut(auth);
       setUser(null);
@@ -300,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Sign Out Error:', error);
     }
-  }, [deactivateAdminMode]);
+  }, []);
 
   const role: UserRole = userProfile?.role || 'USER';
 

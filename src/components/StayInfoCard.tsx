@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Stay } from '../types';
-import { useAuth } from '../context/AuthContext';
 import { MapPin, Wifi, Phone, KeyRound, Copy, Check, ExternalLink, Eye, EyeOff, ShieldAlert, FileText, Lock } from 'lucide-react';
 
 interface StayInfoCardProps {
@@ -9,7 +8,6 @@ interface StayInfoCardProps {
 }
 
 export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) => {
-  const { requireAdmin, isAdminMode } = useAuth();
   const [copiedWifi, setCopiedWifi] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
@@ -44,9 +42,7 @@ export const StayInfoCard: React.FC<StayInfoCardProps> = ({ stay, onEditStay }) 
   };
 
   const handleEditClick = () => {
-    requireAdmin(() => {
-      onEditStay();
-    }, 'Sila sahkan PIN Admin untuk mengedit maklumat penginapan.');
+    onEditStay();
   };
 
   const mapsQuery = encodeURIComponent(stay.address || stay.location);

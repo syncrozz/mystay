@@ -26,7 +26,7 @@ export const ShowcaseIntroHero: React.FC<ShowcaseIntroHeroProps> = ({
   onExploreDemo,
   onOpenWalkthrough
 }) => {
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, signInWithGoogle } = useAuth();
 
   return (
     <section
@@ -74,7 +74,7 @@ export const ShowcaseIntroHero: React.FC<ShowcaseIntroHeroProps> = ({
             <button
               id="hero-start-planning-btn"
               type="button"
-              onClick={() => openAuthModal('Log masuk dengan Google untuk mula merancang stay peribadi anda di ruang selamat.')}
+              onClick={() => signInWithGoogle()}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-stone-900 hover:bg-stone-800 text-white text-xs font-black rounded-2xl shadow-xs active:scale-98 transition-all cursor-pointer"
             >
               <span>🔐 Mula Rancang</span>

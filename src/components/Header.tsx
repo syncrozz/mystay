@@ -7,13 +7,10 @@ import {
   Share2,
   FolderKanban,
   ChevronDown,
-  Lock,
-  Unlock,
   LogOut,
   Shield,
   RefreshCw,
   CheckCircle2,
-  KeyRound,
   ShieldCheck
 } from 'lucide-react';
 
@@ -23,13 +20,15 @@ interface HeaderProps {
   onOpenShare: () => void;
   onOpenSupport?: () => void;
   onOpenDataSafety?: () => void;
+  onNavigateToLanding?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenNewStay,
   onOpenStayList,
   onOpenShare,
-  onOpenDataSafety
+  onOpenDataSafety,
+  onNavigateToLanding
 }) => {
   const {
     activeStay,
@@ -42,11 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
     userProfile,
     signInWithGoogle,
     signOut,
-    isAuthenticated,
-    isAdminMode,
-    openAdminModal,
-    deactivateAdminMode,
-    requireAdmin
+    isAuthenticated
   } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -89,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleNewStayClick = () => {
-    requireAdmin(onOpenNewStay, 'Sila masukkan PIN Admin untuk memulakan rancangan baharu.');
+    onOpenNewStay();
   };
 
   // Close user dropdown when clicking outside
@@ -110,7 +105,13 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* Logo & Brand Identity */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-            <div className="relative group cursor-pointer shrink-0" onClick={onOpenStayList} title="Pilih atau Tukar Rancangan">
+            <div
+              className="relative group cursor-pointer shrink-0"
+              onClick={onNavigateToLanding || onOpenStayList}
+              title="Kembali ke Rancangan Saya"
+              role="button"
+              tabIndex={0}
+            >
               <img
                 id="stayplan-brand-logo"
                 src={ASSETS.LOGO}
@@ -124,7 +125,11 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
 
-            <div className="min-w-0">
+            <div
+              className="min-w-0 cursor-pointer"
+              onClick={onNavigateToLanding || onOpenStayList}
+              title="Kembali ke Rancangan Saya"
+            >
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
                   Stay<span className="text-teal-600">Plan</span>
@@ -165,64 +170,40 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons (Responsive Icon Presentation) */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {/* Admin Mode Status / Toggle Indicator Button */}
-            {isAdminMode ? (
-              <button
-                id="header-admin-mode-active-btn"
-                onClick={deactivateAdminMode}
-                className="inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-xs bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white cursor-pointer border border-emerald-500 shrink-0"
-                title="Admin Mode Aktif (Klik untuk kunci/kembali ke Mod Paparan)"
-                aria-label="Admin Mode Aktif"
-              >
-                <span className="relative flex h-2 w-2 mr-1">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300"></span>
-                </span>
-                <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-            ) : (
-              <button
-                id="header-admin-mode-login-btn"
-                onClick={() => openAdminModal('Sila masukkan 4-digit PIN keselamatan untuk membuka Mod Admin.')}
-                className="inline-flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all shadow-2xs bg-slate-100 hover:bg-teal-50 hover:text-teal-950 text-slate-800 border border-slate-200 hover:border-teal-300 active:scale-95 cursor-pointer shrink-0"
-                title="Akses Mod Admin (Masukkan PIN)"
-                aria-label="Akses Mod Admin"
-              >
-                <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
-              </button>
-            )}
-
             {/* All Stays Button (Desktop only on sm+) */}
             <button
               id="header-all-stays-btn"
-              onClick={onOpenStayList}
-              className="hidden sm:inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
-              title="Rancangan Tersimpan"
-              aria-label="Rancangan Tersimpan"
+              onClick={onNavigateToLanding || onOpenStayList}
+              className="hidden sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              title="Rancangan Saya — Lihat dan pilih semua rancangan tersimpan"
+              aria-label="Rancangan Saya"
             >
-              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" />
+              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 shrink-0" />
+              <span className="hidden md:inline text-xs font-bold">Rancangan Saya</span>
             </button>
 
             {/* Share / Export */}
             <button
               id="header-share-btn"
               onClick={onOpenShare}
-              className="inline-flex items-center justify-center p-2 sm:p-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
-              title="Kongsi ke WhatsApp atau Cetak"
+              className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              title="Kongsi Rancangan ke WhatsApp atau Cetak"
               aria-label="Kongsi Rancangan"
             >
-              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700" />
+              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700 shrink-0" />
+              <span className="hidden lg:inline text-xs font-bold text-slate-800">Kongsi</span>
             </button>
 
-            {/* New Stay Button (Admin Gated) */}
+            {/* New Stay Button */}
             <button
               id="header-new-stay-btn"
               onClick={handleNewStayClick}
-              title={isAdminMode ? 'Rancangan Baharu' : 'Rancangan Baharu (Perlu Mod Admin)'}
-              aria-label="Rancangan Baharu"
-              className="inline-flex items-center justify-center p-2 sm:p-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
+              title="Cipta Rancangan Stay Baharu"
+              aria-label="Cipta Rancangan Stay Baharu"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0"
             >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="hidden sm:inline text-xs font-black">+ Stay Baharu</span>
             </button>
 
             {/* Security Menu / Profile Dropdown */}
@@ -231,7 +212,8 @@ export const Header: React.FC<HeaderProps> = ({
                 id="user-profile-menu-btn"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl sm:rounded-2xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-all cursor-pointer"
-                title="Pilihan Keselamatan & Profil"
+                title="Pilihan Keselamatan & Profil Pengguna"
+                aria-label="Menu Profil dan Keselamatan"
               >
                 {user?.photoURL ? (
                   <img
@@ -241,8 +223,8 @@ export const Header: React.FC<HeaderProps> = ({
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white font-bold text-[10px] sm:text-xs flex items-center justify-center shadow-2xs ${isAdminMode ? 'bg-emerald-600' : 'bg-slate-700'}`}>
-                    {user?.displayName ? user.displayName.charAt(0).toUpperCase() : (isAdminMode ? '👑' : '👤')}
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white font-bold text-[10px] sm:text-xs flex items-center justify-center shadow-2xs bg-teal-700">
+                    {user?.displayName ? user.displayName.charAt(0).toUpperCase() : '👤'}
                   </div>
                 )}
                 <ChevronDown className="w-3 h-3 text-slate-500 hidden sm:block" />
@@ -259,14 +241,6 @@ export const Header: React.FC<HeaderProps> = ({
                       {user ? user.email : 'Mod Setempat (Simpanan Tempatan)'}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase inline-flex items-center gap-1 ${
-                        isAdminMode
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                          : 'bg-slate-100 text-slate-700 border border-slate-300'
-                      }`}>
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        {isAdminMode ? 'Admin Unlocked' : 'Viewer Mode'}
-                      </span>
                       {user ? (
                         <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-50 text-teal-800 border border-teal-300 inline-flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-teal-600" />
@@ -321,30 +295,6 @@ export const Header: React.FC<HeaderProps> = ({
                           />
                         </svg>
                         <span>{isSigningIn ? 'Menyambungkan...' : 'Log Masuk dengan Google'}</span>
-                      </button>
-                    )}
-
-                    {isAdminMode ? (
-                      <button
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          deactivateAdminMode();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors text-left cursor-pointer"
-                      >
-                        <Lock className="w-4 h-4 text-slate-500" />
-                        <span>Kunci Semula Mod Admin</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          openAdminModal('Sila masukkan 4-digit PIN keselamatan untuk membuka Mod Admin.');
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-teal-950 bg-slate-50 hover:bg-teal-50 rounded-xl transition-colors text-left cursor-pointer"
-                      >
-                        <KeyRound className="w-4 h-4 text-teal-600" />
-                        <span>Buka Mod Admin (PIN)</span>
                       </button>
                     )}
 

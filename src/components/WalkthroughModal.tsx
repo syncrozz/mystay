@@ -62,7 +62,7 @@ export const WalkthroughModal: React.FC<WalkthroughModalProps> = ({
   onClose,
   onExploreDemo
 }) => {
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   if (!isOpen) return null;

@@ -67,7 +67,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     deleteAgendaItem,
     toggleAgendaComplete
   } = useStay();
-  const { isAdminMode, requireAdmin } = useAuth();
+  const { requireAdmin } = useAuth();
 
   const [quickTitle, setQuickTitle] = useState('');
   const [quickPriority, setQuickPriority] = useState<ActivityPriority>('must_do');
@@ -451,7 +451,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    🌿 Santai
+                    🌿 Pilihan
                   </button>
                 </div>
 
@@ -506,7 +506,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  Belum Dijadual ({backlogCount})
+                  Belum Dijadualkan ({backlogCount})
                 </button>
 
                 <button
@@ -542,7 +542,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  Dijadualkan ({scheduledCount})
+                  Sudah Dijadualkan ({scheduledCount})
                 </button>
               </div>
 
@@ -582,7 +582,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                     className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-slate-800 hover:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500 cursor-pointer shadow-2xs"
                   >
                     <option value="all">Semua Tarikh ({items.length})</option>
-                    <option value="0">📋 Belum Set ({backlogCount})</option>
+                    <option value="0">📋 Belum Dijadualkan ({backlogCount})</option>
                     {Array.from({ length: duration }).map((_, idx) => {
                       const dNum = idx + 1;
                       const dCtx = getDayContextLabel(stay, dNum);
@@ -643,6 +643,64 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Prominent CTA: Susun & Agihkan Agenda when unscheduled activities exist */}
+          {backlogCount > 0 && (
+            <div
+              id="unscheduled-agenda-cta-banner"
+              className="p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-cyan-50 to-emerald-50 border border-teal-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-teal-600 text-white shrink-0 shadow-2xs">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs sm:text-sm font-black text-teal-950">
+                      {backlogCount} Aktiviti Belum Dijadualkan
+                    </h3>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-200/80 text-teal-900 uppercase">
+                      Tindakan Disyorkan
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed">
+                    Agihkan aktiviti ini ke dalam slot masa dan hari 1 hingga {duration} untuk melengkapkan jadual stay anda.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="prominent-organise-agenda-btn"
+                onClick={handleOrganiseClick}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0 self-stretch sm:self-auto"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Susun &amp; Agihkan Agenda</span>
+              </button>
+            </div>
+          )}
+
+          {/* Reassurance banner when all activities are scheduled */}
+          {backlogCount === 0 && totalItems > 0 && (
+            <div
+              id="all-scheduled-reassurance-badge"
+              className="px-4 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 text-xs flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="font-semibold text-emerald-950">
+                  Semua {totalItems} aktiviti telah berjaya dijadualkan mengikut hari.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleOrganiseClick}
+                className="text-[11px] font-bold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer shrink-0"
+              >
+                Susun Semula Agenda
+              </button>
+            </div>
+          )}
 
           {/* List of Planned Items or Filter Empty State */}
           {filteredItems.length === 0 ? (
@@ -763,7 +821,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                             : 'bg-teal-50 text-teal-950 border-teal-200 font-black'
                         }`}
                       >
-                        <option value={0}>📋 Belum Set</option>
+                        <option value={0}>📋 Belum Dijadualkan</option>
                         {Array.from({ length: duration }).map((_, idx) => {
                           const dNum = idx + 1;
                           const ctx = getDayContextLabel(stay, dNum);
@@ -848,7 +906,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0 self-start sm:self-auto"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Susun Agenda</span>
+              <span>Susun &amp; Agihkan Agenda</span>
             </button>
           </div>
         </>

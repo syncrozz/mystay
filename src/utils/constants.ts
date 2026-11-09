@@ -81,8 +81,8 @@ export const PRIORITY_CONFIG: Record<ActivityPriority, {
     description: 'Aktiviti utama & penting (Mesti buat dalam stay ini)'
   },
   optional: {
-    label: 'Santai',
-    shortLabel: 'Santai',
+    label: 'Pilihan',
+    shortLabel: 'Pilihan',
     badgeClass: 'bg-emerald-100 text-emerald-900 border-emerald-300',
     borderClass: 'border-l-4 border-l-emerald-500',
     bgLight: 'bg-emerald-50/50',

@@ -9,7 +9,10 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 
 export const LoginScreen: React.FC = () => {
@@ -17,17 +20,31 @@ export const LoginScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [unauthorizedDomain, setUnauthorizedDomain] = useState<string | null>(null);
+
+  const handleCopyDomain = (domainToCopy: string) => {
+    navigator.clipboard.writeText(domainToCopy);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2500);
+  };
+
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
     setIsLoading(true);
     setErrorMessage(null);
+    setUnauthorizedDomain(null);
 
     try {
       await signInWithGoogle();
       // On success, onAuthStateChanged in AuthProvider updates session and redirects automatically
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.code === 'auth/popup-closed-by-user') {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+      if (err.code === 'auth/unauthorized-domain') {
+        setUnauthorizedDomain(currentHost);
+        setErrorMessage('Domain ini belum dibenarkan dalam Firebase Authentication (auth/unauthorized-domain).');
+      } else if (err.code === 'auth/popup-closed-by-user') {
         setErrorMessage('Tetingkap log masuk telah ditutup. Sila cuba lagi.');
       } else if (err.code === 'auth/popup-blocked') {
         setErrorMessage('Tetingkap popup disekat oleh pelayar anda. Sila benarkan popup untuk log masuk.');
@@ -138,10 +155,57 @@ export const LoginScreen: React.FC = () => {
             {errorMessage && (
               <div
                 id="login-error-alert"
-                className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5 animate-in fade-in"
+                className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs space-y-3 animate-in fade-in"
               >
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span className="font-semibold leading-snug">{errorMessage}</span>
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                  <div className="space-y-1 flex-1">
+                    <p className="font-bold text-rose-900 leading-snug">{errorMessage}</p>
+                    {unauthorizedDomain ? (
+                      <p className="text-slate-600 text-[11px] leading-relaxed">
+                        Sila daftarkan domain aplikasi ini di Firebase Console agar pengesahan Google dapat beroperasi:
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Domain Copy Box */}
+                {unauthorizedDomain && (
+                  <div className="space-y-2 pt-1 border-t border-rose-200/70">
+                    <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white border border-rose-200 shadow-2xs">
+                      <code className="font-mono text-[11px] text-slate-800 font-bold select-all break-all">
+                        {unauthorizedDomain}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyDomain(unauthorizedDomain)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-[11px] font-bold shrink-0 transition-all cursor-pointer"
+                      >
+                        {isCopied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Disalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Salin Domain</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
+                      <p className="font-bold">Langkah Menambah Domain di Firebase:</p>
+                      <ol className="list-decimal list-inside space-y-0.5 text-slate-700">
+                        <li>Buka <strong>Firebase Console</strong> untuk projek <code>gen-lang-client-0964617130</code></li>
+                        <li>Pergi ke <strong>Build</strong> &gt; <strong>Authentication</strong> &gt; tab <strong>Settings</strong></li>
+                        <li>Pilih <strong>Authorized domains</strong> &gt; klik <strong>Add domain</strong></li>
+                        <li>Tampal domain di atas dan klik <strong>Save</strong></li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
