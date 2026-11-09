@@ -172,11 +172,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons (Responsive Icon Presentation) */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {/* All Stays Button (Desktop only on sm+) */}
+            {/* All Stays Button (Trip Saya) */}
             <button
               id="header-all-stays-btn"
               onClick={onNavigateToLanding || onOpenStayList}
-              className="hidden sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Trip Saya — Lihat dan pilih semua rancangan tersimpan"
               aria-label="Trip Saya"
             >
