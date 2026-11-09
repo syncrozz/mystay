@@ -21,7 +21,10 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   Filter,
-  X
+  X,
+  Loader2,
+  EyeOff,
+  Eye
 } from 'lucide-react';
 
 interface PlanBoardProps {
@@ -78,6 +81,23 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const [isOrganiseModalOpen, setIsOrganiseModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<AgendaItem | null>(null);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const [selectedIdeaTitles, setSelectedIdeaTitles] = useState<string[]>([]);
+  const [isAddingIdeas, setIsAddingIdeas] = useState(false);
+  const [isSuggestionsDismissed, setIsSuggestionsDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('stayplan_hide_starter_suggestions') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [dismissedIdeaTitles, setDismissedIdeaTitles] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('stayplan_dismissed_starter_ideas');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const duration = stay.durationDays || 3;
 
@@ -242,16 +262,59 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }
   };
 
-  // Add idea directly from quick Malaysian stay ideas chip (Admin Gated, Instant)
-  const handleAddIdeaChip = (idea: { title: string; priority: ActivityPriority }) => {
+  // Toggle selection of idea chip in starter recommendations (allows picking 2-3 choices without premature transition)
+  const handleToggleIdeaSelection = (title: string) => {
+    setSelectedIdeaTitles((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    );
+  };
+
+  // Add all selected ideas in one action and transition seamlessly
+  const handleAddSelectedIdeas = async () => {
+    if (selectedIdeaTitles.length === 0 || isAddingIdeas) return;
+    setIsAddingIdeas(true);
+
+    try {
+      const ideasToAdd = MALAYSIAN_STAY_IDEAS.filter((idea) =>
+        selectedIdeaTitles.includes(idea.title)
+      );
+
+      for (const idea of ideasToAdd) {
+        await addAgendaItem({
+          stayId: stay.id,
+          title: idea.title,
+          dayNumber: 0,
+          timeSlot: 'flexible',
+          priority: idea.priority,
+          isCompleted: false,
+          locationName: '',
+          personInCharge: '',
+          description: '',
+          notes: ''
+        });
+      }
+
+      setFeedbackToast(`Berjaya menambah ${ideasToAdd.length} aktiviti pilihan!`);
+      setTimeout(() => setFeedbackToast(null), 3000);
+      setSelectedIdeaTitles([]);
+    } catch (err) {
+      console.error('Failed adding selected ideas:', err);
+    } finally {
+      setIsAddingIdeas(false);
+    }
+  };
+
+  // Add single idea directly (used in normal workspace or quick one-click)
+  const handleAddSingleIdea = async (idea: { title: string; priority: ActivityPriority }) => {
     const exists = items.some((i) => i.title.toLowerCase() === idea.title.toLowerCase());
     if (exists) {
-      setQuickTitle(idea.title);
+      setFeedbackToast(`Aktiviti "${idea.title}" sudah ada dalam jadual.`);
+      setTimeout(() => setFeedbackToast(null), 2000);
       return;
     }
 
-    requireAdmin(() => {
-      addAgendaItem({
+    try {
+      await addAgendaItem({
         stayId: stay.id,
         title: idea.title,
         dayNumber: 0,
@@ -262,10 +325,55 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
         personInCharge: '',
         description: '',
         notes: ''
-      }).catch((err) => {
-        console.error('Failed adding idea:', err);
       });
-    }, 'Sila masukkan PIN Admin untuk menambah aktiviti daripada cadangan pantas.');
+      setFeedbackToast(`Ditambah: "${idea.title}"`);
+      setTimeout(() => setFeedbackToast(null), 2500);
+    } catch (err) {
+      console.error('Failed adding single idea:', err);
+    }
+  };
+
+  const handleAddIdeaChip = handleAddSingleIdea;
+
+  // Filter ideas to exclude dismissed ones
+  const visibleStarterIdeas = useMemo(() => {
+    return MALAYSIAN_STAY_IDEAS.filter((idea) => !dismissedIdeaTitles.includes(idea.title));
+  }, [dismissedIdeaTitles]);
+
+  // Dismiss / delete an individual idea suggestion from view
+  const handleDismissIdea = (title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDismissedIdeaTitles((prev) => {
+      const next = prev.includes(title) ? prev : [...prev, title];
+      try {
+        localStorage.setItem('stayplan_dismissed_starter_ideas', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    setSelectedIdeaTitles((prev) => prev.filter((t) => t !== title));
+    setFeedbackToast(`Cadangan "${title}" dipadam daripada paparan.`);
+    setTimeout(() => setFeedbackToast(null), 2000);
+  };
+
+  // Restore all dismissed ideas
+  const handleRestoreIdeas = () => {
+    setDismissedIdeaTitles([]);
+    try {
+      localStorage.removeItem('stayplan_dismissed_starter_ideas');
+    } catch {}
+    setFeedbackToast('Semua cadangan aktiviti telah dipulihkan.');
+    setTimeout(() => setFeedbackToast(null), 2500);
+  };
+
+  // Toggle hiding the entire suggestions block
+  const handleToggleSuggestionsVisibility = () => {
+    setIsSuggestionsDismissed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('stayplan_hide_starter_suggestions', String(next));
+      } catch {}
+      return next;
+    });
   };
 
   // Toggle priority between Wajib (must_do) and Pilihan (optional)
@@ -356,7 +464,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                 id="hero-add-activity-btn"
                 onClick={() => {
                   if (onOpenAddModal) {
-                    requireAdmin(onOpenAddModal, 'Sila masukkan PIN Admin untuk menambah aktiviti.');
+                    onOpenAddModal();
                   }
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-sm font-black rounded-2xl shadow-md shadow-teal-600/20 transition-all cursor-pointer"
@@ -390,25 +498,169 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </form>
             </div>
 
-            {/* Starter Idea Chips */}
-            <div className="space-y-2 pt-2">
-              <p className="text-[11px] font-semibold text-slate-400">
-                Cadangan pantas untuk mula:
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-lg mx-auto">
-                {MALAYSIAN_STAY_IDEAS.slice(0, 6).map((idea, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleAddIdeaChip(idea)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 hover:bg-teal-50 hover:text-teal-900 hover:border-teal-200 border border-slate-200 text-slate-700 transition-all cursor-pointer active:scale-95"
-                  >
-                    <span>{idea.icon}</span>
-                    <span>{idea.title}</span>
-                  </button>
-                ))}
+            {/* Collapsed / Hidden Suggestions State */}
+            {isSuggestionsDismissed ? (
+              <div className="pt-3 border-t border-slate-100 text-center animate-in fade-in duration-150">
+                <button
+                  type="button"
+                  id="show-suggestions-btn"
+                  onClick={handleToggleSuggestionsVisibility}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-teal-900 bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 transition-all cursor-pointer shadow-2xs"
+                  title="Tunjukkan semula pilihan cadangan aktiviti"
+                >
+                  <Eye className="w-3.5 h-3.5 text-teal-600" />
+                  <span>💡 Tunjukkan Cadangan Aktiviti ({visibleStarterIdeas.length})</span>
+                </button>
               </div>
-            </div>
+            ) : (
+              /* Starter Idea Chips (Allows selecting 2-3+ choices before transitioning or deleting/hiding) */
+              <div className="space-y-3 pt-3 border-t border-slate-100 text-left sm:text-center animate-in fade-in duration-150">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                      <span className="text-teal-600">💡</span>
+                      <span>Pilih cadangan aktiviti untuk mula (boleh pilih 2–3 pilihan):</span>
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {selectedIdeaTitles.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedIdeaTitles([])}
+                          className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 cursor-pointer underline"
+                        >
+                          Batal pilihan
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        id="hide-suggestions-btn"
+                        onClick={handleToggleSuggestionsVisibility}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Sembunyikan bahagian cadangan ini dari paparan"
+                      >
+                        <EyeOff className="w-3 h-3 text-slate-500" />
+                        <span>Sembunyikan</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Tandakan pilihan yang anda suka untuk dimasukkan ke jadual, atau tekan ikon ✕ pada mana-mana pilihan untuk memadamnya dari paparan.
+                  </p>
+                </div>
+
+                {/* Multi-Select & Deletable Chips Container */}
+                {visibleStarterIdeas.length > 0 ? (
+                  <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl mx-auto pt-1">
+                    {visibleStarterIdeas.map((idea, idx) => {
+                      const isSelected = selectedIdeaTitles.includes(idea.title);
+                      return (
+                        <div
+                          key={idx}
+                          className={`inline-flex items-center rounded-full text-xs transition-all select-none ${
+                            isSelected
+                              ? 'bg-teal-600 text-white font-bold border border-teal-600 shadow-xs ring-2 ring-teal-300 scale-[1.02]'
+                              : 'bg-slate-50 hover:bg-teal-50 hover:text-teal-900 border border-slate-200 hover:border-teal-300 text-slate-700 font-medium'
+                          }`}
+                        >
+                          {/* Main Selection Area */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleIdeaSelection(idea.title)}
+                            className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 cursor-pointer"
+                            aria-pressed={isSelected}
+                          >
+                            <span>{isSelected ? '✓' : idea.icon}</span>
+                            <span>{idea.title}</span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                isSelected ? 'bg-teal-700 text-teal-100' : 'bg-slate-200/70 text-slate-600'
+                              }`}
+                            >
+                              {idea.priority === 'must_do' ? 'Wajib' : 'Pilihan'}
+                            </span>
+                          </button>
+
+                          {/* Delete / Dismiss Single Idea */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDismissIdea(idea.title, e)}
+                            title={`Padam "${idea.title}" daripada cadangan`}
+                            aria-label={`Padam cadangan ${idea.title}`}
+                            className={`p-1 mr-1.5 rounded-full transition-colors cursor-pointer ${
+                              isSelected
+                                ? 'text-teal-200 hover:text-white hover:bg-teal-700'
+                                : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                            }`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1.5">
+                    <p className="text-xs text-slate-500 font-medium">
+                      Semua cadangan aktiviti telah dipadam dari paparan.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRestoreIdeas}
+                      className="text-xs font-bold text-teal-700 hover:text-teal-800 underline cursor-pointer"
+                    >
+                      Pulihkan semula semua cadangan aktiviti
+                    </button>
+                  </div>
+                )}
+
+                {/* Sub-action if some ideas were deleted */}
+                {dismissedIdeaTitles.length > 0 && visibleStarterIdeas.length > 0 && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handleRestoreIdeas}
+                      className="text-[11px] text-slate-400 hover:text-teal-700 font-medium underline cursor-pointer"
+                    >
+                      Pulihkan {dismissedIdeaTitles.length} cadangan yang telah dipadam
+                    </button>
+                  </div>
+                )}
+
+                {/* Action Bar when 1 or more ideas are selected */}
+                {selectedIdeaTitles.length > 0 ? (
+                  <div className="pt-2 flex flex-col items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <button
+                      type="button"
+                      id="confirm-selected-ideas-btn"
+                      onClick={handleAddSelectedIdeas}
+                      disabled={isAddingIdeas}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-black rounded-2xl shadow-md shadow-teal-600/25 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isAddingIdeas ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Memasukkan aktiviti...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✨ Masukkan {selectedIdeaTitles.length} Aktiviti Pilihan ke Jadual</span>
+                          <span className="text-teal-200">→</span>
+                        </>
+                      )}
+                    </button>
+                    <p className="text-[11px] text-teal-800 font-semibold">
+                      {selectedIdeaTitles.length} aktiviti dipilih • Anda boleh susun hari & masa di langkah seterusnya.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="pt-1 text-center">
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      (Tip: Tandakan 2–3 pilihan di atas untuk dimasukkan serentak)
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -469,7 +721,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                 {onOpenAddModal && (
                   <button
                     type="button"
-                    onClick={() => requireAdmin(onOpenAddModal, 'Sila masukkan PIN Admin untuk menambah aktiviti.')}
+                    onClick={onOpenAddModal}
                     className="p-2 text-slate-500 hover:text-teal-700 hover:bg-teal-50 border border-slate-200 rounded-xl transition-all cursor-pointer shrink-0"
                     title="Buka Borang Lengkap Aktiviti (Lokasi, Masa, PIC)"
                   >
@@ -478,6 +730,38 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                 )}
               </div>
             </form>
+
+            {/* Quick Suggestion Chips (Allows picking more ideas anytime without leaving this view) */}
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-teal-600" />
+                Cadangan Pantas:
+              </span>
+              <div className="flex items-center gap-1.5">
+                {visibleStarterIdeas.map((idea, idx) => {
+                  const alreadyAdded = items.some(
+                    (i) => i.title.toLowerCase() === idea.title.toLowerCase()
+                  );
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={alreadyAdded}
+                      onClick={() => handleAddSingleIdea(idea)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-all ${
+                        alreadyAdded
+                          ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default opacity-60'
+                          : 'bg-slate-50 hover:bg-teal-50 hover:text-teal-900 border border-slate-200 hover:border-teal-300 text-slate-700 cursor-pointer active:scale-95 font-medium'
+                      }`}
+                      title={alreadyAdded ? `"${idea.title}" sudah ditambah` : `Tambah "${idea.title}"`}
+                    >
+                      <span>{alreadyAdded ? '✓' : idea.icon}</span>
+                      <span>{idea.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Filters & Search Controls (Target element) */}
