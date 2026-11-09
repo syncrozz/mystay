@@ -65,6 +65,7 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
     const restItems = stayAgendas.filter((i) => i.priority === 'rest');
     const logisticsItems = stayAgendas.filter((i) => i.priority === 'logistics');
     const optionalItems = stayAgendas.filter((i) => i.priority === 'optional');
+    const undecidedItems = stayAgendas.filter((i) => !i.priority || i.priority === 'undecided');
 
     // Slot cycle for natural pacing
     const slotCycle: TimeSlot[] = ['morning', 'midday', 'afternoon', 'evening'];
@@ -159,11 +160,14 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
       }
     }
 
-    // 5. Assign Optional Items (spread out, but keep 20-30% in backlog if total is high so user isn't exhausted)
+    // 5. Assign Undecided & Optional Items (spread out, keeping overflow in backlog if total exceeds pacing cap)
     const maxItemsTotal = duration * 4; // Cap at ~3-4 per day max for realistic pacing
     let assignedCount = Object.keys(nextProposal).length;
 
-    for (const item of optionalItems) {
+    const remainingToDistribute = [...undecidedItems, ...optionalItems];
+    for (const item of remainingToDistribute) {
+      if (nextProposal[item.id]) continue;
+
       if (assignedCount < maxItemsTotal) {
         const match = findBestDayAndSlot('stay', item.timeSlot !== 'flexible' ? item.timeSlot : undefined);
         if (match) {
@@ -385,10 +389,18 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                             </span>
                             <span
                               className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                                isWajib ? 'bg-amber-100 text-amber-900' : 'bg-emerald-50 text-emerald-800'
+                                item.priority === 'must_do'
+                                  ? 'bg-amber-100 text-amber-900'
+                                  : item.priority === 'optional'
+                                  ? 'bg-emerald-50 text-emerald-800'
+                                  : 'bg-stone-100 text-stone-700'
                               }`}
                             >
-                              {isWajib ? '🫪 Wajib' : '🌿 Pilihan'}
+                              {item.priority === 'must_do'
+                                ? '📌 Wajib'
+                                : item.priority === 'optional'
+                                ? '🌿 Pilihan'
+                                : '⚪ Belum Set'}
                             </span>
                           </div>
 
@@ -467,7 +479,11 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                     <div className="flex items-start justify-between gap-1.5">
                       <span className="font-bold text-stone-800 line-clamp-2">{item.title}</span>
                       <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-stone-100 text-stone-600">
-                        {item.priority === 'must_do' ? '🫪 Wajib' : '🌿 Pilihan'}
+                        {item.priority === 'must_do'
+                          ? '📌 Wajib'
+                          : item.priority === 'optional'
+                          ? '🌿 Pilihan'
+                          : '⚪ Belum Set'}
                       </span>
                     </div>
 

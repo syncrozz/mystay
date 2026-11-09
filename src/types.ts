@@ -25,7 +25,18 @@ export type TimeSlot = 'morning' | 'midday' | 'afternoon' | 'evening' | 'flexibl
 
 export type SyncStatus = 'SAVED' | 'SAVING' | 'SYNCING' | 'SYNCED' | 'ERROR' | 'OFFLINE';
 
-export type ActivityPriority = 'must_do' | 'optional' | 'food' | 'rest' | 'logistics';
+export type ActivityPriority = 'must_do' | 'optional' | 'undecided' | 'food' | 'rest' | 'logistics';
+
+export interface ActivityLibraryItem {
+  id: string;
+  userId: string;
+  name: string;
+  emoji?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface AgendaItem {
   id: string;
@@ -35,6 +46,8 @@ export interface AgendaItem {
   timeSlot: TimeSlot;
   timeSpecific?: string; // e.g. "08:30 AM" or "Lepas Subuh"
   title: string;
+  emoji?: string;
+  sourceLibraryId?: string;
   description?: string;
   priority: ActivityPriority;
   locationName?: string;

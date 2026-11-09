@@ -85,12 +85,32 @@
         "updatedAt": { "type": "number", "description": "Updated timestamp" }
       },
       "required": ["id", "stayId", "userId", "text"]
+    },
+    "ActivityLibraryItem": {
+      "title": "ActivityLibraryItem",
+      "description": "User's personal reusable activity library item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique library item ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "name": { "type": "string", "description": "Activity name" },
+        "emoji": { "type": "string", "description": "Activity icon emoji" },
+        "sortOrder": { "type": "number", "description": "Display order index" },
+        "isActive": { "type": "boolean", "description": "Active status flag" },
+        "createdAt": { "type": "number", "description": "Created timestamp" },
+        "updatedAt": { "type": "number", "description": "Updated timestamp" }
+      },
+      "required": ["id", "userId", "name"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profile collection isolated per authenticated user"
+    },
+    "/users/{userId}/activityLibrary/{activityId}": {
+      "schema": "ActivityLibraryItem",
+      "description": "User's personal reusable activity library"
     },
     "/stays/{stayId}": {
       "schema": "Stay",

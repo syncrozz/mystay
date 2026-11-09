@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Stay, AgendaItem, ChecklistItem, StayType, SyncStatus } from '../types';
+import { Stay, AgendaItem, ChecklistItem, StayType, SyncStatus, ActivityLibraryItem } from '../types';
 import { SHOWCASE_STAYS, SHOWCASE_AGENDA_ITEMS, SHOWCASE_CHECKLIST_ITEMS } from '../data/defaultStays';
 import { getLocalTodayDate, getLocalDateWithOffset } from '../utils/formatters';
+import { DEFAULT_ACTIVITY_LIBRARY_SEEDS } from '../utils/constants';
 import { useAuth } from './AuthContext';
 import { db } from '../lib/firebase';
 import { ValidatedCsvRow, MyStayBackupPayload, normalizeText } from '../utils/dataSafety';
@@ -28,6 +29,8 @@ interface StayContextType {
   activeAgendaItems: AgendaItem[];
   checklistItems: ChecklistItem[];
   activeChecklistItems: ChecklistItem[];
+  activityLibraryItems: ActivityLibraryItem[];
+  isLoadingLibrary: boolean;
   isPersonalMode: boolean;
   isLoadingStays: boolean;
   isSyncing: boolean;
@@ -54,6 +57,11 @@ interface StayContextType {
   addChecklistItem: (item: Omit<ChecklistItem, 'id' | 'userId'>) => Promise<string>;
   toggleChecklistComplete: (id: string) => Promise<void>;
   deleteChecklistItem: (id: string) => Promise<void>;
+  addActivityLibraryItem: (item: { name: string; emoji?: string; sortOrder?: number }) => Promise<string>;
+  updateActivityLibraryItem: (id: string, updates: Partial<ActivityLibraryItem>) => Promise<void>;
+  deleteActivityLibraryItem: (id: string) => Promise<void>;
+  reorderActivityLibraryItems: (items: ActivityLibraryItem[]) => Promise<void>;
+  seedDefaultActivityLibrary: () => Promise<void>;
   createFromStarterTemplate: (templateType: StayType) => Promise<string>;
   exportDataJson: () => string;
   importCsvRows: (
@@ -165,8 +173,28 @@ function areChecklistListsEqual(a: ChecklistItem[], b: ChecklistItem[]): boolean
   return true;
 }
 
+function areLibraryListsEqual(a: ActivityLibraryItem[], b: ActivityLibraryItem[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const l1 = a[i];
+    const l2 = b[i];
+    if (
+      l1.id !== l2.id ||
+      l1.name !== l2.name ||
+      l1.emoji !== l2.emoji ||
+      l1.sortOrder !== l2.sortOrder ||
+      l1.isActive !== l2.isActive ||
+      l1.updatedAt !== l2.updatedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Storage cache key generator scoped strictly to authenticated UID or guest session
-const getScopedCacheKey = (type: 'stays' | 'agenda' | 'checklist' | 'active_id', uid: string | null | undefined): string => {
+const getScopedCacheKey = (type: 'stays' | 'agenda' | 'checklist' | 'active_id' | 'activity_library', uid: string | null | undefined): string => {
   const scope = uid ? `usr_${uid}` : 'guest';
   return `stayplan_cached_${type}_v6_${scope}`;
 };
@@ -210,6 +238,19 @@ const getInitialCachedChecklist = (uid: string | null | undefined): ChecklistIte
   return [];
 };
 
+const getInitialCachedLibrary = (uid: string | null | undefined): ActivityLibraryItem[] => {
+  try {
+    const raw = localStorage.getItem(getScopedCacheKey('activity_library', uid));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return [];
+};
+
 const getInitialCachedActiveStayId = (uid: string | null | undefined): string | null => {
   try {
     const raw = localStorage.getItem(getScopedCacheKey('active_id', uid));
@@ -225,10 +266,12 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userStays, setUserStays] = useState<Stay[]>(() => getInitialCachedStays(user?.uid));
   const [userAgendaItems, setUserAgendaItems] = useState<AgendaItem[]>(() => getInitialCachedAgenda(user?.uid));
   const [userChecklistItems, setUserChecklistItems] = useState<ChecklistItem[]>(() => getInitialCachedChecklist(user?.uid));
+  const [userLibraryItems, setUserLibraryItems] = useState<ActivityLibraryItem[]>(() => getInitialCachedLibrary(user?.uid));
   const [activeStayId, setActiveStayIdState] = useState<string | null>(() => getInitialCachedActiveStayId(user?.uid));
 
   // Non-blocking loading indicator
   const [isLoadingStays, setIsLoadingStays] = useState<boolean>(false);
+  const [isLoadingLibrary, setIsLoadingLibrary] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (navigator.onLine ? 'SYNCED' : 'OFFLINE'));
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(() => Date.now());
@@ -252,11 +295,13 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const scopedStays = getInitialCachedStays(currentUid);
     const scopedAgenda = getInitialCachedAgenda(currentUid);
     const scopedChecklist = getInitialCachedChecklist(currentUid);
+    const scopedLibrary = getInitialCachedLibrary(currentUid);
     const scopedActiveId = getInitialCachedActiveStayId(currentUid);
 
     setUserStays(scopedStays);
     setUserAgendaItems(scopedAgenda);
     setUserChecklistItems(scopedChecklist);
+    setUserLibraryItems(scopedLibrary);
     setActiveStayIdState(scopedActiveId || (scopedStays.length > 0 ? scopedStays[0].id : null));
 
     // Clear any obsolete un-scoped legacy keys to prevent cross-account leakage
@@ -337,6 +382,13 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(key, JSON.stringify(userChecklistItems));
     } catch {}
   }, [userChecklistItems, user?.uid]);
+
+  useEffect(() => {
+    try {
+      const key = getScopedCacheKey('activity_library', user?.uid);
+      localStorage.setItem(key, JSON.stringify(userLibraryItems));
+    } catch {}
+  }, [userLibraryItems, user?.uid]);
 
   useEffect(() => {
     try {
@@ -658,6 +710,46 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [activeStayId, user?.uid]);
 
+  // ----------------------------------------------------------------------------------
+  // REALTIME SUBSCRIPTION FOR USER'S ACTIVITY LIBRARY (AUTHORITATIVE PER UID)
+  // ----------------------------------------------------------------------------------
+  useEffect(() => {
+    if (!user?.uid) {
+      setUserLibraryItems([]);
+      setIsLoadingLibrary(false);
+      return;
+    }
+
+    setIsLoadingLibrary(true);
+    const libRef = collection(db, 'users', user.uid, 'activityLibrary');
+
+    const unsubscribeLib = onSnapshot(
+      libRef,
+      (snapshot) => {
+        const items: ActivityLibraryItem[] = [];
+        snapshot.forEach((docSnap) => {
+          const item = docSnap.data() as ActivityLibraryItem;
+          if (item && item.id) {
+            items.push({ ...item, userId: user.uid });
+          }
+        });
+
+        items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0) || (a.createdAt || 0) - (b.createdAt || 0));
+
+        setUserLibraryItems((prev) => (areLibraryListsEqual(prev, items) ? prev : items));
+        setIsLoadingLibrary(false);
+      },
+      (error) => {
+        console.warn('Activity library subscription notice:', error);
+        setIsLoadingLibrary(false);
+      }
+    );
+
+    return () => {
+      unsubscribeLib();
+    };
+  }, [user?.uid]);
+
   // Active stay data selectors
   const stays = useMemo(() => {
     return userStays.length > 0 ? userStays : SHOWCASE_STAYS;
@@ -920,6 +1012,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: newItemId,
         stayId: activeStay.id,
         userId: currentUid,
+        priority: item.priority || 'undecided',
         createdAt: now,
         updatedAt: now
       };
@@ -1243,6 +1336,141 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [user, activeStay]
   );
+
+  // ----------------------------------------------------------------------------------
+  // 5. ACTIVITY LIBRARY CRUD OPERATIONS (PERSONAL REUSABLE ACTIVITIES)
+  // ----------------------------------------------------------------------------------
+
+  const addActivityLibraryItem = useCallback(
+    async (item: { name: string; emoji?: string; sortOrder?: number }): Promise<string> => {
+      const trimmedName = item.name.trim();
+      if (!trimmedName) return '';
+
+      const newId = `lib_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const now = Date.now();
+      const currentUid = user?.uid || 'local_user';
+      const newItem: ActivityLibraryItem = {
+        id: newId,
+        userId: currentUid,
+        name: trimmedName,
+        emoji: item.emoji || '📌',
+        sortOrder: item.sortOrder ?? (userLibraryItems.length + 1),
+        isActive: true,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      setUserLibraryItems((prev) => [...prev, newItem]);
+
+      if (user?.uid) {
+        try {
+          const docRef = doc(db, 'users', user.uid, 'activityLibrary', newId);
+          await setDoc(docRef, sanitizeForFirestore<ActivityLibraryItem>(newItem));
+        } catch (err: any) {
+          console.error('Error adding activity library item:', err);
+          handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/activityLibrary/${newId}`);
+        }
+      }
+
+      return newId;
+    },
+    [user?.uid, userLibraryItems.length]
+  );
+
+  const updateActivityLibraryItem = useCallback(
+    async (id: string, updates: Partial<ActivityLibraryItem>): Promise<void> => {
+      const now = Date.now();
+      setUserLibraryItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...updates, updatedAt: now } : item))
+      );
+
+      if (user?.uid) {
+        try {
+          const docRef = doc(db, 'users', user.uid, 'activityLibrary', id);
+          await updateDoc(docRef, sanitizeForFirestore({ ...updates, updatedAt: now }));
+        } catch (err: any) {
+          console.error('Error updating activity library item:', err);
+          handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/activityLibrary/${id}`);
+        }
+      }
+    },
+    [user?.uid]
+  );
+
+  const deleteActivityLibraryItem = useCallback(
+    async (id: string): Promise<void> => {
+      setUserLibraryItems((prev) => prev.filter((item) => item.id !== id));
+
+      if (user?.uid) {
+        try {
+          const docRef = doc(db, 'users', user.uid, 'activityLibrary', id);
+          await deleteDoc(docRef);
+        } catch (err: any) {
+          console.error('Error deleting activity library item:', err);
+          handleFirestoreError(err, OperationType.DELETE, `users/${user.uid}/activityLibrary/${id}`);
+        }
+      }
+    },
+    [user?.uid]
+  );
+
+  const reorderActivityLibraryItems = useCallback(
+    async (items: ActivityLibraryItem[]): Promise<void> => {
+      const now = Date.now();
+      const updated = items.map((item, index) => ({
+        ...item,
+        sortOrder: index + 1,
+        updatedAt: now
+      }));
+
+      setUserLibraryItems(updated);
+
+      if (user?.uid) {
+        try {
+          const batch = writeBatch(db);
+          updated.forEach((item) => {
+            const docRef = doc(db, 'users', user.uid, 'activityLibrary', item.id);
+            batch.update(docRef, { sortOrder: item.sortOrder, updatedAt: item.updatedAt });
+          });
+          await batch.commit();
+        } catch (err: any) {
+          console.error('Error reordering activity library:', err);
+        }
+      }
+    },
+    [user?.uid]
+  );
+
+  const seedDefaultActivityLibrary = useCallback(async (): Promise<void> => {
+    if (!user?.uid) return;
+    const now = Date.now();
+    const batch = writeBatch(db);
+    const newItems: ActivityLibraryItem[] = [];
+
+    DEFAULT_ACTIVITY_LIBRARY_SEEDS.forEach((seed, index) => {
+      const id = `lib_${now}_${index}_${Math.random().toString(36).substring(2, 6)}`;
+      const item: ActivityLibraryItem = {
+        id,
+        userId: user.uid,
+        name: seed.name,
+        emoji: seed.emoji,
+        sortOrder: index + 1,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now
+      };
+      newItems.push(item);
+      const docRef = doc(db, 'users', user.uid, 'activityLibrary', id);
+      batch.set(docRef, sanitizeForFirestore<ActivityLibraryItem>(item));
+    });
+
+    setUserLibraryItems(newItems);
+    try {
+      await batch.commit();
+    } catch (err: any) {
+      console.error('Error seeding default activity library:', err);
+    }
+  }, [user?.uid]);
 
   const createFromStarterTemplate = useCallback(
     async (templateType: StayType): Promise<string> => {
@@ -1615,6 +1843,8 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeAgendaItems,
         checklistItems: userChecklistItems.length > 0 ? userChecklistItems : SHOWCASE_CHECKLIST_ITEMS,
         activeChecklistItems,
+        activityLibraryItems: userLibraryItems,
+        isLoadingLibrary,
         isPersonalMode,
         isLoadingStays,
         isSyncing,
@@ -1641,6 +1871,11 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addChecklistItem,
         toggleChecklistComplete,
         deleteChecklistItem,
+        addActivityLibraryItem,
+        updateActivityLibraryItem,
+        deleteActivityLibraryItem,
+        reorderActivityLibraryItems,
+        seedDefaultActivityLibrary,
         createFromStarterTemplate,
         exportDataJson,
         importCsvRows,

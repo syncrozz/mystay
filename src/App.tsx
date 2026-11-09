@@ -11,6 +11,7 @@ import { SupportModal } from './components/SupportModal';
 import { CreateEditStayModal } from './components/CreateEditStayModal';
 import { StaySelectorModal } from './components/StaySelectorModal';
 import { ActivityModal } from './components/ActivityModal';
+import { ActivityLibraryModal } from './components/ActivityLibraryModal';
 import { ShareExportModal } from './components/ShareExportModal';
 import { DataSafetyModal } from './components/DataSafetyModal';
 import { SaveSyncFloatingBar } from './components/SaveSyncFloatingBar';
@@ -74,6 +75,7 @@ function StayPlanApp() {
   const [editingStay, setEditingStay] = useState<Stay | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isDataSafetyOpen, setIsDataSafetyOpen] = useState(false);
+  const [isActivityLibraryOpen, setIsActivityLibraryOpen] = useState(false);
 
   // Activity Modal state
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -184,6 +186,7 @@ function StayPlanApp() {
           onOpenShare={() => setIsShareOpen(true)}
           onOpenSupport={() => setIsSupportOpen(true)}
           onOpenDataSafety={() => setIsDataSafetyOpen(true)}
+          onOpenActivityLibrary={() => setIsActivityLibraryOpen(true)}
           onNavigateToLanding={handleNavigateToLanding}
         />
 
@@ -556,6 +559,10 @@ function StayPlanApp() {
           isOpen={isDataSafetyOpen}
           onClose={() => setIsDataSafetyOpen(false)}
         />
+        <ActivityLibraryModal
+          isOpen={isActivityLibraryOpen}
+          onClose={() => setIsActivityLibraryOpen(false)}
+        />
         <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       </div>
     );
@@ -571,6 +578,7 @@ function StayPlanApp() {
         onOpenShare={() => setIsShareOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
         onOpenDataSafety={() => setIsDataSafetyOpen(true)}
+        onOpenActivityLibrary={() => setIsActivityLibraryOpen(true)}
         onNavigateToLanding={handleNavigateToLanding}
       />
 
@@ -752,6 +760,7 @@ function StayPlanApp() {
             stay={activeStay}
             onOpenAddModal={() => handleOpenNewActivity(0, 'flexible')}
             onEditItem={handleOpenEditActivity}
+            onOpenActivityLibrary={() => setIsActivityLibraryOpen(true)}
           />
         )}
 
@@ -840,6 +849,11 @@ function StayPlanApp() {
       <DataSafetyModal
         isOpen={isDataSafetyOpen}
         onClose={() => setIsDataSafetyOpen(false)}
+      />
+
+      <ActivityLibraryModal
+        isOpen={isActivityLibraryOpen}
+        onClose={() => setIsActivityLibraryOpen(false)}
       />
 
       {/* Floating Save & Sync notification bar */}

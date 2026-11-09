@@ -260,7 +260,7 @@ export function CalendarView({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs shrink-0" title={slotMeta.label}>
-                                {slotMeta.icon}
+                                {item.emoji || slotMeta.icon}
                               </span>
                               <span
                                 className={`text-xs font-bold truncate ${

@@ -95,9 +95,10 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
     });
   };
 
-  // Quick 1-click toggle priority
+  // Quick 1-click toggle priority (cycling: undecided -> must_do -> optional -> undecided)
   const handleTogglePriority = async (item: AgendaItem) => {
-    const nextPriority: ActivityPriority = item.priority === 'must_do' ? 'optional' : 'must_do';
+    const nextPriority: ActivityPriority =
+      item.priority === 'undecided' ? 'must_do' : item.priority === 'must_do' ? 'optional' : 'undecided';
     await updateAgendaItem(item.id, { priority: nextPriority });
   };
 
@@ -389,6 +390,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                           <div className="space-y-1 flex-1 min-w-0">
                             {/* Title & Specific Time Row */}
                             <div className="flex flex-wrap items-center gap-2">
+                              {item.emoji && <span className="text-base shrink-0">{item.emoji}</span>}
                               <h4
                                 className={`text-xs sm:text-sm font-bold leading-snug ${
                                   item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
@@ -420,13 +422,21 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                                 type="button"
                                 onClick={() => handleTogglePriority(item)}
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md border font-black transition-all cursor-pointer active:scale-95 ${
-                                  isWajib
+                                  item.priority === 'must_do'
                                     ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                    : item.priority === 'optional'
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                                 }`}
-                                title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
+                                title="Klik untuk tukar keutamaan (Belum Set / Wajib / Pilihan)"
                               >
-                                <span>{isWajib ? '📌 Wajib' : '🌿 Pilihan'}</span>
+                                <span>
+                                  {item.priority === 'must_do'
+                                    ? '📌 Wajib'
+                                    : item.priority === 'optional'
+                                    ? '🌿 Pilihan'
+                                    : '⚪ Belum Set'}
+                                </span>
                               </button>
 
                               {/* Location */}

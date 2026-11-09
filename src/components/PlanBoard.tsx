@@ -24,16 +24,19 @@ import {
   X,
   Loader2,
   EyeOff,
-  Eye
+  Eye,
+  Bookmark
 } from 'lucide-react';
+import { ActivityLibraryModal } from './ActivityLibraryModal';
 
 interface PlanBoardProps {
   stay: Stay;
   onOpenAddModal?: () => void;
   onEditItem?: (item: AgendaItem) => void;
+  onOpenActivityLibrary?: () => void;
 }
 
-type FilterType = 'all' | 'backlog' | 'wajib' | 'optional' | 'scheduled';
+type FilterType = 'all' | 'backlog' | 'wajib' | 'optional' | 'undecided' | 'scheduled';
 type SortOption = 'date_asc' | 'date_desc' | 'priority' | 'time_slot' | 'title_asc' | 'created_desc';
 
 const TIME_SLOT_ORDER: Record<string, number> = {
@@ -44,23 +47,11 @@ const TIME_SLOT_ORDER: Record<string, number> = {
   flexible: 5
 };
 
-const MALAYSIAN_STAY_IDEAS = [
-  { title: 'Makan Nasi Dagang', priority: 'must_do' as ActivityPriority, icon: '🍚' },
-  { title: 'Pergi Pantai', priority: 'optional' as ActivityPriority, icon: '🏖️' },
-  { title: 'Gi Kenduri Ayoh Lie', priority: 'must_do' as ActivityPriority, icon: '🎉' },
-  { title: 'Makan Kedai Kak Nurul', priority: 'optional' as ActivityPriority, icon: '🍜' },
-  { title: 'Jumpa Keluarga', priority: 'must_do' as ActivityPriority, icon: '👨‍👩‍👧' },
-  { title: 'Bawa Anak Jalan-Jalan', priority: 'optional' as ActivityPriority, icon: '🧒' },
-  { title: 'Beli Keropok Lekor', priority: 'optional' as ActivityPriority, icon: '🍘' },
-  { title: 'Ziarah Tok', priority: 'must_do' as ActivityPriority, icon: '👵' },
-  { title: 'Singgah Rumah Ayah', priority: 'must_do' as ActivityPriority, icon: '🏡' },
-  { title: 'Rehat Santai & Kopi Petang', priority: 'optional' as ActivityPriority, icon: '☕' }
-];
-
 export const PlanBoard: React.FC<PlanBoardProps> = ({
   stay,
   onOpenAddModal,
-  onEditItem
+  onEditItem,
+  onOpenActivityLibrary
 }) => {
   const {
     activeAgendaItems,
@@ -68,17 +59,22 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     updateAgendaItem,
     batchUpdateAgendaItems,
     deleteAgendaItem,
-    toggleAgendaComplete
+    toggleAgendaComplete,
+    activityLibraryItems,
+    addActivityLibraryItem,
+    seedDefaultActivityLibrary
   } = useStay();
   const { requireAdmin } = useAuth();
 
   const [quickTitle, setQuickTitle] = useState('');
-  const [quickPriority, setQuickPriority] = useState<ActivityPriority>('must_do');
+  const [quickPriority, setQuickPriority] = useState<ActivityPriority>('undecided');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all' | '0' | '1' | '2' ...
   const [sortBy, setSortBy] = useState<SortOption>('date_asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOrganiseModalOpen, setIsOrganiseModalOpen] = useState(false);
+  const [isInternalLibraryOpen, setIsInternalLibraryOpen] = useState(false);
+  const [libraryPromptItem, setLibraryPromptItem] = useState<{ title: string; emoji?: string } | null>(null);
   const [itemToDelete, setItemToDelete] = useState<AgendaItem | null>(null);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
   const [selectedIdeaTitles, setSelectedIdeaTitles] = useState<string[]>([]);
@@ -109,7 +105,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   // Statistics
   const totalItems = items.length;
   const wajibCount = items.filter((i) => i.priority === 'must_do').length;
-  const optionalCount = totalItems - wajibCount;
+  const optionalCount = items.filter((i) => i.priority === 'optional').length;
+  const undecidedCount = items.filter((i) => !i.priority || i.priority === 'undecided').length;
   const backlogCount = items.filter((i) => !i.dayNumber || i.dayNumber === 0).length;
   const scheduledCount = totalItems - backlogCount;
 
@@ -120,7 +117,8 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
       if (activeFilter === 'backlog' && (item.dayNumber || 0) !== 0) return false;
       if (activeFilter === 'scheduled' && (item.dayNumber || 0) === 0) return false;
       if (activeFilter === 'wajib' && item.priority !== 'must_do') return false;
-      if (activeFilter === 'optional' && item.priority === 'must_do') return false;
+      if (activeFilter === 'optional' && item.priority !== 'optional') return false;
+      if (activeFilter === 'undecided' && item.priority !== 'undecided' && item.priority !== undefined) return false;
 
       // 2. Date Filter
       if (dateFilter !== 'all') {
@@ -262,39 +260,52 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }
   };
 
-  // Toggle selection of idea chip in starter recommendations (allows picking 2-3 choices without premature transition)
-  const handleToggleIdeaSelection = (title: string) => {
+  // Visible library items
+  const visibleLibraryItems = useMemo(() => {
+    return activityLibraryItems.filter((item) => !dismissedIdeaTitles.includes(item.name));
+  }, [activityLibraryItems, dismissedIdeaTitles]);
+
+  // Toggle selection of library idea chip (allows picking any number of items)
+  const handleToggleIdeaSelection = (name: string) => {
     setSelectedIdeaTitles((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
     );
   };
 
-  // Add all selected ideas in one action and transition seamlessly
+  // Add all selected ideas into the current stay as independent Stay Activities
   const handleAddSelectedIdeas = async () => {
     if (selectedIdeaTitles.length === 0 || isAddingIdeas) return;
     setIsAddingIdeas(true);
 
     try {
-      const ideasToAdd = MALAYSIAN_STAY_IDEAS.filter((idea) =>
-        selectedIdeaTitles.includes(idea.title)
+      const selectedItems = activityLibraryItems.filter((item) =>
+        selectedIdeaTitles.includes(item.name)
       );
 
-      for (const idea of ideasToAdd) {
+      let addedCount = 0;
+      for (const idea of selectedItems) {
+        // Prevent accidental duplicate if already present in this stay
+        const exists = items.some((i) => i.title.toLowerCase() === idea.name.toLowerCase());
+        if (exists) continue;
+
         await addAgendaItem({
           stayId: stay.id,
-          title: idea.title,
+          title: idea.name,
+          emoji: idea.emoji || '📌',
+          sourceLibraryId: idea.id,
           dayNumber: 0,
           timeSlot: 'flexible',
-          priority: idea.priority,
+          priority: 'undecided', // Trip-level independent default
           isCompleted: false,
           locationName: '',
           personInCharge: '',
           description: '',
           notes: ''
         });
+        addedCount++;
       }
 
-      setFeedbackToast(`Berjaya menambah ${ideasToAdd.length} aktiviti pilihan!`);
+      setFeedbackToast(`Berjaya menambah ${addedCount} aktiviti pilihan ke perjalanan!`);
       setTimeout(() => setFeedbackToast(null), 3000);
       setSelectedIdeaTitles([]);
     } catch (err) {
@@ -304,11 +315,11 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }
   };
 
-  // Add single idea directly (used in normal workspace or quick one-click)
-  const handleAddSingleIdea = async (idea: { title: string; priority: ActivityPriority }) => {
-    const exists = items.some((i) => i.title.toLowerCase() === idea.title.toLowerCase());
+  // Add single library idea directly
+  const handleAddSingleLibraryIdea = async (idea: { name: string; emoji?: string; id?: string }) => {
+    const exists = items.some((i) => i.title.toLowerCase() === idea.name.toLowerCase());
     if (exists) {
-      setFeedbackToast(`Aktiviti "${idea.title}" sudah ada dalam jadual.`);
+      setFeedbackToast(`Aktiviti "${idea.name}" sudah ada dalam jadual.`);
       setTimeout(() => setFeedbackToast(null), 2000);
       return;
     }
@@ -316,46 +327,37 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     try {
       await addAgendaItem({
         stayId: stay.id,
-        title: idea.title,
+        title: idea.name,
+        emoji: idea.emoji || '📌',
+        sourceLibraryId: idea.id,
         dayNumber: 0,
         timeSlot: 'flexible',
-        priority: idea.priority,
+        priority: 'undecided',
         isCompleted: false,
         locationName: '',
         personInCharge: '',
         description: '',
         notes: ''
       });
-      setFeedbackToast(`Ditambah: "${idea.title}"`);
+      setFeedbackToast(`Ditambah: "${idea.name}"`);
       setTimeout(() => setFeedbackToast(null), 2500);
     } catch (err) {
       console.error('Failed adding single idea:', err);
     }
   };
 
-  const handleAddIdeaChip = handleAddSingleIdea;
-
-  // Filter ideas to exclude dismissed ones
-  const visibleStarterIdeas = useMemo(() => {
-    return MALAYSIAN_STAY_IDEAS.filter((idea) => !dismissedIdeaTitles.includes(idea.title));
-  }, [dismissedIdeaTitles]);
-
-  // Dismiss / delete an individual idea suggestion from view
-  const handleDismissIdea = (title: string, e: React.MouseEvent) => {
+  const handleDismissIdea = (name: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setDismissedIdeaTitles((prev) => {
-      const next = prev.includes(title) ? prev : [...prev, title];
+      const next = prev.includes(name) ? prev : [...prev, name];
       try {
         localStorage.setItem('stayplan_dismissed_starter_ideas', JSON.stringify(next));
       } catch {}
       return next;
     });
-    setSelectedIdeaTitles((prev) => prev.filter((t) => t !== title));
-    setFeedbackToast(`Cadangan "${title}" dipadam daripada paparan.`);
-    setTimeout(() => setFeedbackToast(null), 2000);
+    setSelectedIdeaTitles((prev) => prev.filter((t) => t !== name));
   };
 
-  // Restore all dismissed ideas
   const handleRestoreIdeas = () => {
     setDismissedIdeaTitles([]);
     try {
@@ -365,7 +367,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     setTimeout(() => setFeedbackToast(null), 2500);
   };
 
-  // Toggle hiding the entire suggestions block
   const handleToggleSuggestionsVisibility = () => {
     setIsSuggestionsDismissed((prev) => {
       const next = !prev;
@@ -376,11 +377,42 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     });
   };
 
-  // Toggle priority between Wajib (must_do) and Pilihan (optional)
+  const handleSaveToLibrary = async () => {
+    if (!libraryPromptItem) return;
+    try {
+      await addActivityLibraryItem({
+        name: libraryPromptItem.title,
+        emoji: libraryPromptItem.emoji || '📌'
+      });
+      setFeedbackToast(`"${libraryPromptItem.title}" disimpan ke Aktiviti Kebiasaan!`);
+      setTimeout(() => setFeedbackToast(null), 2500);
+    } catch (err) {
+      console.error('Failed saving to library:', err);
+    } finally {
+      setLibraryPromptItem(null);
+    }
+  };
+
+  // Toggle priority cycling: undecided -> must_do -> optional -> undecided
   const handleTogglePriority = async (item: AgendaItem) => {
     requireAdmin(async () => {
-      const nextPriority: ActivityPriority = item.priority === 'must_do' ? 'optional' : 'must_do';
+      let nextPriority: ActivityPriority = 'must_do';
+      if (item.priority === 'must_do') {
+        nextPriority = 'optional';
+      } else if (item.priority === 'optional') {
+        nextPriority = 'undecided';
+      } else {
+        nextPriority = 'must_do';
+      }
       await updateAgendaItem(item.id, { priority: nextPriority });
+      const label =
+        nextPriority === 'must_do'
+          ? '📌 Wajib'
+          : nextPriority === 'optional'
+          ? '🌿 Pilihan'
+          : '⚪ Belum Set';
+      setFeedbackToast(`Ditukar ke ${label}: "${item.title}"`);
+      setTimeout(() => setFeedbackToast(null), 2000);
     }, 'Sila sahkan PIN Admin untuk menukar keutamaan aktiviti.');
   };
 
@@ -498,6 +530,32 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </form>
             </div>
 
+            {/* Prompt to optionally save manually added activity to Activity Library */}
+            {libraryPromptItem && (
+              <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5 p-3 bg-teal-50/80 border border-teal-200/90 rounded-2xl animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-xs text-teal-950 font-semibold text-left">
+                  <Bookmark className="w-4 h-4 text-teal-600 shrink-0" />
+                  <span>Simpan &ldquo;{libraryPromptItem.title}&rdquo; juga sebagai Aktiviti Kebiasaan?</span>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleSaveToLibrary}
+                    className="flex-1 sm:flex-initial px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    Simpan untuk perjalanan akan datang
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLibraryPromptItem(null)}
+                    className="px-2.5 py-1.5 text-slate-500 hover:text-slate-800 text-xs font-medium rounded-xl transition-all cursor-pointer"
+                  >
+                    Tidak, untuk perjalanan ini sahaja
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Collapsed / Hidden Suggestions State */}
             {isSuggestionsDismissed ? (
               <div className="pt-3 border-t border-slate-100 text-center animate-in fade-in duration-150">
@@ -506,20 +564,20 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   id="show-suggestions-btn"
                   onClick={handleToggleSuggestionsVisibility}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-teal-900 bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 transition-all cursor-pointer shadow-2xs"
-                  title="Tunjukkan semula pilihan cadangan aktiviti"
+                  title="Tunjukkan semula Pautan Pantas aktiviti kebiasaan"
                 >
                   <Eye className="w-3.5 h-3.5 text-teal-600" />
-                  <span>💡 Tunjukkan Cadangan Aktiviti ({visibleStarterIdeas.length})</span>
+                  <span>💡 Tunjukkan Pautan Pantas ({visibleLibraryItems.length})</span>
                 </button>
               </div>
             ) : (
-              /* Starter Idea Chips (Allows selecting 2-3+ choices before transitioning or deleting/hiding) */
+              /* Pautan Pantas: Reusable Activity Library Chips */
               <div className="space-y-3 pt-3 border-t border-slate-100 text-left sm:text-center animate-in fade-in duration-150">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                      <span className="text-teal-600">💡</span>
-                      <span>Pilih cadangan aktiviti untuk mula (boleh pilih 2–3 pilihan):</span>
+                      <span className="text-teal-600">⚡</span>
+                      <span>Pautan Pantas</span>
                     </p>
                     <div className="flex items-center gap-2">
                       {selectedIdeaTitles.length > 0 && (
@@ -533,10 +591,19 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       )}
                       <button
                         type="button"
+                        onClick={() => (onOpenActivityLibrary ? onOpenActivityLibrary() : setIsInternalLibraryOpen(true))}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100/80 border border-teal-200/80 transition-colors cursor-pointer"
+                        title="Urus senarai aktiviti kebiasaan peribadi anda"
+                      >
+                        <Bookmark className="w-3 h-3 text-teal-600" />
+                        <span>Urus Aktiviti Kebiasaan</span>
+                      </button>
+                      <button
+                        type="button"
                         id="hide-suggestions-btn"
                         onClick={handleToggleSuggestionsVisibility}
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                        title="Sembunyikan bahagian cadangan ini dari paparan"
+                        title="Sembunyikan bahagian pautan pantas dari paparan"
                       >
                         <EyeOff className="w-3 h-3 text-slate-500" />
                         <span>Sembunyikan</span>
@@ -544,20 +611,26 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    Tandakan pilihan yang anda suka untuk dimasukkan ke jadual, atau tekan ikon ✕ pada mana-mana pilihan untuk memadamnya dari paparan.
+                    Pilih aktiviti kebiasaan anda untuk dimasukkan ke dalam perancangan perjalanan ini.
                   </p>
                 </div>
 
-                {/* Multi-Select & Deletable Chips Container */}
-                {visibleStarterIdeas.length > 0 ? (
+                {/* Multi-Select Chips Container (No 2-3 limit, No Wajib/Pilihan badges) */}
+                {visibleLibraryItems.length > 0 ? (
                   <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl mx-auto pt-1">
-                    {visibleStarterIdeas.map((idea, idx) => {
-                      const isSelected = selectedIdeaTitles.includes(idea.title);
+                    {visibleLibraryItems.map((idea) => {
+                      const isSelected = selectedIdeaTitles.includes(idea.name);
+                      const isAlreadyInTrip = items.some(
+                        (i) => i.title.toLowerCase() === idea.name.toLowerCase()
+                      );
+
                       return (
                         <div
-                          key={idx}
+                          key={idea.id}
                           className={`inline-flex items-center rounded-full text-xs transition-all select-none ${
-                            isSelected
+                            isAlreadyInTrip
+                              ? 'bg-slate-100 text-slate-400 border border-slate-200'
+                              : isSelected
                               ? 'bg-teal-600 text-white font-bold border border-teal-600 shadow-xs ring-2 ring-teal-300 scale-[1.02]'
                               : 'bg-slate-50 hover:bg-teal-50 hover:text-teal-900 border border-slate-200 hover:border-teal-300 text-slate-700 font-medium'
                           }`}
@@ -565,63 +638,73 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                           {/* Main Selection Area */}
                           <button
                             type="button"
-                            onClick={() => handleToggleIdeaSelection(idea.title)}
-                            className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 cursor-pointer"
+                            disabled={isAlreadyInTrip}
+                            onClick={() => handleToggleIdeaSelection(idea.name)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 cursor-pointer disabled:cursor-not-allowed"
                             aria-pressed={isSelected}
                           >
-                            <span>{isSelected ? '✓' : idea.icon}</span>
-                            <span>{idea.title}</span>
-                            <span
-                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                                isSelected ? 'bg-teal-700 text-teal-100' : 'bg-slate-200/70 text-slate-600'
-                              }`}
-                            >
-                              {idea.priority === 'must_do' ? 'Wajib' : 'Pilihan'}
-                            </span>
+                            <span>{isAlreadyInTrip ? '✓' : isSelected ? '✓' : idea.emoji || '📌'}</span>
+                            <span>{idea.name}</span>
+                            {isAlreadyInTrip && (
+                              <span className="text-[10px] text-slate-400 font-normal">(Sudah ada)</span>
+                            )}
                           </button>
 
-                          {/* Delete / Dismiss Single Idea */}
-                          <button
-                            type="button"
-                            onClick={(e) => handleDismissIdea(idea.title, e)}
-                            title={`Padam "${idea.title}" daripada cadangan`}
-                            aria-label={`Padam cadangan ${idea.title}`}
-                            className={`p-1 mr-1.5 rounded-full transition-colors cursor-pointer ${
-                              isSelected
-                                ? 'text-teal-200 hover:text-white hover:bg-teal-700'
-                                : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                            }`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {/* Delete / Dismiss Single Idea from this view */}
+                          {!isAlreadyInTrip && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleDismissIdea(idea.name, e)}
+                              title={`Sembunyikan "${idea.name}" daripada cadangan perjalanan ini`}
+                              aria-label={`Padam cadangan ${idea.name}`}
+                              className={`p-1 mr-1.5 rounded-full transition-colors cursor-pointer ${
+                                isSelected
+                                  ? 'text-teal-200 hover:text-white hover:bg-teal-700'
+                                  : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                              }`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1.5">
-                    <p className="text-xs text-slate-500 font-medium">
-                      Semua cadangan aktiviti telah dipadam dari paparan.
+                  /* Empty state for Activity Library per Section 4 */
+                  <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center space-y-2 max-w-md mx-auto">
+                    <p className="text-xs font-bold text-slate-700">Belum ada aktiviti kebiasaan.</p>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Tambahkan aktiviti yang sering anda lakukan supaya mudah digunakan untuk perjalanan akan datang.
                     </p>
-                    <button
-                      type="button"
-                      onClick={handleRestoreIdeas}
-                      className="text-xs font-bold text-teal-700 hover:text-teal-800 underline cursor-pointer"
-                    >
-                      Pulihkan semula semua cadangan aktiviti
-                    </button>
+                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => (onOpenActivityLibrary ? onOpenActivityLibrary() : setIsInternalLibraryOpen(true))}
+                        className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                      >
+                        + Tambah Aktiviti Kebiasaan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => seedDefaultActivityLibrary()}
+                        className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 hover:text-teal-800 hover:border-teal-300 text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                      >
+                        Muat Cadangan Lazim
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Sub-action if some ideas were deleted */}
-                {dismissedIdeaTitles.length > 0 && visibleStarterIdeas.length > 0 && (
+                {/* Sub-action if some ideas were hidden */}
+                {dismissedIdeaTitles.length > 0 && visibleLibraryItems.length > 0 && (
                   <div className="pt-1">
                     <button
                       type="button"
                       onClick={handleRestoreIdeas}
                       className="text-[11px] text-slate-400 hover:text-teal-700 font-medium underline cursor-pointer"
                     >
-                      Pulihkan {dismissedIdeaTitles.length} cadangan yang telah dipadam
+                      Pulihkan {dismissedIdeaTitles.length} cadangan yang telah disembunyikan
                     </button>
                   </div>
                 )}
@@ -643,7 +726,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         </>
                       ) : (
                         <>
-                          <span>✨ Masukkan {selectedIdeaTitles.length} Aktiviti Pilihan ke Jadual</span>
+                          <span>✨ Masukkan {selectedIdeaTitles.length} Aktiviti ke Perjalanan Ini</span>
                           <span className="text-teal-200">→</span>
                         </>
                       )}
@@ -652,13 +735,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                       {selectedIdeaTitles.length} aktiviti dipilih • Anda boleh susun hari & masa di langkah seterusnya.
                     </p>
                   </div>
-                ) : (
-                  <div className="pt-1 text-center">
-                    <p className="text-[11px] text-slate-400 font-medium">
-                      (Tip: Tandakan 2–3 pilihan di atas untuk dimasukkan serentak)
-                    </p>
-                  </div>
-                )}
+                ) : null}
               </div>
             )}
           </div>
@@ -682,11 +759,23 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
+                {/* 3-Tier Priority Selector with Default Belum Ditentukan */}
                 <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 shrink-0">
                   <button
                     type="button"
+                    onClick={() => setQuickPriority('undecided')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      quickPriority === 'undecided'
+                        ? 'bg-slate-700 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    ⚪ Belum Set
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setQuickPriority('must_do')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       quickPriority === 'must_do'
                         ? 'bg-amber-500 text-white shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -697,7 +786,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   <button
                     type="button"
                     onClick={() => setQuickPriority('optional')}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       quickPriority === 'optional'
                         ? 'bg-emerald-600 text-white shadow-2xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -731,36 +820,72 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </div>
             </form>
 
-            {/* Quick Suggestion Chips (Allows picking more ideas anytime without leaving this view) */}
-            <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-teal-600" />
-                Cadangan Pantas:
-              </span>
-              <div className="flex items-center gap-1.5">
-                {visibleStarterIdeas.map((idea, idx) => {
+            {/* Prompt to optionally save manually added activity to Activity Library */}
+            {libraryPromptItem && (
+              <div className="p-3 bg-teal-50/80 border border-teal-200/90 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 text-teal-950 font-semibold text-left">
+                  <Bookmark className="w-4 h-4 text-teal-600 shrink-0" />
+                  <span>Simpan &ldquo;{libraryPromptItem.title}&rdquo; juga sebagai Aktiviti Kebiasaan?</span>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleSaveToLibrary}
+                    className="flex-1 sm:flex-initial px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    Simpan untuk perjalanan akan datang
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLibraryPromptItem(null)}
+                    className="px-2.5 py-1 text-slate-500 hover:text-slate-800 font-medium rounded-xl transition-all cursor-pointer"
+                  >
+                    Tidak, untuk perjalanan ini sahaja
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Pautan Pantas: Horizontal Quick Addition Strip in Active Workspace */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-teal-600" />
+                  Pautan Pantas:
+                </span>
+                {visibleLibraryItems.slice(0, 10).map((idea) => {
                   const alreadyAdded = items.some(
-                    (i) => i.title.toLowerCase() === idea.title.toLowerCase()
+                    (i) => i.title.toLowerCase() === idea.name.toLowerCase()
                   );
                   return (
                     <button
-                      key={idx}
+                      key={idea.id}
                       type="button"
                       disabled={alreadyAdded}
-                      onClick={() => handleAddSingleIdea(idea)}
+                      onClick={() => handleAddSingleLibraryIdea(idea)}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-all ${
                         alreadyAdded
                           ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-default opacity-60'
                           : 'bg-slate-50 hover:bg-teal-50 hover:text-teal-900 border border-slate-200 hover:border-teal-300 text-slate-700 cursor-pointer active:scale-95 font-medium'
                       }`}
-                      title={alreadyAdded ? `"${idea.title}" sudah ditambah` : `Tambah "${idea.title}"`}
+                      title={alreadyAdded ? `"${idea.name}" sudah ditambah ke perjalanan ini` : `Tambah "${idea.name}"`}
                     >
-                      <span>{alreadyAdded ? '✓' : idea.icon}</span>
-                      <span>{idea.title}</span>
+                      <span>{alreadyAdded ? '✓' : idea.emoji || '📌'}</span>
+                      <span>{idea.name}</span>
                     </button>
                   );
                 })}
               </div>
+
+              <button
+                type="button"
+                onClick={() => (onOpenActivityLibrary ? onOpenActivityLibrary() : setIsInternalLibraryOpen(true))}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold text-teal-700 hover:text-teal-900 bg-teal-50/70 hover:bg-teal-100 rounded-lg shrink-0 cursor-pointer"
+                title="Buka pengurusan Aktiviti Kebiasaan"
+              >
+                <Bookmark className="w-3 h-3" />
+                <span>Urus</span>
+              </button>
             </div>
           </div>
 
@@ -815,6 +940,18 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   }`}
                 >
                   🌿 Pilihan ({optionalCount})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter('undecided')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeFilter === 'undecided'
+                      ? 'bg-slate-700 text-white shadow-2xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  ⚪ Belum Set ({undecidedCount})
                 </button>
 
                 <button
@@ -1043,6 +1180,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                           )}
                         </button>
 
+                        {item.emoji && <span className="text-base shrink-0">{item.emoji}</span>}
                         <span
                           className={`text-xs sm:text-sm font-bold leading-snug truncate ${
                             item.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
@@ -1052,18 +1190,26 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         </span>
                       </div>
 
-                      {/* Quick 1-Click Priority Toggle */}
+                      {/* Quick 1-Click Priority Toggle (Cycling: Undecided -> Wajib -> Pilihan) */}
                       <button
                         type="button"
                         onClick={() => handleTogglePriority(item)}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border transition-all shrink-0 cursor-pointer active:scale-95 ${
-                          isWajib
+                          item.priority === 'must_do'
                             ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                            : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            : item.priority === 'optional'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                         }`}
-                        title="Klik untuk tukar keutamaan (Wajib / Pilihan)"
+                        title="Klik untuk tukar keutamaan (Belum Set / Wajib / Pilihan)"
                       >
-                        <span>{isWajib ? '📌 Wajib' : '🌿 Pilihan'}</span>
+                        <span>
+                          {item.priority === 'must_do'
+                            ? '📌 Wajib'
+                            : item.priority === 'optional'
+                            ? '🌿 Pilihan'
+                            : '⚪ Belum Set'}
+                        </span>
                       </button>
                     </div>
 
@@ -1244,6 +1390,12 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
         stay={stay}
         agendaItems={activeAgendaItems}
         onApplyDistribution={batchUpdateAgendaItems}
+      />
+
+      {/* Activity Library (Pautan Pantas) Modal */}
+      <ActivityLibraryModal
+        isOpen={isInternalLibraryOpen}
+        onClose={() => setIsInternalLibraryOpen(false)}
       />
     </div>
   );

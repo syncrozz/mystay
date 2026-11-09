@@ -113,6 +113,33 @@ const subcollectionRules = {
   }
 };
 
+// Rules for /users/{userId}/activityLibrary/{activityId}
+const activityLibraryRules = {
+  get: (request: MockRequest, resource: MockResource, userId: string, activityId: string) => {
+    return isOwner(request, userId);
+  },
+  list: (request: MockRequest, userId: string) => {
+    return isOwner(request, userId);
+  },
+  create: (request: MockRequest, userId: string, activityId: string) => {
+    return (
+      isOwner(request, userId) &&
+      request.resource?.data.userId === userId &&
+      isValidId(activityId)
+    );
+  },
+  update: (request: MockRequest, resource: MockResource, userId: string) => {
+    return (
+      isOwner(request, userId) &&
+      resource.data.userId === userId &&
+      request.resource?.data.userId === userId
+    );
+  },
+  delete: (request: MockRequest, resource: MockResource, userId: string) => {
+    return isOwner(request, userId) && resource.data.userId === userId;
+  }
+};
+
 // Test Suite
 interface TestResult {
   testId: string;
@@ -342,6 +369,57 @@ runTest(
     return stayRules.get(userCReq, userARes, 'stay_userA');
   },
   'User C cannot access User A or User B stays; receives empty personal workspace'
+);
+
+// 13. Activity Library: Unauthenticated read on /users/userA/activityLibrary
+runTest(
+  'TEST_13',
+  'Unauthenticated read on /users/userA/activityLibrary',
+  'DENY',
+  () => {
+    const unauthReq: MockRequest = { auth: null };
+    return activityLibraryRules.list(unauthReq, 'userA');
+  },
+  'request.auth == null immediately rejects access to activityLibrary'
+);
+
+// 14. Activity Library: Owner reads own activityLibrary
+runTest(
+  'TEST_14',
+  'User A reads own /users/userA/activityLibrary',
+  'ALLOW',
+  () => {
+    const userAReq: MockRequest = { auth: { uid: 'userA' } };
+    return activityLibraryRules.list(userAReq, 'userA');
+  },
+  'Owner UID matches path variable {userId}: ALLOWED'
+);
+
+// 15. Activity Library: Foreign user B reads User A activityLibrary
+runTest(
+  'TEST_15',
+  'User B reads User A /users/userA/activityLibrary',
+  'DENY',
+  () => {
+    const userBReq: MockRequest = { auth: { uid: 'userB' } };
+    return activityLibraryRules.list(userBReq, 'userA');
+  },
+  'Cross-user read on activityLibrary is strictly denied'
+);
+
+// 16. Activity Library: Foreign user B writes to User A activityLibrary
+runTest(
+  'TEST_16',
+  'User B writes to User A /users/userA/activityLibrary/act_1',
+  'DENY',
+  () => {
+    const userBReq: MockRequest = {
+      auth: { uid: 'userB' },
+      resource: { data: { userId: 'userB', name: 'Injected' } }
+    };
+    return activityLibraryRules.create(userBReq, 'userA', 'act_1');
+  },
+  'Cross-user write on activityLibrary is strictly blocked by isOwner(userId)'
 );
 
 console.log('===============================================================');

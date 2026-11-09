@@ -11,7 +11,8 @@ import {
   Shield,
   RefreshCw,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  Bookmark
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ interface HeaderProps {
   onOpenShare: () => void;
   onOpenSupport?: () => void;
   onOpenDataSafety?: () => void;
+  onOpenActivityLibrary?: () => void;
   onNavigateToLanding?: () => void;
 }
 
@@ -28,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStayList,
   onOpenShare,
   onOpenDataSafety,
+  onOpenActivityLibrary,
   onNavigateToLanding
 }) => {
   const {
@@ -319,6 +322,19 @@ export const Header: React.FC<HeaderProps> = ({
                       <FolderKanban className="w-4 h-4 text-slate-500" />
                       <span>Rancangan Tersimpan</span>
                     </button>
+
+                    {onOpenActivityLibrary && (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          onOpenActivityLibrary();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-teal-800 hover:bg-teal-50 rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <Bookmark className="w-4 h-4 text-teal-600" />
+                        <span>Aktiviti Kebiasaan (Pautan Pantas)</span>
+                      </button>
+                    )}
 
                     {onOpenDataSafety && (
                       <button

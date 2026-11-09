@@ -35,13 +35,23 @@ service cloud.firestore {
         get(/databases/$(database)/documents/stays/$(stayId)).data.userId == request.auth.uid;
     }
 
-    // User Profile Documents
+    // User Profile Documents & Personal Subcollections
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
       allow create: if isOwner(userId) && incoming().uid == request.auth.uid;
       allow update: if isOwner(userId) && incoming().uid == existing().uid;
       allow delete: if isOwner(userId);
+
+      // Personal Activity Library subcollection
+      // STRICT OWNER ISOLATION: Only the owner (request.auth.uid == userId) can read/write their library items
+      match /activityLibrary/{activityId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && incoming().userId == request.auth.uid && isValidId(activityId);
+        allow update: if isOwner(userId) && existing().userId == request.auth.uid && incoming().userId == request.auth.uid;
+        allow delete: if isOwner(userId) && existing().userId == request.auth.uid;
+      }
     }
 
     // Central Stays Collection & nested subcollections

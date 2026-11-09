@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, MapPin, User, Calendar, ChevronDown, Save } from 'lucide-react';
+import { X, Clock, MapPin, User, Calendar, ChevronDown, Save, Bookmark } from 'lucide-react';
 import { AgendaItem, TimeSlot, ActivityPriority, Stay } from '../types';
 import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
 import { toTitleCase, getDateForDay, getDayOptionsForStay, getDayContextLabel } from '../utils/formatters';
+import { useStay } from '../context/StayContext';
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
   defaultTimeSlot = 'morning',
   stay
 }) => {
+  const { addActivityLibraryItem } = useStay();
   const isEditing = !!initialItem;
 
   const [title, setTitle] = useState('');
@@ -30,10 +32,11 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
   const [dayNumber, setDayNumber] = useState(defaultDayNumber);
   const [timeSlot, setTimeSlot] = useState<TimeSlot>(defaultTimeSlot);
   const [timeSpecific, setTimeSpecific] = useState('');
-  const [priority, setPriority] = useState<ActivityPriority>('must_do');
+  const [priority, setPriority] = useState<ActivityPriority>('undecided');
   const [locationName, setLocationName] = useState('');
   const [personInCharge, setPersonInCharge] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [saveToLibrary, setSaveToLibrary] = useState(false);
 
   useEffect(() => {
     if (initialItem) {
@@ -42,20 +45,22 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
       setDayNumber(initialItem.dayNumber);
       setTimeSlot(initialItem.timeSlot);
       setTimeSpecific(initialItem.timeSpecific || '');
-      setPriority(initialItem.priority);
+      setPriority(initialItem.priority || 'undecided');
       setLocationName(initialItem.locationName || '');
       setPersonInCharge(initialItem.personInCharge || '');
       setIsCompleted(initialItem.isCompleted || false);
+      setSaveToLibrary(false);
     } else {
       setTitle('');
       setDescription('');
       setDayNumber(defaultDayNumber);
       setTimeSlot(defaultTimeSlot);
       setTimeSpecific('');
-      setPriority('must_do');
+      setPriority('undecided');
       setLocationName('');
       setPersonInCharge('');
       setIsCompleted(false);
+      setSaveToLibrary(false);
     }
   }, [initialItem, defaultDayNumber, defaultTimeSlot, isOpen]);
 
@@ -63,12 +68,21 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
 
+    const trimmedTitle = toTitleCase(title.trim());
+
+    if (saveToLibrary) {
+      addActivityLibraryItem({
+        name: trimmedTitle,
+        emoji: '📌'
+      }).catch(console.error);
+    }
+
     onSave({
       stayId: stay.id,
       dayNumber,
       timeSlot,
       timeSpecific: timeSpecific.trim(),
-      title: toTitleCase(title.trim()),
+      title: trimmedTitle,
       description: description.trim(),
       priority,
       locationName: toTitleCase(locationName.trim()),
@@ -316,6 +330,22 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Option: Simpan sebagai Aktiviti Kebiasaan */}
+          {!isEditing && (
+            <label className="flex items-center gap-2.5 p-3 rounded-xl bg-teal-50/70 border border-teal-200/80 cursor-pointer select-none hover:bg-teal-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={saveToLibrary}
+                onChange={(e) => setSaveToLibrary(e.target.checked)}
+                className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300"
+              />
+              <div className="flex items-center gap-1.5 text-xs text-teal-950 font-semibold">
+                <Bookmark className="w-3.5 h-3.5 text-teal-600" />
+                <span>Simpan juga sebagai Aktiviti Kebiasaan (Pautan Pantas) untuk perjalanan akan datang</span>
+              </div>
+            </label>
+          )}
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
