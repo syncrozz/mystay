@@ -6,7 +6,7 @@ import { generateWhatsAppMessage } from '../utils/formatters';
 interface ShareExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  stay: Stay;
+  stay: Stay | null;
   agendaItems: AgendaItem[];
   checklistItems: ChecklistItem[];
 }
@@ -23,6 +23,37 @@ export const ShareExportModal: React.FC<ShareExportModalProps> = ({
   const [includeSensitiveInfo, setIncludeSensitiveInfo] = useState(false);
 
   if (!isOpen) return null;
+
+  if (!stay) {
+    return (
+      <div id="share-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div id="share-modal-container" className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-8 text-center space-y-4">
+          <button
+            id="share-modal-close-btn"
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+            aria-label="Tutup"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 text-teal-600 flex items-center justify-center mx-auto shadow-2xs">
+            <Share2 className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-black text-slate-900">Belum Ada Trip Untuk Dikongsi</h3>
+          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+            Sila cipta atau pilih rancangan trip terlebih dahulu untuk menjana ringkasan jadual WhatsApp dan mencetak perancangan anda.
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            Faham
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const whatsappMessage = generateWhatsAppMessage(stay, agendaItems, checklistItems, includeSensitiveInfo);
 

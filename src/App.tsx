@@ -526,6 +526,13 @@ function StayPlanApp() {
           isOpen={isActivityLibraryOpen}
           onClose={() => setIsActivityLibraryOpen(false)}
         />
+        <ShareExportModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          stay={activeStay}
+          agendaItems={activeAgendaItems}
+          checklistItems={activeChecklistItems}
+        />
         <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       </div>
     );

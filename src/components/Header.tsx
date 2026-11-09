@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* All Stays Button (Trip Saya) */}
             <button
               id="header-all-stays-btn"
-              onClick={onNavigateToLanding || onOpenStayList}
+              onClick={onOpenStayList || onNavigateToLanding}
               className="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
               title="Trip Saya — Lihat dan pilih semua rancangan tersimpan"
               aria-label="Trip Saya"
