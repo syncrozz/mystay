@@ -37,7 +37,8 @@ import {
   ArrowRight,
   ArrowLeft,
   Layers,
-  CheckCircle2
+  CheckCircle2,
+  Pencil
 } from 'lucide-react';
 
 function StayPlanApp() {
@@ -287,7 +288,18 @@ function StayPlanApp() {
                 const stay = stays[0];
                 const meta = STAY_TYPES[stay.type] || STAY_TYPES.custom;
                 return (
-                  <div className="bg-white rounded-3xl border-2 border-teal-500/30 p-6 sm:p-8 shadow-sm space-y-5 relative overflow-hidden">
+                  <div
+                    onClick={() => handleSelectStay(stay.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectStay(stay.id);
+                      }
+                    }}
+                    className="group bg-white rounded-3xl border-2 border-teal-500/30 hover:border-teal-500 p-6 sm:p-8 shadow-sm hover:shadow-md transition-all space-y-5 relative overflow-hidden cursor-pointer"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2.5">
                         <span className="text-2xl p-2.5 rounded-2xl bg-teal-50 border border-teal-200 shadow-2xs">
@@ -297,16 +309,31 @@ function StayPlanApp() {
                           <span className="px-2 py-0.5 rounded-md bg-teal-50 text-teal-950 border border-teal-200 text-[10px] font-bold uppercase">
                             {meta.label}
                           </span>
-                          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight mt-0.5">
+                          <h2 className="text-lg sm:text-xl font-black text-slate-900 group-hover:text-teal-950 transition-colors tracking-tight mt-0.5">
                             {stay.title}
                           </h2>
                         </div>
                       </div>
 
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Stay Aktif</span>
-                      </span>
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Stay Aktif</span>
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditStay(stay);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                          title="Edit Maklumat Trip"
+                          aria-label={`Edit ${stay.title}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Metadata chips */}
@@ -338,36 +365,6 @@ function StayPlanApp() {
                       <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                         <span className="font-bold text-amber-700">{activeChecklistItems.length}</span>
                         <span>Barang Senarai Semak</span>
-                      </div>
-                    </div>
-
-                    {/* Primary & Secondary Actions */}
-                    <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                      <button
-                        id="single-stay-continue-planning-btn"
-                        onClick={() => handleSelectStay(stay.id)}
-                        className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs sm:text-sm font-black rounded-2xl shadow-sm shadow-teal-600/20 transition-all cursor-pointer"
-                      >
-                        <span>Teruskan Merancang</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEditStay(stay)}
-                          className="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveStayId(stay.id);
-                            setIsShareOpen(true);
-                          }}
-                          className="px-3 py-2 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl transition-colors cursor-pointer"
-                        >
-                          Kongsi
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -403,7 +400,16 @@ function StayPlanApp() {
                   return (
                     <div
                       key={stay.id}
-                      className={`p-5 rounded-3xl border transition-all flex flex-col justify-between space-y-4 bg-white shadow-2xs hover:shadow-sm ${
+                      onClick={() => handleSelectStay(stay.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectStay(stay.id);
+                        }
+                      }}
+                      className={`group p-5 rounded-3xl border transition-all flex flex-col justify-between space-y-4 bg-white shadow-2xs hover:shadow-md cursor-pointer relative overflow-hidden ${
                         isActive
                           ? 'border-teal-500 ring-2 ring-teal-500/20'
                           : 'border-slate-200 hover:border-teal-300'
@@ -416,15 +422,29 @@ function StayPlanApp() {
                             <span>{meta.label}</span>
                           </span>
 
-                          {isActive && (
-                            <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-md bg-teal-600 text-white">
-                              Aktif Sekarang
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {isActive && (
+                              <span className="px-2 py-0.5 text-[10px] font-black uppercase rounded-md bg-teal-600 text-white">
+                                Aktif Sekarang
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditStay(stay);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-teal-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                              title="Edit Maklumat Trip"
+                              aria-label={`Edit ${stay.title}`}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
 
                         <div>
-                          <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+                          <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug group-hover:text-teal-950 transition-colors">
                             {stay.title}
                           </h2>
                           <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1">
@@ -433,7 +453,7 @@ function StayPlanApp() {
                           </p>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 pt-1 border-t border-slate-100">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100">
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{formatDateRange(stay.startDate, stay.endDate, stay.durationDays)}</span>
@@ -446,25 +466,6 @@ function StayPlanApp() {
                             </span>
                           )}
                         </div>
-                      </div>
-
-                      {/* Card Actions */}
-                      <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
-                        <button
-                          onClick={() => handleSelectStay(stay.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
-                        >
-                          <span>Pilih &amp; Teruskan Merancang</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => handleOpenEditStay(stay)}
-                          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                          title="Edit Maklumat Stay"
-                        >
-                          Edit
-                        </button>
                       </div>
                     </div>
                   );
