@@ -3,7 +3,6 @@ import { ASSETS, STAY_TYPES } from '../utils/constants';
 import { useStay } from '../context/StayContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  Plus,
   Share2,
   FolderKanban,
   ChevronDown,
@@ -111,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div
               className="relative group cursor-pointer shrink-0"
               onClick={onNavigateToLanding || onOpenStayList}
-              title="Kembali ke Rancangan Saya"
+              title="Kembali ke Trip Saya"
               role="button"
               tabIndex={0}
             >
@@ -131,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div
               className="min-w-0 cursor-pointer"
               onClick={onNavigateToLanding || onOpenStayList}
-              title="Kembali ke Rancangan Saya"
+              title="Kembali ke Trip Saya"
             >
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
@@ -178,11 +177,11 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-all-stays-btn"
               onClick={onNavigateToLanding || onOpenStayList}
               className="hidden sm:inline-flex items-center justify-center gap-1.5 px-2.5 py-2 sm:py-2.5 text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 rounded-xl transition-colors cursor-pointer shrink-0"
-              title="Rancangan Saya — Lihat dan pilih semua rancangan tersimpan"
-              aria-label="Rancangan Saya"
+              title="Trip Saya — Lihat dan pilih semua rancangan tersimpan"
+              aria-label="Trip Saya"
             >
               <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 shrink-0" />
-              <span className="hidden md:inline text-xs font-bold">Rancangan Saya</span>
+              <span className="hidden md:inline text-xs font-bold">Trip Saya</span>
             </button>
 
             {/* Share / Export */}
@@ -201,12 +200,11 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-new-stay-btn"
               onClick={handleNewStayClick}
-              title="Cipta Rancangan Stay Baharu"
-              aria-label="Cipta Rancangan Stay Baharu"
+              title="Cipta Trip Baharu"
+              aria-label="Cipta Trip Baharu"
               className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-2.5 text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0 font-bold"
             >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span className="text-xs font-black">+ Stay<span className="hidden sm:inline"> Baharu</span></span>
+              <span className="text-xs font-black">+ Trip<span className="hidden sm:inline"> Baharu</span></span>
             </button>
 
             {/* Security Menu / Profile Dropdown */}

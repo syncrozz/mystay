@@ -50,7 +50,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
   const isEditing = !!initialStay;
 
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<StayType>('homestay');
+  const [type, setType] = useState<StayType>('balik_kampung');
   const [durationDays, setDurationDays] = useState(3);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -100,7 +100,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
       setActiveTab('quick');
     } else {
       setTitle('');
-      setType('homestay');
+      setType('balik_kampung');
       const defaultDuration = 3;
       setDurationDays(defaultDuration);
       const today = getLocalTodayDate();
@@ -390,6 +390,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
                     return (
                       <button
                         key={tKey}
+                        id={`stay-type-btn-${tKey}`}
                         type="button"
                         onClick={() => setType(tKey)}
                         className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
