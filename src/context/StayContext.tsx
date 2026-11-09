@@ -489,36 +489,46 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setActiveStayIdState(currentActive);
         }
 
-        // Parallel fetch for active stay's subcollections
-        if (currentActive) {
-          const agendaColRef = collection(db, 'stays', currentActive, 'agendaItems');
-          const checklistColRef = collection(db, 'stays', currentActive, 'checklistItems');
+        // Parallel fetch for active stay's subcollections (only if the stay exists in fetchedStays)
+        if (currentActive && fetchedStays.some((s) => s.id === currentActive)) {
+          try {
+            const agendaQuery = query(
+              collection(db, 'stays', currentActive, 'agendaItems'),
+              where('userId', '==', user.uid)
+            );
+            const checklistQuery = query(
+              collection(db, 'stays', currentActive, 'checklistItems'),
+              where('userId', '==', user.uid)
+            );
 
-          const [agendaSnap, checklistSnap] = await Promise.all([
-            getDocs(agendaColRef),
-            getDocs(checklistColRef)
-          ]);
+            const [agendaSnap, checklistSnap] = await Promise.all([
+              getDocs(agendaQuery),
+              getDocs(checklistQuery)
+            ]);
 
-          const fetchedAgendas: AgendaItem[] = [];
-          agendaSnap.forEach((d) => fetchedAgendas.push({ ...(d.data() as AgendaItem), userId: user.uid }));
+            const fetchedAgendas: AgendaItem[] = [];
+            agendaSnap.forEach((d) => fetchedAgendas.push({ ...(d.data() as AgendaItem), userId: user.uid }));
 
-          const fetchedChecklists: ChecklistItem[] = [];
-          checklistSnap.forEach((d) => fetchedChecklists.push({ ...(d.data() as ChecklistItem), userId: user.uid }));
+            const fetchedChecklists: ChecklistItem[] = [];
+            checklistSnap.forEach((d) => fetchedChecklists.push({ ...(d.data() as ChecklistItem), userId: user.uid }));
 
-          if (fetchedAgendas.length > 0) {
-            setUserAgendaItems((prev) => {
-              const otherStays = prev.filter((i) => i.stayId !== currentActive);
-              const merged = [...otherStays, ...fetchedAgendas];
-              return areAgendaListsEqual(prev, merged) ? prev : merged;
-            });
-          }
+            if (fetchedAgendas.length > 0) {
+              setUserAgendaItems((prev) => {
+                const otherStays = prev.filter((i) => i.stayId !== currentActive);
+                const merged = [...otherStays, ...fetchedAgendas];
+                return areAgendaListsEqual(prev, merged) ? prev : merged;
+              });
+            }
 
-          if (fetchedChecklists.length > 0) {
-            setUserChecklistItems((prev) => {
-              const otherStays = prev.filter((i) => i.stayId !== currentActive);
-              const merged = [...otherStays, ...fetchedChecklists];
-              return areChecklistListsEqual(prev, merged) ? prev : merged;
-            });
+            if (fetchedChecklists.length > 0) {
+              setUserChecklistItems((prev) => {
+                const otherStays = prev.filter((i) => i.stayId !== currentActive);
+                const merged = [...otherStays, ...fetchedChecklists];
+                return areChecklistListsEqual(prev, merged) ? prev : merged;
+              });
+            }
+          } catch (subErr) {
+            console.warn('Subcollections sync notice in refreshFromCloud:', subErr);
           }
         }
 
@@ -569,25 +579,23 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [refreshFromCloud]
   );
 
-  // Listen for tab focus / visibilitychange to instantly re-sync when switching between tabs
+  // Listen for tab visibilitychange to re-sync when switching between tabs
   useEffect(() => {
+    let lastVisibilitySync = 0;
     const handleVisibilityChange = () => {
+      const now = Date.now();
       if (document.visibilityState === 'visible' && user?.uid && navigator.onLine) {
-        refreshFromCloud({ forceFetch: true });
-      }
-    };
-    const handleFocus = () => {
-      if (user?.uid && navigator.onLine) {
-        refreshFromCloud({ forceFetch: true });
+        if (now - lastVisibilitySync > 5000) {
+          lastVisibilitySync = now;
+          refreshFromCloud({ forceFetch: true });
+        }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
     };
   }, [user?.uid, refreshFromCloud]);
 
@@ -679,11 +687,24 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const agendaRef = collection(db, 'stays', activeStayId, 'agendaItems');
-    const checklistRef = collection(db, 'stays', activeStayId, 'checklistItems');
+    // Only subscribe to subcollections if activeStayId belongs to a verified stay in userStays
+    const stayExists = userStays.some((s) => s.id === activeStayId);
+    if (!stayExists) {
+      subcollectionsListenerActiveRef.current = false;
+      return;
+    }
+
+    const agendaQuery = query(
+      collection(db, 'stays', activeStayId, 'agendaItems'),
+      where('userId', '==', user.uid)
+    );
+    const checklistQuery = query(
+      collection(db, 'stays', activeStayId, 'checklistItems'),
+      where('userId', '==', user.uid)
+    );
 
     const unsubAgenda = onSnapshot(
-      agendaRef,
+      agendaQuery,
       (snapshot) => {
         subcollectionsListenerActiveRef.current = true;
         hasPendingWritesRef.current = hasPendingWritesRef.current || snapshot.metadata.hasPendingWrites;
@@ -706,7 +727,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     const unsubChecklist = onSnapshot(
-      checklistRef,
+      checklistQuery,
       (snapshot) => {
         const items: ChecklistItem[] = [];
         snapshot.forEach((d) => items.push({ ...(d.data() as ChecklistItem), userId: user.uid }));
@@ -730,7 +751,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubAgenda();
       unsubChecklist();
     };
-  }, [activeStayId, user?.uid]);
+  }, [activeStayId, user?.uid, userStays]);
 
   // ----------------------------------------------------------------------------------
   // REALTIME SUBSCRIPTION FOR USER'S ACTIVITY LIBRARY (AUTHORITATIVE PER UID)
