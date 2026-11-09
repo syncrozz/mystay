@@ -569,6 +569,28 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [refreshFromCloud]
   );
 
+  // Listen for tab focus / visibilitychange to instantly re-sync when switching between tabs
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user?.uid && navigator.onLine) {
+        refreshFromCloud({ forceFetch: true });
+      }
+    };
+    const handleFocus = () => {
+      if (user?.uid && navigator.onLine) {
+        refreshFromCloud({ forceFetch: true });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.uid, refreshFromCloud]);
+
   // ----------------------------------------------------------------------------------
   // 2. DATA SUBSCRIPTION & HYDRATION (Authoritative Realtime Listener with User Isolation)
   // ----------------------------------------------------------------------------------
@@ -887,15 +909,34 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSyncStatus('SAVING');
           setIsSyncing(true);
 
-          const agendaSnap = await getDocs(collection(db, 'stays', id, 'agendaItems'));
-          const checklistSnap = await getDocs(collection(db, 'stays', id, 'checklistItems'));
+          // 1. Delete child documents (agendaItems & checklistItems) with proper owner queries
+          try {
+            const agendaQuery = query(
+              collection(db, 'stays', id, 'agendaItems'),
+              where('userId', '==', user.uid)
+            );
+            const checklistQuery = query(
+              collection(db, 'stays', id, 'checklistItems'),
+              where('userId', '==', user.uid)
+            );
 
-          const batch = writeBatch(db);
-          agendaSnap.forEach((d) => batch.delete(d.ref));
-          checklistSnap.forEach((d) => batch.delete(d.ref));
-          batch.delete(doc(db, 'stays', id));
+            const [agendaSnap, checklistSnap] = await Promise.all([
+              getDocs(agendaQuery),
+              getDocs(checklistQuery)
+            ]);
 
-          await batch.commit();
+            if (!agendaSnap.empty || !checklistSnap.empty) {
+              const batch = writeBatch(db);
+              agendaSnap.forEach((d) => batch.delete(d.ref));
+              checklistSnap.forEach((d) => batch.delete(d.ref));
+              await batch.commit();
+            }
+          } catch (childErr) {
+            console.warn('Subcollections deletion notice:', childErr);
+          }
+
+          // 2. Authoritative deletion of the stay document itself
+          await deleteDoc(doc(db, 'stays', id));
 
           setSyncStatus('SYNCED');
           setLastSyncTime(Date.now());
@@ -904,6 +945,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Firestore deleteStay error:', err);
           setSyncStatus('ERROR');
           setSyncError(err.message || 'Gagal memadam Stay di Cloud.');
+          await refreshFromCloud({ forceFetch: true });
           handleFirestoreError(err, OperationType.DELETE, `stays/${id}`);
         } finally {
           setIsSyncing(false);
@@ -913,7 +955,7 @@ export const StayProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLastSyncTime(Date.now());
       }
     },
-    [user]
+    [user, refreshFromCloud]
   );
 
   const duplicateStay = useCallback(

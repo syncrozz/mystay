@@ -51,6 +51,7 @@ function StayPlanApp() {
     activeChecklistItems,
     addStay,
     updateStay,
+    deleteStay,
     addAgendaItem,
     updateAgendaItem,
     deleteAgendaItem,
@@ -123,6 +124,13 @@ function StayPlanApp() {
   const handleOpenEditStay = (stayToEdit: Stay) => {
     setEditingStay(stayToEdit);
     setIsCreateStayOpen(true);
+  };
+
+  const handleDeleteStay = async (stayId: string) => {
+    await deleteStay(stayId);
+    if (activeStayId === stayId) {
+      setViewMode('landing');
+    }
   };
 
   const handleSaveStay = async (stayData: Omit<Stay, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -510,6 +518,7 @@ function StayPlanApp() {
           isOpen={isCreateStayOpen}
           onClose={() => setIsCreateStayOpen(false)}
           onSave={handleSaveStay}
+          onDelete={handleDeleteStay}
           initialStay={editingStay}
         />
         <StaySelectorModal
@@ -796,6 +805,7 @@ function StayPlanApp() {
         isOpen={isCreateStayOpen}
         onClose={() => setIsCreateStayOpen(false)}
         onSave={handleSaveStay}
+        onDelete={handleDeleteStay}
         initialStay={editingStay}
       />
 

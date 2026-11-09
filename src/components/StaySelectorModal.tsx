@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   X,
-  Plus,
   Calendar,
   MapPin,
   Check,
@@ -139,7 +138,6 @@ export const StaySelectorModal: React.FC<StaySelectorModalProps> = ({
               onClick={handleCreateNew}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-all shrink-0 self-start sm:self-auto cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
               <span>+ Rancangan Baharu</span>
             </button>
           </div>

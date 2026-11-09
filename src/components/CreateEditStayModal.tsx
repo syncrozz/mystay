@@ -38,6 +38,7 @@ interface CreateEditStayModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (stayData: Omit<Stay, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onDelete?: (stayId: string) => void;
   initialStay?: Stay | null;
 }
 
@@ -45,6 +46,7 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   initialStay
 }) => {
   const isEditing = !!initialStay;
@@ -677,7 +679,21 @@ export const CreateEditStayModal: React.FC<CreateEditStayModalProps> = ({
           {/* Form Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-200">
             <div>
-              {activeTab === 'quick' && !isEditing ? (
+              {isEditing && onDelete && initialStay ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm(`Adakah anda pasti mahu memadam "${initialStay.title}"? Semua jadual dan semakan akan dipadamkan daripada Cloud.`)) {
+                      onDelete(initialStay.id);
+                      onClose();
+                    }
+                  }}
+                  className="px-3.5 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Padam Trip</span>
+                </button>
+              ) : activeTab === 'quick' && !isEditing ? (
                 <button
                   type="button"
                   onClick={() => setActiveTab('stay_info')}
