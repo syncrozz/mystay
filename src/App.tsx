@@ -280,14 +280,6 @@ function StayPlanApp() {
                     Selamat kembali{user?.displayName ? `, ${user.displayName}` : ''}! Teruskan merancang stay aktif anda.
                   </p>
                 </div>
-
-                <button
-                  onClick={handleOpenNewStay}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl transition-all self-start sm:self-auto cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Rancangan Baharu</span>
-                </button>
               </div>
 
               {/* Single Stay Featured Card */}
@@ -400,15 +392,6 @@ function StayPlanApp() {
                     Pilih rancangan stay untuk terus menyusun agenda atau melihat kalendar perjalanan anda.
                   </p>
                 </div>
-
-                <button
-                  id="multi-stay-add-new-btn"
-                  onClick={handleOpenNewStay}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 active:scale-95 rounded-xl shadow-xs transition-all self-start sm:self-auto cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Rancangan Baharu</span>
-                </button>
               </div>
 
               {/* Grid of All Existing Stays */}
@@ -496,7 +479,7 @@ function StayPlanApp() {
               Akses Pantas
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {/* Shortcut 1: Rancangan Tersimpan */}
               <button
                 type="button"
@@ -515,26 +498,6 @@ function StayPlanApp() {
                   </p>
                 </div>
                 <span className="text-xs text-slate-400 group-hover:text-slate-600 shrink-0 font-bold">→</span>
-              </button>
-
-              {/* Shortcut 2: Rancangan Baharu */}
-              <button
-                type="button"
-                onClick={handleOpenNewStay}
-                className="p-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 transition-all text-left shadow-2xs group flex items-start justify-between gap-3 cursor-pointer"
-              >
-                <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-teal-950">
-                      Rancangan Baharu
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium truncate">
-                    Mulakan rancangan baharu
-                  </p>
-                </div>
-                <span className="text-xs text-slate-400 group-hover:text-slate-600 shrink-0 font-bold">+</span>
               </button>
             </div>
           </div>
