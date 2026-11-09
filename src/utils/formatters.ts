@@ -329,24 +329,13 @@ export function generateWhatsAppMessage(
 
       const slotMeta = TIME_SLOTS[slot];
       msg += `\n${slotMeta.icon} *${slotMeta.label}*\n`;
-
       slotItems.forEach((item) => {
-        const priorityTag = item.priority === 'must_do' 
-          ? '🫪 [WAJIB]' 
-          : item.priority === 'food' 
-          ? '🍽️ [MAKAN]' 
-          : item.priority === 'rest' 
-          ? '☕ [REHAT]' 
-          : item.priority === 'logistics' 
-          ? '🚗 [LOGISTIK]' 
-          : '🌴 [PILIHAN]';
-
         const statusIcon = item.isCompleted ? '✅' : '•';
         const timeStr = item.timeSpecific ? ` (${item.timeSpecific})` : '';
         const locStr = item.locationName ? ` 📍 ${item.locationName}` : '';
         const picStr = item.personInCharge ? ` [PIC: ${item.personInCharge}]` : '';
 
-        msg += `${statusIcon} ${priorityTag} *${item.title}*${timeStr}${locStr}${picStr}\n`;
+        msg += `${statusIcon} *${item.title}*${timeStr}${locStr}${picStr}\n`;
         if (item.description) {
           msg += `   _${item.description}_\n`;
         }

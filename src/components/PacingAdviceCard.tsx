@@ -14,11 +14,9 @@ export const PacingAdviceCard: React.FC<PacingAdviceCardProps> = ({
   totalDays
 }) => {
   const currentDayItems = agendaItems.filter((i) => (selectedDay === 0 ? true : i.dayNumber === selectedDay));
-  const mustDos = currentDayItems.filter((i) => i.priority === 'must_do').length;
-  const optionals = currentDayItems.filter((i) => i.priority === 'optional').length;
-  const foodItems = currentDayItems.filter((i) => i.priority === 'food').length;
-  const restItems = currentDayItems.filter((i) => i.priority === 'rest').length;
   const totalCount = currentDayItems.length;
+  const completedCount = currentDayItems.filter((i) => i.isCompleted).length;
+  const pendingCount = totalCount - completedCount;
 
   let paceStatus: 'spacious' | 'balanced' | 'overloaded' = 'balanced';
   let badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300';
@@ -26,12 +24,12 @@ export const PacingAdviceCard: React.FC<PacingAdviceCardProps> = ({
   let advice = 'Pilihan aktiviti yang tenang. Ada ruang secukupnya untuk bersembang santai dan berehat tanpa tergesa-gesa.';
 
   if (selectedDay !== 0) {
-    if (totalCount >= 5 || mustDos >= 4) {
+    if (totalCount >= 5) {
       paceStatus = 'overloaded';
       badgeColor = 'bg-rose-100 text-rose-900 border-rose-300';
       title = 'Jadual Agak Padat!';
-      advice = `Hari ke-${selectedDay} mempunyai ${totalCount} aktiviti (${mustDos} Wajib). Pertimbangkan untuk menukar beberapa item kepada "Pilihan 🌴" atau sediakan slot rehat agar tidak letih.`;
-    } else if (totalCount <= 2 && mustDos <= 2) {
+      advice = `Hari ke-${selectedDay} mempunyai ${totalCount} aktiviti. Pertimbangkan untuk menyediakan slot rehat agar tidak letih.`;
+    } else if (totalCount <= 2) {
       paceStatus = 'spacious';
       badgeColor = 'bg-teal-100 text-teal-900 border-teal-300';
       title = 'Jadual Sangat Selesa 🍃';
@@ -40,7 +38,7 @@ export const PacingAdviceCard: React.FC<PacingAdviceCardProps> = ({
       paceStatus = 'balanced';
       badgeColor = 'bg-teal-100 text-teal-950 border-teal-300';
       title = 'Keseimbangan Baik ⚖️';
-      advice = `Nisbah aktiviti wajib (${mustDos}) dan makanan/rehat (${foodItems + restItems}) berada dalam rentak yang sihat untuk short stay.`;
+      advice = `Rentak aktiviti berada dalam keadaan yang sihat dan seimbang untuk percutian.`;
     }
   } else {
     // Whole stay view
@@ -78,22 +76,18 @@ export const PacingAdviceCard: React.FC<PacingAdviceCardProps> = ({
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-4 gap-2 pt-1">
+      <div className="grid grid-cols-3 gap-2 pt-1">
         <div className="p-2.5 rounded-xl bg-teal-50/70 border border-teal-200/70 text-center">
-          <p className="text-lg font-black text-teal-950 leading-none">{mustDos}</p>
-          <p className="text-[10px] font-semibold text-teal-700 mt-1">🫪 Wajib</p>
+          <p className="text-lg font-black text-teal-950 leading-none">{totalCount}</p>
+          <p className="text-[10px] font-semibold text-teal-700 mt-1">📝 Jumlah Aktiviti</p>
         </div>
         <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-center">
-          <p className="text-lg font-black text-emerald-900 leading-none">{optionals}</p>
-          <p className="text-[10px] font-semibold text-emerald-700 mt-1">🌴 Pilihan</p>
+          <p className="text-lg font-black text-emerald-900 leading-none">{completedCount}</p>
+          <p className="text-[10px] font-semibold text-emerald-700 mt-1">✅ Selesai</p>
         </div>
-        <div className="p-2.5 rounded-xl bg-rose-50/70 border border-rose-200/70 text-center">
-          <p className="text-lg font-black text-rose-900 leading-none">{foodItems}</p>
-          <p className="text-[10px] font-semibold text-rose-700 mt-1">🍽️ Makan</p>
-        </div>
-        <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/70 text-center">
-          <p className="text-lg font-black text-indigo-900 leading-none">{restItems}</p>
-          <p className="text-[10px] font-semibold text-indigo-700 mt-1">☕ Rehat</p>
+        <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-center">
+          <p className="text-lg font-black text-amber-900 leading-none">{pendingCount}</p>
+          <p className="text-[10px] font-semibold text-amber-700 mt-1">⏳ Belum Selesai</p>
         </div>
       </div>
 

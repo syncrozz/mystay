@@ -48,7 +48,6 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
 }) => {
   const { updateAgendaItem, batchUpdateAgendaItems, addAgendaItem } = useStay();
   const [selectedDay, setSelectedDay] = useState<number>(initialSelectedDay);
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isOrganiseModalOpen, setIsOrganiseModalOpen] = useState(false);
   const [showBacklogTray, setShowBacklogTray] = useState(true);
 
@@ -65,12 +64,7 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
     } else {
       if (item.dayNumber !== selectedDay) return false;
     }
-
-    if (priorityFilter === 'all') return true;
-    if (priorityFilter === 'incomplete') return !item.isCompleted;
-    if (priorityFilter === 'must_do') return item.priority === 'must_do';
-    if (priorityFilter === 'optional') return item.priority !== 'must_do';
-    return item.priority === priorityFilter;
+    return true;
   });
 
   const activeDayContext = selectedDay > 0 ? getDayContextLabel(stay, selectedDay) : null;
@@ -95,12 +89,6 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
     });
   };
 
-  // Quick 1-click toggle priority (cycling: undecided -> must_do -> optional -> undecided)
-  const handleTogglePriority = async (item: AgendaItem) => {
-    const nextPriority: ActivityPriority =
-      item.priority === 'undecided' ? 'must_do' : item.priority === 'must_do' ? 'optional' : 'undecided';
-    await updateAgendaItem(item.id, { priority: nextPriority });
-  };
 
   return (
     <div id="agenda-board" className="space-y-6">
@@ -151,14 +139,13 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
               {/* Horizontal list of backlog chips */}
               <div className="flex flex-wrap gap-2 pt-1">
                 {backlogItems.map((bItem) => {
-                  const isWajib = bItem.priority === 'must_do';
                   return (
                     <div
                       key={bItem.id}
                       className="bg-white border border-teal-200/90 rounded-xl p-2.5 shadow-2xs flex items-center justify-between gap-3 text-xs min-w-[220px] max-w-sm"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs">{isWajib ? '🫪' : '🌿'}</span>
+                        <span className="text-xs">📌</span>
                         <span className="font-bold text-slate-900 truncate">{bItem.title}</span>
                       </div>
 
@@ -193,8 +180,6 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
               const dayContext = getDayContextLabel(stay, dayNum);
               const dateInfo = getDateForDay(stay.startDate, dayNum);
               const isTravel = dayContext.type === 'travel_day';
-              const dayItems = agendaItems.filter((i) => i.dayNumber === dayNum);
-              const mustCount = dayItems.filter((i) => i.priority === 'must_do').length;
 
               return (
                 <button
@@ -215,19 +200,6 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                 >
                   <span>{dayContext.icon}</span>
                   <span>{dateInfo.dayOfMonth} {dateInfo.monthShort}</span>
-                  {mustCount > 0 && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                        isSelected
-                          ? 'bg-black/20 text-white'
-                          : isTravel
-                          ? 'bg-sky-200 text-sky-950'
-                          : 'bg-teal-200 text-teal-950'
-                      }`}
-                    >
-                      🫪 {mustCount}
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -245,24 +217,8 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
             </button>
           </div>
 
-          {/* Priority Filter & Susun Button */}
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <div className="flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-700 font-medium focus:bg-white focus:ring-2 focus:ring-teal-500"
-              >
-                <option value="all">Semua Keutamaan</option>
-                <option value="must_do">Wajib</option>
-                <option value="optional">Santai</option>
-                <option value="food">Makan</option>
-                <option value="rest">Rehat</option>
-                <option value="logistics">Perjalanan</option>
-                <option value="incomplete">Belum Selesai</option>
-              </select>
-            </div>
+          {/* Susun Button */}
+          <div className="flex items-center gap-2">
 
             <button
               type="button"
@@ -357,15 +313,10 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
               {/* Slot Items */}
               <div className="p-4 space-y-3">
                 {slotItems.map((item) => {
-                  const pConfig = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.optional;
-                  const isWajib = item.priority === 'must_do';
-
                   return (
                     <div
                       key={item.id}
-                      className={`p-3 sm:p-3.5 rounded-xl border transition-all ${
-                        isWajib ? 'border-l-4 border-l-teal-600 border-teal-200' : 'border-slate-200'
-                      } ${
+                      className={`p-3 sm:p-3.5 rounded-xl border border-slate-200 transition-all ${
                         item.isCompleted
                           ? 'bg-slate-50/70 opacity-75'
                           : 'bg-white hover:shadow-2xs'
@@ -417,27 +368,6 @@ export const AgendaBoard: React.FC<AgendaBoardProps> = ({
                                 </span>
                               )}
 
-                              {/* 1-Click Priority Toggle Button */}
-                              <button
-                                type="button"
-                                onClick={() => handleTogglePriority(item)}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md border font-black transition-all cursor-pointer active:scale-95 ${
-                                  item.priority === 'must_do'
-                                    ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                                    : item.priority === 'optional'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                                }`}
-                                title="Klik untuk tukar keutamaan (Belum Set / Wajib / Pilihan)"
-                              >
-                                <span>
-                                  {item.priority === 'must_do'
-                                    ? '📌 Wajib'
-                                    : item.priority === 'optional'
-                                    ? '🌿 Pilihan'
-                                    : '⚪ Belum Set'}
-                                </span>
-                              </button>
 
                               {/* Location */}
                               {item.locationName && (

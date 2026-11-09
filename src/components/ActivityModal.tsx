@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, MapPin, User, Calendar, ChevronDown, Save, Bookmark } from 'lucide-react';
 import { AgendaItem, TimeSlot, ActivityPriority, Stay } from '../types';
-import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
+import { TIME_SLOTS } from '../utils/constants';
 import { toTitleCase, getDateForDay, getDayOptionsForStay, getDayContextLabel } from '../utils/formatters';
 import { useStay } from '../context/StayContext';
 
@@ -257,32 +257,6 @@ export const ActivityModal: React.FC<ActivityModalProps> = ({
               </div>
             </div>
 
-            {/* Keutamaan Selector */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Keutamaan
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {(Object.keys(PRIORITY_CONFIG) as ActivityPriority[]).map((pKey) => {
-                  const pConfig = PRIORITY_CONFIG[pKey];
-                  const isSelected = priority === pKey;
-                  return (
-                    <button
-                      key={pKey}
-                      type="button"
-                      onClick={() => setPriority(pKey)}
-                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? `${pConfig.badgeClass} ring-2 ring-teal-500/30 shadow-2xs`
-                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-bold">{pConfig.label}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* PIC (Person In Charge) */}
             <div>

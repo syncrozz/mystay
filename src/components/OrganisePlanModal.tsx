@@ -219,8 +219,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
   if (!isOpen) return null;
 
   const totalPlanned = stayAgendas.length;
-  const wajibCount = stayAgendas.filter((i) => i.priority === 'must_do').length;
-  const optionalCount = totalPlanned - wajibCount;
 
   // Handle individual item day/slot change in proposal
   const handleItemMove = (itemId: string, targetDay: number, targetSlot?: TimeSlot) => {
@@ -307,12 +305,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
             <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-950 font-bold">
               📝 {totalPlanned} Perkara Dirancang
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-900">
-              🫪 {wajibCount} Wajib
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-emerald-900">
-              🌿 {optionalCount} Pilihan
-            </span>
             <span className="px-2.5 py-1 rounded-lg bg-white border border-stone-200 text-stone-700">
               🏠 {duration} Hari Aktiviti
             </span>
@@ -339,7 +331,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
               const dateInfo = getDateForDay(stay.startDate, dayNum);
               const isTravel = dayContext.type === 'travel_day';
               const itemsInDay = getItemsForDay(dayNum);
-              const dayWajibCount = itemsInDay.filter((i) => i.priority === 'must_do').length;
 
               return (
                 <div
@@ -374,33 +365,14 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                     {itemsInDay.map((item) => {
                       const p = proposal[item.id] || { dayNumber: item.dayNumber, timeSlot: item.timeSlot };
                       const slotMeta = TIME_SLOTS[p.timeSlot] || TIME_SLOTS.morning;
-                      const isWajib = item.priority === 'must_do';
-
                       return (
                         <div
                           key={item.id}
-                          className={`p-2.5 rounded-xl border bg-white shadow-2xs space-y-1.5 transition-all text-xs ${
-                            isWajib ? 'border-amber-300' : 'border-stone-200'
-                          }`}
+                          className="p-2.5 rounded-xl border border-stone-200 bg-white shadow-2xs space-y-1.5 transition-all text-xs"
                         >
                           <div className="flex items-start justify-between gap-1.5">
                             <span className="font-bold text-stone-900 leading-snug line-clamp-2">
                               {item.title}
-                            </span>
-                            <span
-                              className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                                item.priority === 'must_do'
-                                  ? 'bg-amber-100 text-amber-900'
-                                  : item.priority === 'optional'
-                                  ? 'bg-emerald-50 text-emerald-800'
-                                  : 'bg-stone-100 text-stone-700'
-                              }`}
-                            >
-                              {item.priority === 'must_do'
-                                ? '📌 Wajib'
-                                : item.priority === 'optional'
-                                ? '🌿 Pilihan'
-                                : '⚪ Belum Set'}
                             </span>
                           </div>
 
@@ -478,13 +450,6 @@ export const OrganisePlanModal: React.FC<OrganisePlanModalProps> = ({
                   >
                     <div className="flex items-start justify-between gap-1.5">
                       <span className="font-bold text-stone-800 line-clamp-2">{item.title}</span>
-                      <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-stone-100 text-stone-600">
-                        {item.priority === 'must_do'
-                          ? '📌 Wajib'
-                          : item.priority === 'optional'
-                          ? '🌿 Pilihan'
-                          : '⚪ Belum Set'}
-                      </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-100">

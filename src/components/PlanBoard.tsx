@@ -36,8 +36,8 @@ interface PlanBoardProps {
   onOpenActivityLibrary?: () => void;
 }
 
-type FilterType = 'all' | 'backlog' | 'wajib' | 'optional' | 'undecided' | 'scheduled';
-type SortOption = 'date_asc' | 'date_desc' | 'priority' | 'time_slot' | 'title_asc' | 'created_desc';
+type FilterType = 'all' | 'backlog' | 'scheduled';
+type SortOption = 'date_asc' | 'date_desc' | 'time_slot' | 'title_asc' | 'created_desc';
 
 const TIME_SLOT_ORDER: Record<string, number> = {
   morning: 1,
@@ -67,7 +67,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
   const { requireAdmin } = useAuth();
 
   const [quickTitle, setQuickTitle] = useState('');
-  const [quickPriority, setQuickPriority] = useState<ActivityPriority>('undecided');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all' | '0' | '1' | '2' ...
   const [sortBy, setSortBy] = useState<SortOption>('date_asc');
@@ -104,9 +103,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
 
   // Statistics
   const totalItems = items.length;
-  const wajibCount = items.filter((i) => i.priority === 'must_do').length;
-  const optionalCount = items.filter((i) => i.priority === 'optional').length;
-  const undecidedCount = items.filter((i) => !i.priority || i.priority === 'undecided').length;
   const backlogCount = items.filter((i) => !i.dayNumber || i.dayNumber === 0).length;
   const scheduledCount = totalItems - backlogCount;
 
@@ -116,9 +112,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
       // 1. Status Filter
       if (activeFilter === 'backlog' && (item.dayNumber || 0) !== 0) return false;
       if (activeFilter === 'scheduled' && (item.dayNumber || 0) === 0) return false;
-      if (activeFilter === 'wajib' && item.priority !== 'must_do') return false;
-      if (activeFilter === 'optional' && item.priority !== 'optional') return false;
-      if (activeFilter === 'undecided' && item.priority !== 'undecided' && item.priority !== undefined) return false;
 
       // 2. Date Filter
       if (dateFilter !== 'all') {
@@ -156,9 +149,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
         const slotA = TIME_SLOT_ORDER[a.timeSlot || 'flexible'] || 5;
         const slotB = TIME_SLOT_ORDER[b.timeSlot || 'flexible'] || 5;
         if (slotA !== slotB) return slotA - slotB;
-        // If same slot, wajib first
-        if (a.priority === 'must_do' && b.priority !== 'must_do') return -1;
-        if (b.priority === 'must_do' && a.priority !== 'must_do') return 1;
         return a.title.localeCompare(b.title);
       }
 
@@ -173,18 +163,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
         return slotA - slotB;
       }
 
-      if (sortBy === 'priority') {
-        if (a.priority === 'must_do' && b.priority !== 'must_do') return -1;
-        if (b.priority === 'must_do' && a.priority !== 'must_do') return 1;
-        const dayA = a.dayNumber || 0;
-        const dayB = b.dayNumber || 0;
-        if (dayA !== dayB) {
-          if (dayA === 0) return 1;
-          if (dayB === 0) return -1;
-          return dayA - dayB;
-        }
-        return a.title.localeCompare(b.title);
-      }
 
       if (sortBy === 'time_slot') {
         const slotA = TIME_SLOT_ORDER[a.timeSlot || 'flexible'] || 5;
@@ -224,7 +202,7 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           title,
           dayNumber: 0, // 0 = Belum dijadualkan / Backlog Pool
           timeSlot: 'flexible',
-          priority: quickPriority,
+          priority: 'undecided',
           isCompleted: false,
           locationName: '',
           personInCharge: '',
@@ -393,28 +371,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
     }
   };
 
-  // Toggle priority cycling: undecided -> must_do -> optional -> undecided
-  const handleTogglePriority = async (item: AgendaItem) => {
-    requireAdmin(async () => {
-      let nextPriority: ActivityPriority = 'must_do';
-      if (item.priority === 'must_do') {
-        nextPriority = 'optional';
-      } else if (item.priority === 'optional') {
-        nextPriority = 'undecided';
-      } else {
-        nextPriority = 'must_do';
-      }
-      await updateAgendaItem(item.id, { priority: nextPriority });
-      const label =
-        nextPriority === 'must_do'
-          ? '📌 Wajib'
-          : nextPriority === 'optional'
-          ? '🌿 Pilihan'
-          : '⚪ Belum Set';
-      setFeedbackToast(`Ditukar ke ${label}: "${item.title}"`);
-      setTimeout(() => setFeedbackToast(null), 2000);
-    }, 'Sila sahkan PIN Admin untuk menukar keutamaan aktiviti.');
-  };
 
   // Quick assign day
   const handleAssignDay = async (item: AgendaItem, targetDay: number) => {
@@ -759,42 +715,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                {/* 3-Tier Priority Selector with Default Belum Ditentukan */}
-                <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setQuickPriority('undecided')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      quickPriority === 'undecided'
-                        ? 'bg-slate-700 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    ⚪ Belum Set
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuickPriority('must_do')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      quickPriority === 'must_do'
-                        ? 'bg-amber-500 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    📌 Wajib
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuickPriority('optional')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      quickPriority === 'optional'
-                        ? 'bg-emerald-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    🌿 Pilihan
-                  </button>
-                </div>
 
                 <button
                   type="submit"
@@ -918,41 +838,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   Belum Dijadualkan ({backlogCount})
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('wajib')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    activeFilter === 'wajib'
-                      ? 'bg-amber-500 text-white shadow-2xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  📌 Wajib ({wajibCount})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('optional')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    activeFilter === 'optional'
-                      ? 'bg-emerald-600 text-white shadow-2xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  🌿 Pilihan ({optionalCount})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter('undecided')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    activeFilter === 'undecided'
-                      ? 'bg-slate-700 text-white shadow-2xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  ⚪ Belum Set ({undecidedCount})
-                </button>
 
                 <button
                   type="button"
@@ -1031,7 +916,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                   >
                     <option value="date_asc">📅 Tarikh: Awal ➔ Akhir</option>
                     <option value="date_desc">📅 Tarikh: Akhir ➔ Awal</option>
-                    <option value="priority">📌 Keutamaan: Wajib Dahulu</option>
                     <option value="time_slot">⏰ Slot Masa: Pagi ➔ Malam</option>
                     <option value="title_asc">🔤 Nama Aktiviti: A ➔ Z</option>
                     <option value="created_desc">⏱️ Terkini Ditambah</option>
@@ -1065,41 +949,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
             </div>
           </div>
 
-          {/* Prominent CTA: Susun & Agihkan Agenda when unscheduled activities exist */}
-          {backlogCount > 0 && (
-            <div
-              id="unscheduled-agenda-cta-banner"
-              className="p-4 rounded-2xl bg-gradient-to-r from-teal-50 via-cyan-50 to-emerald-50 border border-teal-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-teal-600 text-white shrink-0 shadow-2xs">
-                  <Sparkles className="w-4 h-4 animate-pulse" />
-                </div>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs sm:text-sm font-black text-teal-950">
-                      {backlogCount} Aktiviti Belum Dijadualkan
-                    </h3>
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-teal-200/80 text-teal-900 uppercase">
-                      Tindakan Disyorkan
-                    </span>
-                  </div>
-                  <p className="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                    Agihkan aktiviti ini ke dalam slot masa dan hari 1 hingga {duration} untuk melengkapkan jadual stay anda.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                id="prominent-organise-agenda-btn"
-                onClick={handleOrganiseClick}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-xs shadow-teal-600/20 transition-all cursor-pointer shrink-0 self-stretch sm:self-auto"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Susun &amp; Agihkan Agenda</span>
-              </button>
-            </div>
-          )}
 
           {/* Reassurance banner when all activities are scheduled */}
           {backlogCount === 0 && totalItems > 0 && (
@@ -1152,14 +1001,13 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
           ) : (
             <div className="space-y-2">
             {filteredItems.map((item) => {
-              const isWajib = item.priority === 'must_do';
               const isBacklog = !item.dayNumber || item.dayNumber === 0;
 
               return (
                 <div
                   key={item.id}
                   className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border bg-white shadow-2xs hover:shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 ${
-                    item.isCompleted ? 'bg-slate-50/80 border-slate-200 opacity-75' : isWajib ? 'border-amber-300/80' : 'border-slate-200'
+                    item.isCompleted ? 'bg-slate-50/80 border-slate-200 opacity-75' : 'border-slate-200'
                   }`}
                 >
                   {/* Left Column on Desktop / Top Content on Mobile */}
@@ -1190,27 +1038,6 @@ export const PlanBoard: React.FC<PlanBoardProps> = ({
                         </span>
                       </div>
 
-                      {/* Quick 1-Click Priority Toggle (Cycling: Undecided -> Wajib -> Pilihan) */}
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePriority(item)}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black border transition-all shrink-0 cursor-pointer active:scale-95 ${
-                          item.priority === 'must_do'
-                            ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
-                            : item.priority === 'optional'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                        }`}
-                        title="Klik untuk tukar keutamaan (Belum Set / Wajib / Pilihan)"
-                      >
-                        <span>
-                          {item.priority === 'must_do'
-                            ? '📌 Wajib'
-                            : item.priority === 'optional'
-                            ? '🌿 Pilihan'
-                            : '⚪ Belum Set'}
-                        </span>
-                      </button>
                     </div>
 
                     {/* Optional Location Row (Hanya muncul jika ada) */}

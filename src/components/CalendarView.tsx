@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Stay, AgendaItem, TimeSlot } from '../types';
-import { TIME_SLOTS, PRIORITY_CONFIG } from '../utils/constants';
+import { TIME_SLOTS } from '../utils/constants';
 import { getDayContextLabel, formatStaySummary, getDateForDay } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -395,7 +395,6 @@ export function CalendarView({
               ) : (
                 activeDayDetailItems.map((item) => {
                   const slotMeta = TIME_SLOTS[item.timeSlot] || TIME_SLOTS.morning;
-                  const pConfig = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.optional;
                   return (
                     <div
                       key={item.id}
@@ -435,9 +434,6 @@ export function CalendarView({
                               {item.timeSpecific}
                             </span>
                           )}
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md border ${pConfig.badgeClass}`}>
-                            {pConfig.label}
-                          </span>
                         </div>
 
                         <h4
